@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import sys
 import pymatgen
+from sssp import pseudo_dict
 
 args = sys.argv
 
@@ -11,15 +12,12 @@ structure = structure.get_primitive_structure()
 structure = structure.get_primitive_structure()
 structure = structure.get_primitive_structure()
 
-
-
 structure.remove_oxidation_states()
 
 avec = structure.lattice.matrix
 nat = len(structure.species)
 typ = set(structure.species)
 ntyp = len(typ)
-
 
 print(structure)
 
@@ -32,12 +30,12 @@ with open("scf.in", 'w') as f:
     print("/", file=f)
 
     print("&SYSTEM", file=f)
-    print(" ibrav = 0", file=f)
-    print("      nat = %d" % nat, file=f)
-    print("      ntyp = %d" % ntyp, file=f)
-    print("      ecutwfc = %d" % 30.0, file=f)
-    print("      ecutrho = %d" % 300.0, file=f)
-    print("      occupations = \'tetrahedra_opt\'", file=f)
+    print("       ibrav = 0", file=f)
+    print("         nat = %d" % nat, file=f)
+    print("        ntyp = %d" % ntyp, file=f)
+    print("     ecutwfc = %d" % 30.0, file=f)
+    print("     ecutrho = %d" % 300.0, file=f)
+    print(" occupations = \'tetrahedra_opt\'", file=f)
     print("/", file=f)
 
     print("&ELECTRONS", file=f)
@@ -49,7 +47,7 @@ with open("scf.in", 'w') as f:
 
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
-        print(" %s %f " % (ityp, pymatgen.Element(ityp).atomic_mass), file=f)
+        print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
 
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
