@@ -12,8 +12,14 @@ structure.remove_oxidation_states()
 
 num2atom = {str(pymatgen.Element(str(spc)).number):str(spc) for spc in structure.species}
 
+if len(args) > 3:
+    reference_distance = float(args[3])
+else:
+    reference_distance = 0.1
+print("  reference_distance : {0}".format(reference_distance))
 skp = seekpath.get_explicit_k_path((structure.lattice.matrix, structure.frac_coords,
-                         [pymatgen.Element(str(spc)).number for spc in structure.species]))
+                         [pymatgen.Element(str(spc)).number for spc in structure.species]),
+                                   reference_distance=reference_distance)
 
 avec = skp["primitive_lattice"]
 bvec = skp["reciprocal_primitive_lattice"]
@@ -22,19 +28,36 @@ nat = len(skp["primitive_types"])
 atom = [num2atom[str(skp["primitive_types"][iat])] for iat in range(nat)]
 typ = set(atom)
 ntyp = len(typ)
-
+#
 ecutwfc = 0.0
 ecutrho = 0.0
 for ityp in typ:
     if ecutwfc < ecutwfc_dict[str(ityp)]:ecutwfc = ecutwfc_dict[str(ityp)]
     if ecutrho < ecutrho_dict[str(ityp)]:ecutrho = ecutrho_dict[str(ityp)]
+#
+if len(args) > 4:
+    reference_distance = float(args[4])
+else:
+    reference_distance = 0.3359385398275
+print("  reference_distance : {0}".format(reference_distance))
 nq = numpy.zeros(3, numpy.int_)
 for ii in range(3):
     norm = numpy.sqrt(numpy.dot(bvec[ii][:], bvec[ii][:]))
-    nq[ii] = round(norm / 0.3359385398275)
+    nq[ii] = round(norm / reference_distance)
     print(norm)
 nelec = 0.0
 for iat in range(nat): nelec += valence_dict[atom[iat]]
+#
+if len(args) > 2:
+    prefix = args[2]
+else:
+    xxx = {}
+    for ityp in typ: xxx[ityp] = 0
+    for iatom in range(nat): xxx[atom[iatom]] += 1
+    prefix = ""
+    for ityp in typ:
+        prefix += str(ityp) + str(xxx[ityp])
+print("  prefix : {0}".format(prefix))
 #
 # scf.in : Charge density
 #
@@ -42,7 +65,7 @@ with open("scf.in", 'w') as f:
     print("&CONTROL", file=f)
     print(" calculation = \'scf\'", file=f)
     print("  pseudo_dir = \'../pseudo/\'", file=f)
-    print("      prefix = \'%s\'" % args[2], file=f)
+    print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
     #
     print("&SYSTEM", file=f)
@@ -79,7 +102,7 @@ with open("nscf.in", 'w') as f:
     print("&CONTROL", file=f)
     print(" calculation = \'nscf\'", file=f)
     print("  pseudo_dir = \'../pseudo/\'", file=f)
-    print("      prefix = \'%s\'" % args[2], file=f)
+    print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
     #
     print("&SYSTEM", file=f)
@@ -117,7 +140,7 @@ with open("band.in", 'w') as f:
     print("&CONTROL", file=f)
     print(" calculation = \'bands\'", file=f)
     print("  pseudo_dir = \'../pseudo/\'", file=f)
-    print("      prefix = \'%s\'" % args[2], file=f)
+    print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
     #
     print("&SYSTEM", file=f)
@@ -155,7 +178,7 @@ with open("band.in", 'w') as f:
 #
 with open("bands.in", 'w') as f:
     print("&BANDS", file=f)
-    print("      prefix = \'%s\'" % args[2], file=f)
+    print("      prefix = \'%s\'" % prefix, file=f)
     print("!       lsym = .true.", file=f)
     print("/", file=f)
 #
@@ -163,7 +186,7 @@ with open("bands.in", 'w') as f:
 #
 with open("proj.in", 'w') as f:
     print("&PROJWFC", file=f)
-    print("      prefix = \'%s\'" % args[2], file=f)
+    print("      prefix = \'%s\'" % prefix, file=f)
     print("      emin = ", file=f)
     print("      emax = ", file=f)
     print("    deltae = ", file=f)
@@ -174,7 +197,7 @@ with open("proj.in", 'w') as f:
 with open("ph.in", 'w') as f:
     print("Phonon", file=f)
     print("&INPUTPH", file=f)
-    print("    prefix = \'%s\'" % args[2], file=f)
+    print("    prefix = \'%s\'" % prefix, file=f)
     print("  lshift_q = .true.", file=f)
     print("     ldisp = .true.", file=f)
     print(" reduce_io = .true.", file=f)
@@ -192,7 +215,7 @@ with open("ph.in", 'w') as f:
 with open("elph.in", 'w') as f:
     print("Electron-phonon", file=f)
     print("&INPUTPH", file=f)
-    print("          prefix = \'%s\'" % args[2], file=f)
+    print("          prefix = \'%s\'" % prefix, file=f)
     print("        lshift_q = .true.", file=f)
     print("           ldisp = .true.", file=f)
     print("       reduce_io = .true.", file=f)
@@ -216,7 +239,7 @@ with open("elph.in", 'w') as f:
 with open("epmat.in", 'w') as f:
     print("Electron-phonon matrix", file=f)
     print("&INPUTPH", file=f)
-    print("          prefix = \'%s\'" % args[2], file=f)
+    print("          prefix = \'%s\'" % prefix, file=f)
     print("        lshift_q = .true.", file=f)
     print("           ldisp = .true.", file=f)
     print("       reduce_io = .true.", file=f)
@@ -275,8 +298,8 @@ with open("phdos.in", 'w') as f:
 with open("pw2wan.in", 'w') as f:
     print("&INPUTPP", file=f)
     print("         outdir = \'./\'", file=f)
-    print("         prefix = \'%s\'" % args[2], file=f)
-    print("       seedname = \'%s\'" % args[2], file=f)
+    print("         prefix = \'%s\'" % prefix, file=f)
+    print("       seedname = \'%s\'" % prefix, file=f)
     print("      write_mmn = .true.", file=f)
     print("      write_amn = .true.", file=f)
     print("      write_unk = .true.", file=f)
@@ -287,7 +310,7 @@ with open("pw2wan.in", 'w') as f:
 #
 # {prefix}.win : wannier90 input
 #
-with open(args[2] + ".win", 'w') as f:
+with open(prefix + ".win", 'w') as f:
     print("num_bands = %d" % int(nelec), file=f)
     print(" num_wann = ", file=f)
     print("", file=f)
