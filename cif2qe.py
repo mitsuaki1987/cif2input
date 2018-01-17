@@ -10,7 +10,7 @@ args = sys.argv
 structure = pymatgen.Structure.from_file(args[1])
 structure.remove_oxidation_states()
 
-num2atom = {str(pymatgen.Element(str(spc)).number):str(spc) for spc in structure.species}
+num2atom = {str(pymatgen.Element(str(spc)).number): str(spc) for spc in structure.species}
 
 if len(args) > 3:
     reference_distance = float(args[3])
@@ -18,7 +18,7 @@ else:
     reference_distance = 0.1
 print("  reference_distance : {0}".format(reference_distance))
 skp = seekpath.get_explicit_k_path((structure.lattice.matrix, structure.frac_coords,
-                         [pymatgen.Element(str(spc)).number for spc in structure.species]),
+                                    [pymatgen.Element(str(spc)).number for spc in structure.species]),
                                    reference_distance=reference_distance)
 
 avec = skp["primitive_lattice"]
@@ -32,8 +32,10 @@ ntyp = len(typ)
 ecutwfc = 0.0
 ecutrho = 0.0
 for ityp in typ:
-    if ecutwfc < ecutwfc_dict[str(ityp)]:ecutwfc = ecutwfc_dict[str(ityp)]
-    if ecutrho < ecutrho_dict[str(ityp)]:ecutrho = ecutrho_dict[str(ityp)]
+    if ecutwfc < ecutwfc_dict[str(ityp)]:
+        ecutwfc = ecutwfc_dict[str(ityp)]
+    if ecutrho < ecutrho_dict[str(ityp)]:
+        ecutrho = ecutrho_dict[str(ityp)]
 #
 if len(args) > 4:
     reference_distance = float(args[4])
@@ -46,17 +48,20 @@ for ii in range(3):
     nq[ii] = round(norm / reference_distance)
     print(norm)
 nelec = 0.0
-for iat in range(nat): nelec += valence_dict[atom[iat]]
+for iat in range(nat):
+    nelec += valence_dict[atom[iat]]
 #
 if len(args) > 2:
     prefix = args[2]
 else:
     xxx = {}
-    for ityp in typ: xxx[ityp] = 0
-    for iatom in range(nat): xxx[atom[iatom]] += 1
+    for ityp in typ:
+        xxx[ityp] = 0
+    for iatom in range(nat):
+        xxx[atom[iatom]] += 1
     prefix = ""
     for ityp in typ:
-        prefix += str(ityp) + str(xxx[ityp])
+        prefix += str(ityp).lower() + str(xxx[ityp])
 print("  prefix : {0}".format(prefix))
 #
 # scf.in : Charge density
@@ -82,7 +87,7 @@ with open("scf.in", 'w') as f:
     #
     print("CELL_PARAMETERS angstrom", file=f)
     for ii in range(3):
-        print(" %f %f %f" % (avec[ii][0],avec[ii][1],avec[ii][2]), file=f)
+        print(" %f %f %f" % (avec[ii][0], avec[ii][1], avec[ii][2]), file=f)
     #
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
@@ -91,7 +96,7 @@ with open("scf.in", 'w') as f:
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
         print(" %s %f %f %f" % (
-            atom[iat], pos[iat][0],pos[iat][1],pos[iat][2]), file=f)
+            atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
     #
     print("K_POINTS automatic", file=f)
     print(" %d %d %d 0 0 0" % (nq[0]*2, nq[1]*2, nq[2]*2), file=f)
@@ -120,7 +125,7 @@ with open("nscf.in", 'w') as f:
     #
     print("CELL_PARAMETERS angstrom", file=f)
     for ii in range(3):
-        print(" %f %f %f" % (avec[ii][0],avec[ii][1],avec[ii][2]), file=f)
+        print(" %f %f %f" % (avec[ii][0], avec[ii][1], avec[ii][2]), file=f)
     #
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
@@ -129,7 +134,7 @@ with open("nscf.in", 'w') as f:
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
         print(" %s %f %f %f" % (
-            atom[iat], pos[iat][0],pos[iat][1],pos[iat][2]), file=f)
+            atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
     #
     print("K_POINTS automatic", file=f)
     print(" %d %d %d 0 0 0" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
@@ -157,7 +162,7 @@ with open("band.in", 'w') as f:
     #
     print("CELL_PARAMETERS angstrom", file=f)
     for ii in range(3):
-        print(" %f %f %f" % (avec[ii][0],avec[ii][1],avec[ii][2]), file=f)
+        print(" %f %f %f" % (avec[ii][0], avec[ii][1], avec[ii][2]), file=f)
     #
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
@@ -166,7 +171,7 @@ with open("band.in", 'w') as f:
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
         print(" %s %f %f %f" % (
-            atom[iat], pos[iat][0],pos[iat][1],pos[iat][2]), file=f)
+            atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
     print("K_POINTS crystal", file=f)
     print(len(skp["explicit_kpoints_rel"]), file=f)
     for ik in range(len(skp["explicit_kpoints_rel"])):
@@ -181,6 +186,44 @@ with open("bands.in", 'w') as f:
     print("      prefix = \'%s\'" % prefix, file=f)
     print("!       lsym = .true.", file=f)
     print("/", file=f)
+#
+# band.gp : Gnuplot script
+#
+with open("band.gp", 'w') as f:
+    print("set terminal pdf color enhanced \\", file=f)
+    print("dashed dl 0.5 size 8.0cm, 6.0cm", file=f)
+    print("set output \"band.pdf\"", file=f)
+    print("#", file=f)
+    print("EF = ", file=f)
+    print("Emin = ", file=f)
+    print("Emax = ", file=f)
+    print("#", file=f)
+    print("x1 = 0.0", file=f)
+    print("#", file=f)
+    print("set border lw 2", file=f)
+    print("#", file=f)
+    print("set style line 1 lt 1 lw 2 lc 0 dashtype 2", file=f)
+    print("set style line 2 lt 1 lw 2 lc 0", file=f)
+    print("set style line 3 lt 1 lw 1 lc 1", file=f)
+    print("set style line 4 lt 1 lw 1 lc 2", file=f)
+    print("set style line 5 lt 1 lw 1 lc 3", file=f)
+    print("set style line 6 lt 1 lw 1 lc 4", file=f)
+    print("#", file=f)
+    print("set ytics scale 3.0, -0.5 1.0 font \'Cmr10,18\'", file=f)
+    print("set xtics( \\", file=f)
+    print("\"\241\" x1, \\", file=f)
+    print("offset 0.0, 0.0 font \'Cmr10,18\'", file=f)
+    print("#", file=f)
+    print("set arrow from x2, Emin to x2, Emax nohead ls 2 front", file=f)
+    print("#", file=f)
+    print("unset key", file=f)
+    print("#", file=f)
+    print("set xzeroaxis ls 1", file=f)
+    print("#", file=f)
+    print("set ylabel \"Energy from {/Cmmi10 E}_F [eV]\" offset - 0.5, 0.0 font \'Cmr10,18\'", file=f)
+    print("#", file=f)
+    print("plot[:][Emin:Emax] \\", file=f)
+    print("        \"bands.out.gnu\" u 1: ($2-EF) w l ls 3", file=f)
 #
 # proj.in : Read by projwfc.x
 #
@@ -334,9 +377,13 @@ with open(prefix + ".win", 'w') as f:
         final = skp["explicit_segments"][ipath][1] - 1
         print("%s %f %f %f %s %f %f %f" % (
             skp["explicit_kpoints_labels"][start],
-            skp["explicit_kpoints_rel"][start][0], skp["explicit_kpoints_rel"][start][1],  skp["explicit_kpoints_rel"][start][2],
+            skp["explicit_kpoints_rel"][start][0],
+            skp["explicit_kpoints_rel"][start][1],
+            skp["explicit_kpoints_rel"][start][2],
             skp["explicit_kpoints_labels"][final],
-            skp["explicit_kpoints_rel"][final][0], skp["explicit_kpoints_rel"][final][1],  skp["explicit_kpoints_rel"][final][2]),
+            skp["explicit_kpoints_rel"][final][0],
+            skp["explicit_kpoints_rel"][final][1],
+            skp["explicit_kpoints_rel"][final][2]),
               file=f)
     print("end kpoint_path", file=f)
     print("", file=f)
@@ -345,14 +392,109 @@ with open(prefix + ".win", 'w') as f:
     print("begin unit_cell_cart", file=f)
     print("Ang", file=f)
     for ii in range(3):
-        print(" %f %f %f" % (avec[ii][0],avec[ii][1],avec[ii][2]), file=f)
+        print(" %f %f %f" % (avec[ii][0], avec[ii][1], avec[ii][2]), file=f)
     print("end unit_cell_cart", file=f)
     print("", file=f)
     print("begin atoms_frac", file=f)
     for iat in range(nat):
         print(" %s %f %f %f" % (
-            atom[iat], pos[iat][0],pos[iat][1],pos[iat][2]), file=f)
+            atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
     print("end atoms_frac", file=f)
     print("", file=f)
     print("begin kpoints", file=f)
     print("end kpoints", file=f)
+#
+# pp.in : Plot Kohn-Sham orbitals
+#
+with open("pp.in", 'w') as f:
+    print("&INPUTPP ", file=f)
+    print("   prefix = \'%s\'" % prefix, file=f)
+    print(" plot_num = 7", file=f)
+    print("   kpoint = 1", file=f)
+    print(" kband(1) = ", file=f)
+    print(" kband(2) = ", file=f)
+    print("    lsign = .true.", file=f)
+    print("/", file=f)
+    print("&PLOT  ", file=f)
+    print("         iflag = 3", file=f)
+    print(" output_format = 5", file=f)
+    print("       fileout = \".xsf\"", file=f)
+    print("/", file=f)
+#
+# nscf_r.in : Pre-process for respack
+#
+with open("nscf_r.in", 'w') as f:
+    print("&CONTROL", file=f)
+    print(" calculation = \'nscf\'", file=f)
+    print("  pseudo_dir = \'../pseudo/\'", file=f)
+    print("  wf_collect = .true.", file=f)
+    print("      prefix = \'%s\'" % prefix, file=f)
+    print("/", file=f)
+    #
+    print("&SYSTEM", file=f)
+    print("       ibrav = 0", file=f)
+    print("         nat = %d" % nat, file=f)
+    print("        ntyp = %d" % ntyp, file=f)
+    print("     ecutwfc = %f" % ecutwfc, file=f)
+    print("     ecutrho = %f" % ecutrho, file=f)
+    print(" occupations = \'tetrahedra_opt\'", file=f)
+    print("        nbnd = %d" % int(nelec), file=f)
+    print("/", file=f)
+    #
+    print("&ELECTRONS", file=f)
+    print("/", file=f)
+    #
+    print("CELL_PARAMETERS angstrom", file=f)
+    for ii in range(3):
+        print(" %f %f %f" % (avec[ii][0], avec[ii][1], avec[ii][2]), file=f)
+    #
+    print("ATOMIC_SPECIES", file=f)
+    for ityp in typ:
+        print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
+    #
+    print("ATOMIC_POSITIONS crystal", file=f)
+    for iat in range(nat):
+        print(" %s %f %f %f" % (
+            atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
+    #
+    print("K_POINTS automatic", file=f)
+    print(" %d %d %d 0 0 0" % (nq[0], nq[1], nq[2]), file=f)
+#
+# respack.in : Input file for
+#
+with open("respack.in", 'w') as f:
+    print("&PARAM_CHIQW", file=f)
+    print("Num_freq_grid = 1", file=f)
+    print("#Ecut_for_eps = ", file=f)
+    print("flg_cRPA = 1", file=f)
+    print("/", file=f)
+    print("&PARAM_WANNIER", file=f)
+    print("N_wannier = ", file=f)
+    print("Lower_energy_window = ", file=f)
+    print("Upper_energy_window = ", file=f)
+    print("N_initial_guess = ", file=f)
+    print("/", file=f)
+    print("", file=f)
+    print("& PARAM_INTERPOLATION", file=f)
+    print("N_sym_points = ", file=f)
+    print("dense = %d, %d, %d" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
+    print("/", file=f)
+    print("", file=f)
+    print("& PARAM_VISUALIZATION", file=f)
+    print("flg_vis_wannier = 1,", file=f)
+    print("ix_vis_min = -1,", file=f)
+    print("ix_vis_max = 2,", file=f)
+    print("iy_vis_min = -1,", file=f)
+    print("iy_vis_max = 2,", file=f)
+    print("iz_vis_min = -1,", file=f)
+    print("iz_vis_max = 2", file=f)
+    print("/", file=f)
+    print("& PARAM_CALC_INT", file=f)
+    print("calc_ifreq = 1", file=f)
+    print("!ix_int_min = 0", file=f)
+    print("!ix_int_max = 0", file=f)
+    print("!iy_int_min = 0", file=f)
+    print("!iy_int_max = 0", file=f)
+    print("!iz_int_min = 0", file=f)
+    print("!iz_int_max = 0", file=f)
+    print("/", file=f)
