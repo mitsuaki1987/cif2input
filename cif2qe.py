@@ -211,7 +211,8 @@ with open("band.gp", 'w') as f:
     print("#", file=f)
     print("set ytics scale 3.0, -0.5 1.0 font \'Cmr10,18\'", file=f)
     print("set xtics( \\", file=f)
-    print("\"\241\" x1, \\", file=f)
+    print("\"\\241\" x1, \\", file=f)
+    print("\"X\" x2 ) \\", file=f)
     print("offset 0.0, 0.0 font \'Cmr10,18\'", file=f)
     print("#", file=f)
     print("set arrow from x2, Emin to x2, Emax nohead ls 2 front", file=f)
@@ -387,7 +388,7 @@ with open(prefix + ".win", 'w') as f:
               file=f)
     print("end kpoint_path", file=f)
     print("", file=f)
-    print("mp_grid = 4 4 4", file=f)
+    print("mp_grid = %d %d %d" % (nq[0], nq[1], nq[2]), file=f)
     print("", file=f)
     print("begin unit_cell_cart", file=f)
     print("Ang", file=f)
@@ -465,9 +466,14 @@ with open("nscf_r.in", 'w') as f:
 with open("respack.in", 'w') as f:
     print("&PARAM_CHIQW", file=f)
     print("Num_freq_grid = 1", file=f)
-    print("#Ecut_for_eps = ", file=f)
+    print("!Ecut_for_eps = ", file=f)
     print("flg_cRPA = 1", file=f)
+    print("MPI_num_proc_per_qcomm = 1", file=f)
+    print("MPI_num_qcomm = 1", file=f)
+    print("flg_calc_type = 2", file=f)
+    print("n_calc_q = 1", file=f)
     print("/", file=f)
+    print("1", file=f)
     print("&PARAM_WANNIER", file=f)
     print("N_wannier = ", file=f)
     print("Lower_energy_window = ", file=f)
@@ -475,12 +481,25 @@ with open("respack.in", 'w') as f:
     print("N_initial_guess = ", file=f)
     print("/", file=f)
     print("", file=f)
-    print("& PARAM_INTERPOLATION", file=f)
-    print("N_sym_points = ", file=f)
+    print("&PARAM_INTERPOLATION", file=f)
+    print("N_sym_points = %d" % (len(skp["path"])*2), file=f)
     print("dense = %d, %d, %d" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
     print("/", file=f)
     print("", file=f)
-    print("& PARAM_VISUALIZATION", file=f)
+    for ipath in range(len(skp["path"])):
+        start = skp["explicit_segments"][ipath][0]
+        final = skp["explicit_segments"][ipath][1] - 1
+        print("%f %f %f" % (
+            skp["explicit_kpoints_rel"][start][0],
+            skp["explicit_kpoints_rel"][start][1],
+            skp["explicit_kpoints_rel"][start][2]),
+              file=f)
+        print("%f %f %f" % (
+            skp["explicit_kpoints_rel"][final][0],
+            skp["explicit_kpoints_rel"][final][1],
+            skp["explicit_kpoints_rel"][final][2]),
+              file=f)
+    print("&PARAM_VISUALIZATION", file=f)
     print("flg_vis_wannier = 1,", file=f)
     print("ix_vis_min = -1,", file=f)
     print("ix_vis_max = 2,", file=f)
@@ -489,12 +508,12 @@ with open("respack.in", 'w') as f:
     print("iz_vis_min = -1,", file=f)
     print("iz_vis_max = 2", file=f)
     print("/", file=f)
-    print("& PARAM_CALC_INT", file=f)
+    print("&PARAM_CALC_INT", file=f)
     print("calc_ifreq = 1", file=f)
-    print("!ix_int_min = 0", file=f)
-    print("!ix_int_max = 0", file=f)
-    print("!iy_int_min = 0", file=f)
-    print("!iy_int_max = 0", file=f)
-    print("!iz_int_min = 0", file=f)
-    print("!iz_int_max = 0", file=f)
+    print("ix_intJ_min = 0", file=f)
+    print("ix_intJ_max = 0", file=f)
+    print("iy_intJ_min = 0", file=f)
+    print("iy_intJ_max = 0", file=f)
+    print("iz_intJ_min = 0", file=f)
+    print("iz_intJ_max = 0", file=f)
     print("/", file=f)
