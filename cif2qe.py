@@ -2,16 +2,40 @@
 import sys
 import numpy
 import pymatgen
-from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict
 import seekpath
 
 args = sys.argv
-
+#
+# Pseudo potential type
+#
+if len(args) > 5:
+    if args[5] == "sssp":
+        from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict
+        print("SSSP id used.")
+    else:
+        from sg15 import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict
+        print("SG15 id used.")
+else:
+    from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict
+    print("SSSP id used.")
+#
+# Location of pseudo
+#
+if len(args) > 6:
+    pseudo_dir = args[6]
+else:
+    pseudo_dir = "../pseudo/"
+print("Pseudo is at ", pseudo_dir)
+#
+# CIF parser
+#
 structure = pymatgen.Structure.from_file(args[1])
 structure.remove_oxidation_states()
 
 num2atom = {str(pymatgen.Element(str(spc)).number): str(spc) for spc in structure.species}
-
+#
+# Band path and primitive lattice
+#
 if len(args) > 3:
     reference_distance = float(args[3])
 else:
@@ -20,7 +44,9 @@ print("  reference_distance : {0}".format(reference_distance))
 skp = seekpath.get_explicit_k_path((structure.lattice.matrix, structure.frac_coords,
                                     [pymatgen.Element(str(spc)).number for spc in structure.species]),
                                    reference_distance=reference_distance)
-
+#
+# Lattice information
+#
 avec = skp["primitive_lattice"]
 bvec = skp["reciprocal_primitive_lattice"]
 pos = skp["primitive_positions"]
@@ -29,6 +55,8 @@ atom = [num2atom[str(skp["primitive_types"][iat])] for iat in range(nat)]
 typ = set(atom)
 ntyp = len(typ)
 #
+# WFC and Rho cutoff
+#
 ecutwfc = 0.0
 ecutrho = 0.0
 for ityp in typ:
@@ -36,6 +64,8 @@ for ityp in typ:
         ecutwfc = ecutwfc_dict[str(ityp)]
     if ecutrho < ecutrho_dict[str(ityp)]:
         ecutrho = ecutrho_dict[str(ityp)]
+#
+# k and q grid
 #
 if len(args) > 4:
     reference_distance = float(args[4])
@@ -50,6 +80,8 @@ for ii in range(3):
 nelec = 0.0
 for iat in range(nat):
     nelec += valence_dict[atom[iat]]
+#
+# Prefix
 #
 if len(args) > 2:
     prefix = args[2]
@@ -69,7 +101,7 @@ print("  prefix : {0}".format(prefix))
 with open("scf.in", 'w') as f:
     print("&CONTROL", file=f)
     print(" calculation = \'scf\'", file=f)
-    print("  pseudo_dir = \'../pseudo/\'", file=f)
+    print("  pseudo_dir = \'%s\'" % pseudo_dir, file=f)
     print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
     #
@@ -83,6 +115,7 @@ with open("scf.in", 'w') as f:
     print("/", file=f)
     #
     print("&ELECTRONS", file=f)
+    print(" mixing_beta = 0.3", file=f)
     print("/", file=f)
     #
     print("CELL_PARAMETERS angstrom", file=f)
@@ -106,7 +139,7 @@ with open("scf.in", 'w') as f:
 with open("nscf.in", 'w') as f:
     print("&CONTROL", file=f)
     print(" calculation = \'nscf\'", file=f)
-    print("  pseudo_dir = \'../pseudo/\'", file=f)
+    print("  pseudo_dir = \'%s\'" % pseudo_dir, file=f)
     print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
     #
@@ -144,7 +177,7 @@ with open("nscf.in", 'w') as f:
 with open("band.in", 'w') as f:
     print("&CONTROL", file=f)
     print(" calculation = \'bands\'", file=f)
-    print("  pseudo_dir = \'../pseudo/\'", file=f)
+    print("  pseudo_dir = \'%s\'" % pseudo_dir, file=f)
     print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
     #
@@ -184,21 +217,32 @@ with open("band.in", 'w') as f:
 with open("bands.in", 'w') as f:
     print("&BANDS", file=f)
     print("      prefix = \'%s\'" % prefix, file=f)
-    print("!       lsym = .true.", file=f)
+    print("       lsym = .false.", file=f)
     print("/", file=f)
 #
 # band.gp : Gnuplot script
 #
 with open("band.gp", 'w') as f:
-    print("set terminal pdf color enhanced \\", file=f)
-    print("dashed dl 0.5 size 8.0cm, 6.0cm", file=f)
-    print("set output \"band.pdf\"", file=f)
+    print("#set terminal pdf color enhanced \\", file=f)
+    print("#dashed dl 0.5 size 8.0cm, 6.0cm", file=f)
+    print("#set output \"band.pdf\"", file=f)
     print("#", file=f)
     print("EF = ", file=f)
     print("Emin = ", file=f)
     print("Emax = ", file=f)
     print("#", file=f)
-    print("x1 = 0.0", file=f)
+    n_sym_points = 1
+    final = 0
+    print("x0 = ", file=f)
+    print("x%d = %f" % (n_sym_points, skp["explicit_kpoints_linearcoord"][final]), file=f)
+    for ipath in range(len(skp["path"])):
+        start = skp["explicit_segments"][ipath][0]
+        if start != final:
+            n_sym_points += 1
+            print("x%d = %f*x0" % (n_sym_points, skp["explicit_kpoints_linearcoord"][start]), file=f)
+        n_sym_points += 1
+        final = skp["explicit_segments"][ipath][1] - 1
+        print("x%d = %f*x0" % (n_sym_points, skp["explicit_kpoints_linearcoord"][final]), file=f)
     print("#", file=f)
     print("set border lw 2", file=f)
     print("#", file=f)
@@ -211,11 +255,22 @@ with open("band.gp", 'w') as f:
     print("#", file=f)
     print("set ytics scale 3.0, -0.5 1.0 font \'Cmr10,18\'", file=f)
     print("set xtics( \\", file=f)
-    print("\"\\241\" x1, \\", file=f)
-    print("\"X\" x2 ) \\", file=f)
-    print("offset 0.0, 0.0 font \'Cmr10,18\'", file=f)
+    n_sym_points = 1
+    final = 0
+    print("\"%s\" x%d" % (skp["explicit_kpoints_labels"][final], n_sym_points), end="", file=f)
+    for ipath in range(len(skp["path"])):
+        start = skp["explicit_segments"][ipath][0]
+        if start != final:
+            n_sym_points += 1
+            print(", \\\n\"%s%s\" x%d" % (skp["explicit_kpoints_labels"][final],
+                                          skp["explicit_kpoints_labels"][start], n_sym_points), end="", file=f)
+        n_sym_points += 1
+        final = skp["explicit_segments"][ipath][1] - 1
+        print(", \\\n\"%s\" x%d" % (skp["explicit_kpoints_labels"][final], n_sym_points), end="", file=f)
+    print(") \\\noffset 0.0, 0.0 font \'Cmr10,18\'", file=f)
     print("#", file=f)
-    print("set arrow from x2, Emin to x2, Emax nohead ls 2 front", file=f)
+    for ii in range(n_sym_points):
+        print("set arrow from x%d, Emin to x%d, Emax nohead ls 2 front" % (ii+1, ii+1), file=f)
     print("#", file=f)
     print("unset key", file=f)
     print("#", file=f)
@@ -223,8 +278,19 @@ with open("band.gp", 'w') as f:
     print("#", file=f)
     print("set ylabel \"Energy from {/Cmmi10 E}_F [eV]\" offset - 0.5, 0.0 font \'Cmr10,18\'", file=f)
     print("#", file=f)
+    n_sym_points = 1
+    final = 0
+    for ipath in range(len(skp["path"])):
+        start = skp["explicit_segments"][ipath][0]
+        if start == final:
+            n_sym_points += 1
+            final = skp["explicit_segments"][ipath][1] - 1
+        else:
+            break
     print("plot[:][Emin:Emax] \\", file=f)
-    print("        \"bands.out.gnu\" u 1: ($2-EF) w l ls 3", file=f)
+    print("        \"bands.out.gnu\" u 1:($2-EF) w p ls 3, \\", file=f)
+    print("        \"dir-wan/dat.iband\" u ($1*x%d):($2-EF) w l ls 4" % n_sym_points, file=f)
+    print("pause -1", file=f)
 #
 # proj.in : Read by projwfc.x
 #
@@ -246,6 +312,7 @@ with open("ph.in", 'w') as f:
     print("     ldisp = .true.", file=f)
     print(" reduce_io = .true.", file=f)
     print("    tr2_ph = 1.0d-15", file=f)
+    print(" alpha_mix = 0.3", file=f)
     print("  fildvscf = \'dv\'", file=f)
     print("       nq1 = %d" % nq[0], file=f)
     print("       nq2 = %d" % nq[1], file=f)
@@ -427,7 +494,7 @@ with open("pp.in", 'w') as f:
 with open("nscf_r.in", 'w') as f:
     print("&CONTROL", file=f)
     print(" calculation = \'nscf\'", file=f)
-    print("  pseudo_dir = \'../pseudo/\'", file=f)
+    print("  pseudo_dir = \'%s\'" % pseudo_dir, file=f)
     print("  wf_collect = .true.", file=f)
     print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
@@ -465,55 +532,70 @@ with open("nscf_r.in", 'w') as f:
 #
 with open("respack.in", 'w') as f:
     print("&PARAM_CHIQW", file=f)
-    print("Num_freq_grid = 1", file=f)
-    print("!Ecut_for_eps = ", file=f)
-    print("flg_cRPA = 1", file=f)
-    print("MPI_num_proc_per_qcomm = 1", file=f)
-    print("MPI_num_qcomm = 1", file=f)
-    print("flg_calc_type = 2", file=f)
-    print("n_calc_q = 1", file=f)
+    print("          Num_freq_grid = 1", file=f)
+    print("!          Ecut_for_eps = ", file=f)
+    print("               flg_cRPA = 1", file=f)
+    print(" MPI_num_proc_per_qcomm = 1", file=f)
+    print("          MPI_num_qcomm = 1", file=f)
+    print("          flg_calc_type = 2", file=f)
+    print("               n_calc_q = 1", file=f)
     print("/", file=f)
     print("1", file=f)
     print("&PARAM_WANNIER", file=f)
-    print("N_wannier = ", file=f)
-    print("Lower_energy_window = ", file=f)
-    print("Upper_energy_window = ", file=f)
-    print("N_initial_guess = ", file=f)
+    print("           N_wannier = ", file=f)
+    print("     N_initial_guess = ", file=f)
+    print(" Lower_energy_window = ", file=f)
+    print(" Upper_energy_window = ", file=f)
+    print("!   set_inner_window =.true.", file=f)
+    print("! Lower_inner_window = ", file=f)
+    print("! Upper_inner_window = ", file=f)
     print("/", file=f)
     print("", file=f)
-    print("&PARAM_INTERPOLATION", file=f)
-    print("N_sym_points = %d" % (len(skp["path"])*2), file=f)
-    print("dense = %d, %d, %d" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
-    print("/", file=f)
-    print("", file=f)
+    n_sym_points = 1
+    final = 0
     for ipath in range(len(skp["path"])):
         start = skp["explicit_segments"][ipath][0]
-        final = skp["explicit_segments"][ipath][1] - 1
-        print("%f %f %f" % (
-            skp["explicit_kpoints_rel"][start][0],
-            skp["explicit_kpoints_rel"][start][1],
-            skp["explicit_kpoints_rel"][start][2]),
-              file=f)
-        print("%f %f %f" % (
-            skp["explicit_kpoints_rel"][final][0],
-            skp["explicit_kpoints_rel"][final][1],
-            skp["explicit_kpoints_rel"][final][2]),
-              file=f)
+        if start == final:
+            n_sym_points += 1
+            final = skp["explicit_segments"][ipath][1] - 1
+        else:
+            break
+    print("&PARAM_INTERPOLATION", file=f)
+    print(" N_sym_points = %d" % n_sym_points, file=f)
+    print("!       dense = %d, %d, %d" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
+    print("/", file=f)
+    final = 0
+    print("%f %f %f" % (
+        skp["explicit_kpoints_rel"][final][0],
+        skp["explicit_kpoints_rel"][final][1],
+        skp["explicit_kpoints_rel"][final][2]),
+          file=f)
+    for ipath in range(len(skp["path"])):
+        start = skp["explicit_segments"][ipath][0]
+        if start == final:
+            final = skp["explicit_segments"][ipath][1] - 1
+            print("%f %f %f" % (
+                skp["explicit_kpoints_rel"][final][0],
+                skp["explicit_kpoints_rel"][final][1],
+                skp["explicit_kpoints_rel"][final][2]),
+                file=f)
+        else:
+            break
     print("&PARAM_VISUALIZATION", file=f)
-    print("flg_vis_wannier = 1,", file=f)
-    print("ix_vis_min = -1,", file=f)
-    print("ix_vis_max = 2,", file=f)
-    print("iy_vis_min = -1,", file=f)
-    print("iy_vis_max = 2,", file=f)
-    print("iz_vis_min = -1,", file=f)
-    print("iz_vis_max = 2", file=f)
+    print("! flg_vis_wannier = 1,", file=f)
+    print("       ix_vis_min = -1,", file=f)
+    print("       ix_vis_max = 2,", file=f)
+    print("       iy_vis_min = -1,", file=f)
+    print("       iy_vis_max = 2,", file=f)
+    print("       iz_vis_min = -1,", file=f)
+    print("       iz_vis_max = 2", file=f)
     print("/", file=f)
     print("&PARAM_CALC_INT", file=f)
-    print("calc_ifreq = 1", file=f)
-    print("ix_intJ_min = 0", file=f)
-    print("ix_intJ_max = 0", file=f)
-    print("iy_intJ_min = 0", file=f)
-    print("iy_intJ_max = 0", file=f)
-    print("iz_intJ_min = 0", file=f)
-    print("iz_intJ_max = 0", file=f)
+    print("  calc_ifreq = 1", file=f)
+    print(" ix_intJ_min = 0", file=f)
+    print(" ix_intJ_max = 0", file=f)
+    print(" iy_intJ_min = 0", file=f)
+    print(" iy_intJ_max = 0", file=f)
+    print(" iz_intJ_min = 0", file=f)
+    print(" iz_intJ_max = 0", file=f)
     print("/", file=f)
