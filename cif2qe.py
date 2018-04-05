@@ -3,6 +3,7 @@ import sys
 import numpy
 import pymatgen
 import seekpath
+from openmx import omx_pao_dict, omx_pot_dict, omx_radius_dict, omx_valence_dict
 
 args = sys.argv
 #
@@ -599,3 +600,137 @@ with open("respack.in", 'w') as f:
     print(" iz_intJ_min = 0", file=f)
     print(" iz_intJ_max = 0", file=f)
     print("/", file=f)
+#
+# rpa.in : Input file for rpa_el.x
+#
+with open("rpa.in", 'w') as f:
+    print("&CONTROL", file=f)
+    print("      prefix = \'%s\'" % prefix, file=f)
+    print("/", file=f)
+    print("&SYSTEM", file=f)
+    print(" start_q = 1", file=f)
+    print("  last_q = 1", file=f)
+    print("     nmf = 10", file=f)
+    print("  laddxc = .FALSE.", file=f)
+    print(" ecutwfc = %f" % ecutwfc, file=f)
+    print("     nq1 = %d" % nq[0], file=f)
+    print("     nq2 = %d" % nq[1], file=f)
+    print("     nq3 = %d" % nq[2], file=f)
+    print("/", file=f)
+#
+# scdft.in : Input file for scdft.x
+#
+with open("rpa.in", 'w') as f:
+    print("&CONTROL", file=f)
+    print("      prefix = \'%s\'" % prefix, file=f)
+    print("/", file=f)
+    print("&SYSTEM", file=f)
+    print("             temp = 0.1", file=f)
+    print("             fbee = 1", file=f)
+    print("             lbee = %d" % int(nelec), file=f)
+    print("              xic = -1.0", file=f)
+    print("              nmf = 10", file=f)
+    print("               nx = 100", file=f)
+    print("               ne = 50", file=f)
+    print("             emin = 1.0e-7", file=f)
+    print("             emax = 5.0", file=f)
+    print(" electron_maxstep = 100", file=f)
+    print("         conv_thr = 1.0e-15", file=f)
+    print("/", file=f)
+#
+# openmx.in : Input file for openmx
+#
+with open("openmx.in", 'w') as f:
+    print("#", file=f)
+    print("# File Name", file=f)
+    print("#", file=f)
+    print("System.CurrrentDirectory    ./", file=f)
+    print("System.Name          %s" % prefix, file=f)
+    print("level.of.stdout      1", file=f)
+    print("level.of.fileout     1", file=f)
+    print("data.path            ", file=f)
+    print("#", file=f)
+    print("# Definition of Atomic Species", file=f)
+    print("#", file=f)
+    print("Species.Number  %d" % ntyp, file=f)
+    print("<Definition.of.Atomic.Species", file=f)
+    for ityp in typ:
+        print(" %s  %s%s-%s  %s" % (
+            ityp, ityp, omx_radius_dict[str(ityp)], omx_pao_dict[str(ityp)], omx_pot_dict[str(ityp)]), file=f)
+    for ityp in typ:
+        print("# %s  %s%s-s1p1d1  %s" % (
+            ityp, ityp, omx_radius_dict[str(ityp)], omx_pot_dict[str(ityp)]), file=f)
+    print("proj  V6.0-s1p1d1     V_PBE13", file=f)
+    print("Definition.of.Atomic.Species>", file=f)
+    print("#", file=f)
+    print("# Atoms", file=f)
+    print("#", file=f)
+    print("Atoms.Number  %d" % nat, file=f)
+    print("Atoms.SpeciesAndCoordinates.Unit   FRAC", file=f)
+    print("<Atoms.SpeciesAndCoordinates", file=f)
+    for iat in range(nat):
+        print("%d %s %f %f %f %f %f" % (
+            iat, atom[iat], pos[iat][0], pos[iat][1], pos[iat][2],
+            omx_valence_dict[atom[iat]]*0.5, omx_valence_dict[atom[iat]]*0.5), file=f)
+    print("Atoms.SpeciesAndCoordinates>", file=f)
+    print("Atoms.UnitVectors.Unit  Ang", file=f)
+    print("<Atoms.UnitVectors", file=f)
+    for ii in range(3):
+        print(" %f %f %f" % (avec[ii][0], avec[ii][1], avec[ii][2]), file=f)
+    print("Atoms.UnitVectors>", file=f)
+    print("#", file=f)
+    print("# SCF or Electronic System", file=f)
+    print("#", file=f)
+    print("scf.XcType               GGA-PBE", file=f)
+    print("scf.SpinPolarization        Off         # On|Off|NC", file=f)
+    print("scf.maxIter                  40", file=f)
+    print("scf.EigenvalueSolver       band        # DC|GDC|Cluster|Band", file=f)
+    print("scf.Kgrid              %d %d %d" % (nq[0]*2, nq[1]*2, nq[2]*2), file=f)
+    print("scf.Mixing.Type           rmm-diisk    # Simple|Rmm-Diis|Gr-Pulay|Kerker|Rmm-Diisk", file=f)
+    print("scf.Init.Mixing.Weight     0.30", file=f)
+    print("scf.Min.Mixing.Weight      0.001", file=f)
+    print("scf.Max.Mixing.Weight      0.4", file=f)
+    print("scf.Mixing.History          5", file=f)
+    print("scf.Mixing.StartPulay       6", file=f)
+    print("scf.Mixing.EveryPulay       6", file=f)
+    print("scf.criterion             1.0e-6", file=f)
+    print("orbitalOpt.Force.Skip       on", file=f)
+    print("#scf.restart                on", file=f)
+    print("#", file=f)
+    print("# Band dispersion", file=f)
+    print("#", file=f)
+    print("Band.dispersion              off", file=f)
+    print("Band.Nkpath  4", file=f)
+    print("<Band.kpath", file=f)
+    for ipath in range(len(skp["path"])):
+        start = skp["explicit_segments"][ipath][0]
+        final = skp["explicit_segments"][ipath][1] - 1
+        print("15  %f %f %f %f %f %f %s %s" % (
+            skp["explicit_kpoints_rel"][start][0],
+            skp["explicit_kpoints_rel"][start][1],
+            skp["explicit_kpoints_rel"][start][2],
+            skp["explicit_kpoints_rel"][final][0],
+            skp["explicit_kpoints_rel"][final][1],
+            skp["explicit_kpoints_rel"][final][2],
+            skp["explicit_kpoints_labels"][start],
+            skp["explicit_kpoints_labels"][final]),
+            file=f)
+    print("Band.kpath>", file=f)
+    print("#", file=f)
+    print("# Wannier", file=f)
+    print("#", file=f)
+    print("Wannier.Func.Calc off", file=f)
+    print("Wannier.Func.Num 3", file=f)
+    print("Wannier.Outer.Window.Bottom  -1.5", file=f)
+    print("Wannier.Outer.Window.Top      7.0", file=f)
+    print("Wannier.Inner.Window.Bottom  -1.5", file=f)
+    print("Wannier.Inner.Window.Top      1.2", file=f)
+    print("Wannier.Initial.Projectors.Unit FRAC", file=f)
+    print("<Wannier.Initial.Projectors", file=f)
+    print("proj-dxy 0.5 0.5 0.5  0.0 0.0 1.0  1.0 0.0 0.0", file=f)
+    print("proj-dxz 0.5 0.5 0.5  0.0 0.0 1.0  1.0 0.0 0.0", file=f)
+    print("proj-dyz 0.5 0.5 0.5  0.0 0.0 1.0  1.0 0.0 0.0", file=f)
+    print("Wannier.Initial.Projectors>", file=f)
+    print("Wannier.Interpolated.Bands             on", file=f)
+    print("Wannier.Function.Plot                  on         # default off", file=f)
+    print("Wannier.Function.Plot.SuperCells      1 1 1       # default=0 0 0", file=f)
