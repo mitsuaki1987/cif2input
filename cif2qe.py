@@ -97,6 +97,45 @@ else:
         prefix += str(ityp).lower() + str(xxx[ityp])
 print("  prefix : {0}".format(prefix))
 #
+# rx.in : Variation cell optimization
+#
+with open("rx.in", 'w') as f:
+    print("&CONTROL", file=f)
+    print(" calculation = \'vc-relax\'", file=f)
+    print("  pseudo_dir = \'%s\'" % pseudo_dir, file=f)
+    print("      prefix = \'%s\'" % prefix, file=f)
+    print("/", file=f)
+    print("&SYSTEM", file=f)
+    print("       ibrav = 0", file=f)
+    print("         nat = %d" % nat, file=f)
+    print("        ntyp = %d" % ntyp, file=f)
+    print("     ecutwfc = %f" % ecutwfc, file=f)
+    print("     ecutrho = %f" % ecutrho, file=f)
+    print(" occupations = \'tetrahedra_opt\'", file=f)
+    print("/", file=f)
+    print("&ELECTRONS", file=f)
+    print(" mixing_beta = 0.3", file=f)
+    print("/", file=f)
+    print("&IONS", file=f)
+    print(" ion_dynamics = \"bfgs\"", file=f)
+    print("/", file=f)
+    print("&CELL", file=f)
+    print(" press = 0.0", file=f)
+    print(" cell_dynamics = \"bfgs\"", file=f)
+    print("/", file=f)
+    print("CELL_PARAMETERS angstrom", file=f)
+    for ii in range(3):
+        print(" %f %f %f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
+    print("ATOMIC_SPECIES", file=f)
+    for ityp in typ:
+        print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
+    print("ATOMIC_POSITIONS crystal", file=f)
+    for iat in range(nat):
+        print(" %s %f %f %f" % (
+            atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
+    print("K_POINTS automatic", file=f)
+    print(" %d %d %d 0 0 0" % (nq[0]*2, nq[1]*2, nq[2]*2), file=f)
+#
 # scf.in : Charge density
 #
 with open("scf.in", 'w') as f:
@@ -143,7 +182,6 @@ with open("nscf.in", 'w') as f:
     print("  pseudo_dir = \'%s\'" % pseudo_dir, file=f)
     print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
-    #
     print("&SYSTEM", file=f)
     print("       ibrav = 0", file=f)
     print("         nat = %d" % nat, file=f)
@@ -153,23 +191,18 @@ with open("nscf.in", 'w') as f:
     print(" occupations = \'tetrahedra_opt\'", file=f)
     print("        nbnd = %d" % int(nelec), file=f)
     print("/", file=f)
-    #
     print("&ELECTRONS", file=f)
     print("/", file=f)
-    #
     print("CELL_PARAMETERS angstrom", file=f)
     for ii in range(3):
         print(" %f %f %f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
-    #
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
         print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
-    #
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
         print(" %s %f %f %f" % (
             atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
-    #
     print("K_POINTS automatic", file=f)
     print(" %d %d %d 0 0 0" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
 #
@@ -181,7 +214,6 @@ with open("band.in", 'w') as f:
     print("  pseudo_dir = \'%s\'" % pseudo_dir, file=f)
     print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
-    #
     print("&SYSTEM", file=f)
     print("       ibrav = 0", file=f)
     print("         nat = %d" % nat, file=f)
@@ -190,18 +222,14 @@ with open("band.in", 'w') as f:
     print("     ecutrho = %f" % ecutrho, file=f)
     print("        nbnd = %d" % int(nelec), file=f)
     print("/", file=f)
-    #
     print("&ELECTRONS", file=f)
     print("/", file=f)
-    #
     print("CELL_PARAMETERS angstrom", file=f)
     for ii in range(3):
         print(" %f %f %f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
-    #
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
         print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
-    #
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
         print(" %s %f %f %f" % (
@@ -426,7 +454,6 @@ with open("nscf_w.in", 'w') as f:
     print("      prefix = \'%s\'" % prefix, file=f)
     print("  wf_collect = .true.", file=f)
     print("/", file=f)
-    #
     print("&SYSTEM", file=f)
     print("       ibrav = 0", file=f)
     print("         nat = %d" % nat, file=f)
@@ -435,18 +462,14 @@ with open("nscf_w.in", 'w') as f:
     print("     ecutrho = %f" % ecutrho, file=f)
     print("        nbnd = %d" % int(nelec), file=f)
     print("/", file=f)
-    #
     print("&ELECTRONS", file=f)
     print("/", file=f)
-    #
     print("CELL_PARAMETERS angstrom", file=f)
     for ii in range(3):
         print(" %f %f %f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
-    #
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
         print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
-    #
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
         print(" %s %f %f %f" % (
@@ -565,7 +588,6 @@ with open("nscf_r.in", 'w') as f:
     print("  wf_collect = .true.", file=f)
     print("      prefix = \'%s\'" % prefix, file=f)
     print("/", file=f)
-    #
     print("&SYSTEM", file=f)
     print("       ibrav = 0", file=f)
     print("         nat = %d" % nat, file=f)
@@ -575,23 +597,18 @@ with open("nscf_r.in", 'w') as f:
     print(" occupations = \'tetrahedra_opt\'", file=f)
     print("        nbnd = %d" % int(nelec), file=f)
     print("/", file=f)
-    #
     print("&ELECTRONS", file=f)
     print("/", file=f)
-    #
     print("CELL_PARAMETERS angstrom", file=f)
     for ii in range(3):
         print(" %f %f %f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
-    #
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
         print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
-    #
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
         print(" %s %f %f %f" % (
             atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
-    #
     print("K_POINTS automatic", file=f)
     print(" %d %d %d 0 0 0" % (nq[0], nq[1], nq[2]), file=f)
 #
@@ -712,9 +729,9 @@ with open("openmx.in", 'w') as f:
     print("#", file=f)
     print("System.CurrrentDirectory    ./", file=f)
     print("System.Name          %s" % prefix, file=f)
-    print("level.of.stdout      1", file=f)
-    print("level.of.fileout     1", file=f)
-    print("data.path            ", file=f)
+    print("level.of.stdout      1 #1-3", file=f)
+    print("level.of.fileout     0 #0-2", file=f)
+    print("data.path      /mnt/c/Users/kawamuura/program/openmx/DFT_DATA13/", file=f)
     print("HS.fileout     off   # on|off, default=off", file=f)
     #
     print("#", file=f)
@@ -726,16 +743,17 @@ with open("openmx.in", 'w') as f:
         print(" %s  %s%s-%s  %s  %f" % (
             ityp, ityp, omx_radius_dict[str(ityp)], omx_pao_dict[str(ityp)], omx_pot_dict[str(ityp)],
             pymatgen.Element(ityp).atomic_mass), file=f)
+    print("Definition.of.Atomic.Species>", file=f)
     for ityp in typ:
         print("# proj%s  %s%s-s1p1d1  %s" % (
             ityp, ityp, omx_radius_dict[str(ityp)], omx_pot_dict[str(ityp)]), file=f)
-    print("Definition.of.Atomic.Species>", file=f)
     print("Atoms.Number  %d" % nat, file=f)
-    print("Atoms.SpeciesAndCoordinates.Unit   FRAC", file=f)
+    print("Atoms.SpeciesAndCoordinates.Unit   Ang", file=f)
     print("<Atoms.SpeciesAndCoordinates", file=f)
     for iat in range(nat):
+        pos2 = numpy.dot(pos[iat, :], avec)
         print("%d %s %f %f %f %f %f" % (
-            iat+1, atom[iat], pos[iat][0], pos[iat][1], pos[iat][2],
+            iat+1, atom[iat], pos2[0], pos2[1], pos2[2],
             omx_valence_dict[atom[iat]]*0.5, omx_valence_dict[atom[iat]]*0.5), file=f)
     print("Atoms.SpeciesAndCoordinates>", file=f)
     print("Atoms.UnitVectors.Unit  Ang", file=f)
@@ -755,7 +773,7 @@ with open("openmx.in", 'w') as f:
         print(" %s  s 1.0 p 1.0 d 1.0 f 1.0" % ityp, file=f)
     print("scf.SO.factor>", file=f)
     print("scf.maxIter                  40", file=f)
-    print("scf.EigenvalueSolver       band        # DC|GDC|Cluster|Band", file=f)
+    print("scf.EigenvalueSolver       band        # DC|GDC|Cluster|Band|NEGF", file=f)
     print("scf.Kgrid              %d %d %d" % (nq[0]*2, nq[1]*2, nq[2]*2), file=f)
     print("scf.Mixing.Type           rmm-diisk    # Simple|Rmm-Diis|Gr-Pulay|Kerker|Rmm-Diisk", file=f)
     print("scf.Init.Mixing.Weight     0.30", file=f)
@@ -894,7 +912,7 @@ with open("openmx.in", 'w') as f:
     print("Wannier.Dis.Conv.Criterion        1e-8", file=f)
     print("Wannier.Dis.Mixing.Para           0.5", file=f)
     print("Wannier.MaxShells          12", file=f)
-    print("Wannier.Kgrid           8  8  8", file=f)
+    print("Wannier.Kgrid     %d %d %d" % (nq[0], nq[1], nq[2]), file=f)
     #
     print("#", file=f)
     print("# DOS", file=f)
@@ -982,8 +1000,9 @@ with open("openmx.in", 'w') as f:
     print("MD.NEB.Spring.Const      0.1", file=f)
     print("<NEB.Atoms.SpeciesAndCoordinates", file=f)
     for iat in range(nat):
+        pos2 = numpy.dot(pos[iat, :], avec)
         print("%d %s %f %f %f %f %f" % (
-            iat+1, atom[iat], pos[iat][0], pos[iat][1], pos[iat][2],
+            iat+1, atom[iat], pos2[0], pos2[1], pos2[2],
             omx_valence_dict[atom[iat]]*0.5, omx_valence_dict[atom[iat]]*0.5), file=f)
     print("NEB.Atoms.SpeciesAndCoordinates>", file=f)
     #
@@ -1021,3 +1040,62 @@ with open("openmx.in", 'w') as f:
     print("<MO.kpoint", file=f)
     print("0.0  0.0  0.0", file=f)
     print("MO.kpoint>", file=f)
+    #
+    print("#", file=f)
+    print("# NEGF", file=f)
+    print("#", file=f)
+    print("NEGF.output_hks    off", file=f)
+    print("NEGF.filename.hks  %s.hks" % prefix, file=f)
+    #
+    print("NEGF.filename.hks.l   %s.hks" % prefix, file=f)
+    print("NEGF.filename.hks.r   %s.hks" % prefix, file=f)
+    print("LeftLeadAtoms.Number  %d" % nat, file=f)
+    print("<LeftLeadAtoms.SpeciesAndCoordinates         ", file=f)
+    for iat in range(nat):
+        pos2 = numpy.dot(pos[iat, :], avec)
+        print("%d %s %f %f %f %f %f" % (
+            iat+1, atom[iat], pos2[0], pos2[1], pos2[2],
+            omx_valence_dict[atom[iat]]*0.5, omx_valence_dict[atom[iat]]*0.5), file=f)
+    print("LeftLeadAtoms.SpeciesAndCoordinates>", file=f)
+    print("RightLeadAtoms.Number  %d" % nat, file=f)
+    print("<RightLeadAtoms.SpeciesAndCoordinates", file=f)
+    for iat in range(nat):
+        pos2 = numpy.dot(pos[iat, :], avec)
+        print("%d %s %f %f %f %f %f" % (
+            iat+1, atom[iat], pos2[0], pos2[1], pos2[2],
+            omx_valence_dict[atom[iat]]*0.5, omx_valence_dict[atom[iat]]*0.5), file=f)
+    print("RightLeadAtoms.SpeciesAndCoordinates>", file=f)
+    #
+    print("NEGF.Num.Poles             150", file=f)
+    print("NEGF.scf.Kgrid             1 1", file=f)
+    print("NEGF.bias.voltage          0.0", file=f)
+    print("NEGF.bias.neq.im.energy    0.01", file=f)
+    print("NEGF.bias.neq.energy.step  0.02", file=f)
+    print("NEGF.scf.Iter.Band          6", file=f)
+    print("NEGF.Poisson.Solver       FD     # FD|FFT", file=f)
+    print("NEGF.gate.voltage   0.0", file=f)
+    #
+    print("NEGF.tran.SCF.skip  off", file=f)
+    print("NEGF.tran.Analysis         on", file=f)
+    print("NEGF.tran.CurrentDensity   on", file=f)
+    print("NEGF.tran.Channel          on", file=f)
+    print("NEGF.tran.energyrange -10 10 1.0e-3", file=f)
+    print('NEGF.tran.energydiv        200', file=f)
+    print("NEGF.tran.Kgrid            1 1", file=f)
+    print("NEGF.Channel.Nkpoint        1", file=f)
+    print("<NEGF.Channel.kpoint", file=f)
+    print("0.0  0.0", file=f)
+    print("NEGF.Channel.kpoint>", file=f)
+    print("NEGF.Channel.Nenergy        1", file=f)
+    print("<NEGF.Channel.energy", file=f)
+    print("0.0", file=f)
+    print("NEGF.Channel.energy>", file=f)
+    print("NEGF.Channel.Num    5", file=f)
+    print("NEGF.Dos.energyrange     -10.0 10.0 5.0e-3", file=f)
+    print("NEGF.Dos.energy.div        200", file=f)
+    print("NEGF.Dos.Kgrid             1 1", file=f)
+    #
+    print("NEGF.tran.interpolate         off    # on|off", file=f)
+    print("NEGF.tran.interpolate.file1  %s.tranb" % prefix, file=f)
+    print("NEGF.tran.interpolate.file2  %s.tranb" % prefix, file=f)
+    print("NEGF.tran.interpolate.coes   1.0 0.0", file=f)
