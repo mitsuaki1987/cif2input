@@ -1,4 +1,5 @@
 import os
+import math
 
 
 def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
@@ -23,9 +24,9 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
     elif 12 < ntg < 24:
         ntg = 12
     nproc = nk*ntg
-    node = int(nproc / 24)
+    node = math.ceil(nproc / 24)
     if node <= 4:
-        queue = "F4cpi"
+        queue = "F4cpu"
     elif node <= 36:
         queue = "F36cpu"
     else:
@@ -42,15 +43,13 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
                   % (nproc, pw, nk, ntg), file=f)
             print("sed -n -e '/occupations/c occupations=\"tetrahedra_opt\"' -e '1,/CELL_PARAMETERS/p' rx.in > rx_t.in",
                   file=f)
-            print("awk '/Begin final coordinates/,/End final coordinate/' rx_s.out | sed -n -e '6,8p' >> rx_t.in",
-                  file=f)
+            print("grep -A 3 CELL_PARAMETERS rx_s.out | tail -n 3 >> rx_t.in", file=f)
             print("awk '/ATOMIC_SPECIES/,/ATOMIC_POSITIONS/' rx.in >> rx_t.in", file=f)
-            print("awk '/Begin final coordinates/,/End final coordinate/' "
-                  "rx_s.out | sed -e '$d'| sed -n -e '11,$p' >> rx_t.in", file=f)
+            print("grep -A %d ATOMIC_POSITIONS rx_s.out |tail -n %d >> rx_t.in" % (len(atom), len(atom)), file=f)
             print("sed -n -e '/K_POINTS/,$p' rx.in >> rx_t.in", file=f)
             print("sed -i -e '/occupations/c occupations=\"tetrahedra_opt\"' rx_t.in", file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in rx_t.in > rx_t.out"
-                  % (nproc, pw, nks, ntg), file=f)
+                  % (nproc, pw, nk, ntg), file=f)
     #
     # Charge optimization
     #
@@ -63,7 +62,7 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
             print("source ~/.bashrc", file=f)
             print("cd $PBS_O_WORKDIR", file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in scf.in > scf.out"
-                  % (nproc, pw, nks, ntg), file=f)
+                  % (nproc, pw, nk, ntg), file=f)
     #
     # Projected DOS
     #
@@ -78,9 +77,9 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
     elif 12 < ntg < 24:
         ntg = 12
     nproc = nk * ntg
-    node = int(nproc / 24)
+    node = math.ceil(nproc / 24)
     if node <= 4:
-        queue = "F4cpi"
+        queue = "F4cpu"
     elif node <= 36:
         queue = "F36cpu"
     else:
@@ -88,11 +87,11 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
     #
     # Atomwfc dictionary for fermi_proj.x
     #
-    pfermi = {ityp: [[] for il in range(len(atomwfc_dict[ityp]))] for ityp in typ}
+    pfermi = {ityp: [[] for il in range(len(atomwfc_dict[ityp][0]))] for ityp in typ}
     ii = 0
     for iat in atom:
-        for il in range(len(atomwfc_dict[iat])):
-            for im in range(atomwfc_dict[iat][il]):
+        for il in range(len(atomwfc_dict[iat][0])):
+            for im in range(atomwfc_dict[iat][0][il]):
                 ii += 1
                 pfermi[iat][il].append(ii)
     #
@@ -115,20 +114,20 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
             # Sum PDOS at each Atom and L
             #
             for ityp in typ:
-                for il in range(len(atomwfc_dict[ityp])):
-                    print("%s %s.pdos_atm*\\(%s\\)_wfc#%d* > %s.pdos_%s%d"
-                          % (sumpdos, prefix, ityp, il+1, prefix, ityp, il+1), file=f)
+                for il in range(len(atomwfc_dict[ityp][1])):
+                    print("%s %s.pdos_atm*\\(%s\\)_wfc#%d* > %s.pdos_%s%s"
+                          % (sumpdos, prefix, ityp, il+1, prefix, ityp, atomwfc_dict[ityp][1][il]), file=f)
             #
             # Fermi surface with atomic projection
             #
             for ityp in typ:
-                for il in range(len(atomwfc_dict[ityp])):
+                for il in range(len(atomwfc_dict[ityp][1])):
                     print("sed -e '$a %d\\n" % len(pfermi[ityp][il]), end="", file=f)
                     for ii in pfermi[ityp][il]:
                         print(" %d" % ii, end="", file=f)
                     print("' proj.in > proj_f.in", file=f)
                     print("mpijob -n 1 %s -in proj_f.in" % fproj, file=f)
-                    print("mv proj.frmsf %s%d.frmsf" % (ityp, il+1), file=f)
+                    print("mv proj.frmsf %s%s.frmsf" % (ityp, atomwfc_dict[ityp][1][il]), file=f)
     #
     # Band
     #
@@ -143,9 +142,9 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
     elif 12 < ntg < 24:
         ntg = 12
     nproc = nk * ntg
-    node = int(nproc / 24)
+    node = math.ceil(nproc / 24)
     if node <= 4:
-        queue = "F4cpi"
+        queue = "F4cpu"
     elif node <= 36:
         queue = "F36cpu"
     else:

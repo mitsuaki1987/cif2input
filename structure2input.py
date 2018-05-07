@@ -26,9 +26,6 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     skp = seekpath.get_explicit_k_path((structure.lattice.matrix, structure.frac_coords,
                                         [pymatgen.Element(str(spc)).number for spc in structure.species]),
                                        reference_distance=dk_path)
-    print(skp["primitive_types"])
-    print([iat for iat in skp["primitive_types"]])
-    print([str(get_el_sp(iat)) for iat in skp["primitive_types"]])
     #
     # Lattice information
     #
