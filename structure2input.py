@@ -12,12 +12,18 @@ from write_sh import write_sh
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir):
+def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir, rel):
 
     if pseudo_kind == "sg15":
-        from sg15 import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+        if rel:
+            from sg15_rel import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+        else:
+            from sg15 import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
     elif pseudo_kind == "pslibrary":
-        from pslibrary import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+        if rel:
+            from pslibrary_rel import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+        else:
+            from pslibrary import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
     else:
         from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
     #
@@ -71,7 +77,7 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     #
     # Number of electrons
     #
-    nelec = 0.0
+    nelec = 0
     for iat in atom:
         nelec += valence_dict[iat]
     #
@@ -87,7 +93,7 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
-    write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nelec)
+    write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nelec, rel)
     #
     # ph.in, elph.in, epmat.in, phdos.in, rpa.in, scdft.in
     #
@@ -104,4 +110,4 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     # openmx.in : Input file for openmx
     #
     if not os.path.isfile("openmx.in"):
-        write_openmx(prefix, skp, nq)
+        write_openmx(prefix, skp, nq, rel)

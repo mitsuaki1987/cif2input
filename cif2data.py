@@ -57,7 +57,7 @@ if __name__ == '__main__':
         #
         if not known:
             #
-            xsf_file = structure2.formula+"_"+skp['spacegroup_international'].replace("/", "s")+'_' \
+            xsf_file = structure2.formula.replace(" ","")+"_"+skp['spacegroup_international'].replace("/", "s")+'_' \
                        + cif_file[0:len(cif_file) - 4].replace("MyBaseFileNameCollCode", "")+".xsf"
             print("Write to "+xsf_file)
             structure2.to(fmt="xsf", filename=xsf_file)

@@ -1,0 +1,9 @@
+   background  black
+       minmax  0.0 1.0
+#     interpol  4
+#    linewidth  3.0
+     position  0.0 0.0 0.0
+#        scale  1.0
+     rotation  120.0 40.0 0.0
+   stereogram  parallel
+#  tetrahedron  1

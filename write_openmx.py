@@ -4,7 +4,7 @@ import numpy
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def write_openmx(prefix, skp, nq):
+def write_openmx(prefix, skp, nq, rel):
     #
     # Lattice information
     #
@@ -58,14 +58,19 @@ def write_openmx(prefix, skp, nq):
         print("# SCF or Electronic System", file=f)
         print("#", file=f)
         print("scf.XcType               GGA-PBE", file=f)
-        print("scf.SpinPolarization        Off   # On|Off|NC", file=f)
-        print("scf.SpinOrbit.Coupling      off   # On|Off", file=f)
+        if rel:
+            print("scf.SpinPolarization        NC   # On|Off|NC", file=f)
+            print("scf.SpinOrbit.Coupling      On   # On|Off", file=f)
+        else:
+            print("scf.SpinPolarization        Off   # On|Off|NC", file=f)
+            print("scf.SpinOrbit.Coupling      off   # On|Off", file=f)
         print("<scf.SO.factor", file=f)
         for ityp in typ:
             print(" %s  s 1.0 p 1.0 d 1.0 f 1.0" % ityp, file=f)
         print("scf.SO.factor>", file=f)
-        print("scf.ElectronicTemperature   300", file=f)
+        print("scf.ElectronicTemperature   5000", file=f)
         print("scf.maxIter                  40", file=f)
+        print("scf.energycutoff           300", file=f)
         print("scf.EigenvalueSolver       band        # DC|GDC|Cluster|Band|NEGF", file=f)
         print("scf.Kgrid              %d %d %d" % (nq[0] * 2, nq[1] * 2, nq[2] * 2), file=f)
         print("scf.Mixing.Type           rmm-diisk   #Simple|Rmm-Diis|Gr-Pulay|Kerker|Rmm-Diisk", file=f)
@@ -131,7 +136,7 @@ def write_openmx(prefix, skp, nq):
         print("MD.Opt.DIIS.History     3", file=f)
         print("MD.Opt.StartDIIS      5", file=f)
         print("MD.Opt.EveryDIIS       200", file=f)
-        print("MD.maxIter             1", file=f)
+        print("MD.maxIter             100", file=f)
         print("MD.Opt.criterion      0.0003", file=f)
         print("MD.Opt.Init.Hessian        Schlegel  # Schlegel|iden", file=f)
         print("<MD.Fixed.XYZ", file=f)

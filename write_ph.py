@@ -9,18 +9,19 @@ def write_ph(prefix, nq, ecutwfc, nelec):
         with open("ph.in", 'w') as f:
             print("Phonon", file=f)
             print("&INPUTPH", file=f)
-            print("    prefix = \'%s\'" % prefix, file=f)
-            print("  lshift_q = .true.", file=f)
-            print("     ldisp = .true.", file=f)
-            print(" reduce_io = .true.", file=f)
-            print("    tr2_ph = 1.0d-15", file=f)
-            print(" alpha_mix = 0.3", file=f)
-            print("  fildvscf = \'dv\'", file=f)
-            print("       nq1 = %d" % nq[0], file=f)
-            print("       nq2 = %d" % nq[1], file=f)
-            print("       nq3 = %d" % nq[2], file=f)
-            print("!  start_q = ", file=f)
-            print("!   last_q = ", file=f)
+            print("     prefix = \'%s\'" % prefix, file=f)
+            print("   lshift_q = .true.", file=f)
+            print("      ldisp = .true.", file=f)
+            print(" search_sym = .false.", file=f)
+            print("! reduce_io = .true.", file=f)
+            print("     tr2_ph = 1.0d-15", file=f)
+            print("  alpha_mix = 0.3", file=f)
+            print("   fildvscf = \'dv\'", file=f)
+            print("        nq1 = %d" % nq[0], file=f)
+            print("        nq2 = %d" % nq[1], file=f)
+            print("        nq3 = %d" % nq[2], file=f)
+            print("!   start_q = ", file=f)
+            print("!    last_q = ", file=f)
             print("/", file=f)
     #
     # elph.in : Electron-phonon
@@ -32,7 +33,8 @@ def write_ph(prefix, nq, ecutwfc, nelec):
             print("          prefix = \'%s\'" % prefix, file=f)
             print("        lshift_q = .true.", file=f)
             print("           ldisp = .true.", file=f)
-            print("       reduce_io = .true.", file=f)
+            print("!       reduce_io = .true.", file=f)
+            print(" search_sym = .false.", file=f)
             print("             nq1 = %d" % nq[0], file=f)
             print("             nq2 = %d" % nq[1], file=f)
             print("             nq3 = %d" % nq[2], file=f)
@@ -57,7 +59,8 @@ def write_ph(prefix, nq, ecutwfc, nelec):
             print("          prefix = \'%s\'" % prefix, file=f)
             print("        lshift_q = .true.", file=f)
             print("           ldisp = .true.", file=f)
-            print("       reduce_io = .true.", file=f)
+            print("!       reduce_io = .true.", file=f)
+            print(" search_sym = .false.", file=f)
             print("             nq1 = %d" % nq[0], file=f)
             print("             nq2 = %d" % nq[1], file=f)
             print("             nq3 = %d" % nq[2], file=f)
@@ -88,35 +91,28 @@ def write_ph(prefix, nq, ecutwfc, nelec):
             print("   ndos = %d" % 100, file=f)
             print("/", file=f)
     #
-    # rpa.in : Input file for rpa_el.x
+    # scdft.in : Input file for scdft.x
     #
-    if not os.path.isfile("rpa.in"):
-        with open("rpa.in", 'w') as f:
+    if not os.path.isfile("sctk.in"):
+        with open("sctk.in", 'w') as f:
             print("&CONTROL", file=f)
             print("      prefix = \'%s\'" % prefix, file=f)
+            print(" calculation = kel", file=f)
             print("/", file=f)
-            print("&SYSTEM", file=f)
-            print(" start_q = 1", file=f)
-            print("  last_q = 1", file=f)
-            print("     nmf = 10", file=f)
-            print("  laddxc = .FALSE.", file=f)
+            print("&KEL", file=f)
+            print("! start_q = 1", file=f)
+            print("!  last_q = 1", file=f)
+            print("     nci = 10", file=f)
+            print("  laddxc = 0", file=f)
             print(" ecutwfc = %f" % ecutwfc, file=f)
             print("     nq1 = %d" % nq[0], file=f)
             print("     nq2 = %d" % nq[1], file=f)
             print("     nq3 = %d" % nq[2], file=f)
             print("/", file=f)
-    #
-    # scdft.in : Input file for scdft.x
-    #
-    if not os.path.isfile("scdft.in"):
-        with open("scdft.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print("      prefix = \'%s\'" % prefix, file=f)
-            print("/", file=f)
-            print("&SYSTEM", file=f)
+            print("&SCDFT", file=f)
             print("             temp = 0.1", file=f)
             print("             fbee = 1", file=f)
-            print("             lbee = %d" % int(nelec), file=f)
+            print("             lbee = %d" % nelec, file=f)
             print("              xic = -1.0", file=f)
             print("              nmf = 10", file=f)
             print("               nx = 100", file=f)
