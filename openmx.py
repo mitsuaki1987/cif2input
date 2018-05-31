@@ -232,7 +232,7 @@ omx_pot_dict = {
     "Zr": "Zr_PBE13"
 }
 
-omx_valence_dict ={
+omx_valence_dict = {
     "Ag": 17.0,
     "Al": 3.0,
     "Ar": 8.0,

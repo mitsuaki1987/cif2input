@@ -8,9 +8,9 @@ if __name__ == '__main__':
     args = sys.argv
     if len(args) < 2:
         print("Usage:")
-        print("$ cif2input.py cif-file [prefix] [dk_path] [dq_grid] [pseudo_kind] [pseudo_path] [rel]")
+        print("$ cif2input.py cif-file [prefix] [dk_path] [dq_grid] [pseudo_kind] [pseudo_path] [queue] [rel]")
         print("Default:")
-        print("$ cif2input.py cif-file cif-file 0.1 0.3359385398275 sssp /work/i0012/i001200/pseudo/")
+        print("$ cif2input.py cif-file cif-file 0.1 0.3359385398275 sssp /work/i0012/i001200/pseudo/ F4cpus")
         exit(0)
     #
     # CIF parser
@@ -24,6 +24,7 @@ if __name__ == '__main__':
     dq_grid = 0.3359385398275
     pseudo_kind = "sssp"
     pseudo_dir = "/work/i0012/i001200/pseudo/"
+    queue = "F4cpus"
     rel = False
     #
     if len(args) > 2:
@@ -37,7 +38,9 @@ if __name__ == '__main__':
                     if len(args) > 6:
                         pseudo_dir = args[6]
                         if len(args) > 7:
-                            rel = True
+                            queue = args[7]
+                            if len(args) > 8:
+                                rel = True
     #
     print("  prefix : {0}".format(prefix))
     print("  dk for band : {0}".format(dk_path))
@@ -47,4 +50,4 @@ if __name__ == '__main__':
 
     structure.remove_oxidation_states()
 
-    structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir, rel)
+    structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue, rel)

@@ -34,7 +34,7 @@ def write_middle(f, pseudo_dir, prefix, nat, ntyp, ecutwfc, ecutrho, rel):
         print("     lspinorb = .FALSE.", file=f)
 
 
-def write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nelec, rel):
+def write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     # Lattice information
     #
@@ -99,7 +99,7 @@ def write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nelec,
             print(" calculation = \'nscf\'", file=f)
             write_middle(f, pseudo_dir, prefix, nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
-            print("        nbnd = %d" % nelec, file=f)
+            print("        nbnd = %d" % nbnd, file=f)
             print("        la2f = .true.", file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
@@ -115,7 +115,7 @@ def write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nelec,
             print("&CONTROL", file=f)
             print(" calculation = \'bands\'", file=f)
             write_middle(f, pseudo_dir, prefix, nat, ntyp, ecutwfc, ecutrho, rel)
-            print("        nbnd = %d" % nelec, file=f)
+            print("        nbnd = %d" % nbnd, file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
             print("/", file=f)
@@ -138,7 +138,7 @@ def write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nelec,
             print(" calculation = \'bands\'", file=f)
             print("  wf_collect = .true.", file=f)
             write_middle(f, pseudo_dir, prefix, nat, ntyp, ecutwfc, ecutrho, rel)
-            print("        nbnd = %d" % nelec, file=f)
+            print("        nbnd = %d" % nbnd, file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
             print("/", file=f)
@@ -164,7 +164,7 @@ def write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nelec,
             print("  wf_collect = .true.", file=f)
             write_middle(f, pseudo_dir, prefix, nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
-            print("        nbnd = %d" % nelec, file=f)
+            print("        nbnd = %d" % nbnd, file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
             print("/", file=f)
@@ -180,7 +180,7 @@ def write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nelec,
             print(" calculation = \'bands\'", file=f)
             print("  wf_collect = .true.", file=f)
             write_middle(f, pseudo_dir, prefix, nat, ntyp, ecutwfc, ecutrho, rel)
-            print("        nbnd = %d" % nelec, file=f)
+            print("        nbnd = %d" % nbnd, file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
             print("/", file=f)

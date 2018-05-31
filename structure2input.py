@@ -12,7 +12,7 @@ from write_sh import write_sh
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir, rel):
+def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue, rel):
 
     if pseudo_kind == "sg15":
         if rel:
@@ -77,9 +77,11 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     #
     # Number of electrons
     #
-    nelec = 0
+    nbnd = 0
     for iat in atom:
-        nelec += valence_dict[iat]
+        nbnd += valence_dict[iat]
+    if rel:
+        nbnd *= 2
     #
     # Shell scripts
     #
@@ -89,15 +91,15 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     middle = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*2, nq[1]*2, nq[2]*2), is_shift=(0, 0, 0))
     dense = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*4, nq[1]*4, nq[2]*4), is_shift=(0, 0, 0))
     print("Number of irreducible k : ", len(middle), len(dense))
-    write_sh(len(middle), len(dense), len(skp["explicit_kpoints_rel"]), atom, prefix, atomwfc_dict)
+    write_sh(len(middle), len(dense), len(skp["explicit_kpoints_rel"]), atom, prefix, atomwfc_dict, queue)
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
-    write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nelec, rel)
+    write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel)
     #
     # ph.in, elph.in, epmat.in, phdos.in, rpa.in, scdft.in
     #
-    write_ph(prefix, nq, ecutwfc, nelec)
+    write_ph(prefix, nq, ecutwfc, nbnd)
     #
     # bands.in, pp.in, proj.in, pw2wan.in, q2r.in
     #
@@ -105,7 +107,7 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     #
     # band.gp, {prefix}.win, respack.in, disp.in
     #
-    write_wannier(prefix, skp, nelec, nq)
+    write_wannier(prefix, skp, nbnd, nq)
     #
     # openmx.in : Input file for openmx
     #

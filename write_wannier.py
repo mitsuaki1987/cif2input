@@ -3,7 +3,7 @@ import numpy
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def write_wannier(prefix, skp, nelec, nq):
+def write_wannier(prefix, skp, nbnd, nq):
     #
     # Lattice information
     #
@@ -101,7 +101,7 @@ def write_wannier(prefix, skp, nelec, nq):
     #
     if not os.path.isfile(prefix + ".win"):
         with open(prefix + ".win", 'w') as f:
-            print("num_bands = %d" % nelec, file=f)
+            print("num_bands = %d" % nbnd, file=f)
             print(" num_wann = ", file=f)
             print("", file=f)
             print(" dis_win_min = ", file=f)

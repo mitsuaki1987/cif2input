@@ -2,7 +2,32 @@ import os
 import math
 
 
-def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
+def good_proc(nproc, ncore):
+    if ncore == 24:
+        if nproc == 5:
+            nproc = 4
+        elif nproc == 7:
+            nproc = 6
+        elif 8 < nproc < 12:
+            nproc = 8
+        elif 12 < nproc < 24:
+            nproc = 12
+    else:  # ncore == 40
+        if nproc == 3:
+            nproc = 2
+        elif 5 < nproc < 8:
+            nproc = 5
+        elif nproc == 9:
+            nproc = 8
+        elif 10 < nproc < 20:
+            nproc = 10
+        elif 20 < nproc < 40:
+            nproc = 20
+
+    return nproc
+
+
+def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict, queue):
     pw = "~/program/QE/qe-6.2.1/bin/pw.x"
     proj = "~/program/QE/qe-6.2.1/bin/projwfc.x"
     vf = "~/program/QE/qe-6.2.1/bin/fermi_velocity.x"
@@ -11,30 +36,35 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
     fproj = "~/program/QE/qe-6.2.1/bin/fermi_proj.x"
     typ = set(atom)
     #
+    if queue == "F4cpus":
+        maxnode = 4
+        ncore = 24
+    elif queue == "F4cpue":
+        maxnode = 4
+        ncore = 40
+    elif queue == "F36cpus":
+        maxnode = 36
+        ncore = 24
+    elif queue == "F9cpue":
+        maxnode = 9
+        ncore = 40
+    elif queue == "F36cpue":
+        maxnode = 36
+        ncore = 40
+    else:  # queue == "F144cpus":
+        maxnode = 144
+        ncore = 24
+    #
     # Structure optimization
     #
-    nk = min(24*4, nks)
-    ntg = int(24*4 / nk)  # 2, 3, 4, 6, 8, 12, 24
-    if ntg == 5:
-        ntg = 4
-    elif ntg == 7:
-        ntg = 6
-    elif 8 < ntg < 12:
-        ntg = 8
-    elif 12 < ntg < 24:
-        ntg = 12
+    nk = min(ncore*maxnode, nks)
+    ntg = good_proc(int(ncore*maxnode / nk), ncore)
     nproc = nk*ntg
-    node = math.ceil(nproc / 24)
-    if node <= 4:
-        queue = "F4cpu"
-    elif node <= 36:
-        queue = "F36cpu"
-    else:
-        queue = "F144cpu"
+    node = math.ceil(nproc / ncore)
     if not os.path.isfile("rx.sh"):
         with open("rx.sh", 'w') as f:
             print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue, file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
             print("#QSUB -node", node, file=f)
             print("#PBS -l walltime=8:00:00", file=f)
             print("source ~/.bashrc", file=f)
@@ -56,7 +86,7 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
     if not os.path.isfile("scf.sh"):
         with open("scf.sh", 'w') as f:
             print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue, file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
             print("#QSUB -node", node, file=f)
             print("#PBS -l walltime=8:00:00", file=f)
             print("source ~/.bashrc", file=f)
@@ -66,24 +96,10 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
     #
     # Projected DOS
     #
-    nk = min(24*4, nkd)
-    ntg = int(24*4 / nk)
-    if ntg == 5:
-        ntg = 4
-    elif ntg == 7:
-        ntg = 6
-    elif 8 < ntg < 12:
-        ntg = 8
-    elif 12 < ntg < 24:
-        ntg = 12
+    nk = min(ncore*maxnode, nkd)
+    ntg = good_proc(int(ncore*maxnode / nk), ncore)
     nproc = nk * ntg
-    node = math.ceil(nproc / 24)
-    if node <= 4:
-        queue = "F4cpu"
-    elif node <= 36:
-        queue = "F36cpu"
-    else:
-        queue = "F144cpu"
+    node = math.ceil(nproc / ncore)
     #
     # Atomwfc dictionary for fermi_proj.x
     #
@@ -98,7 +114,7 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
     if not os.path.isfile("proj.sh"):
         with open("proj.sh", 'w') as f:
             print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue, file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
             print("#QSUB -node", node, file=f)
             print("#PBS -l walltime=8:00:00", file=f)
             print("source ~/.bashrc", file=f)
@@ -131,28 +147,14 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict):
     #
     # Band
     #
-    nk = min(24*4, nk_path)
-    ntg = int(24*4 / nk)
-    if ntg == 5:
-        ntg = 4
-    elif ntg == 7:
-        ntg = 6
-    elif 8 < ntg < 12:
-        ntg = 8
-    elif 12 < ntg < 24:
-        ntg = 12
+    nk = min(ncore*maxnode, nk_path)
+    ntg = good_proc(int(ncore*maxnode / nk), ncore)
     nproc = nk * ntg
-    node = math.ceil(nproc / 24)
-    if node <= 4:
-        queue = "F4cpu"
-    elif node <= 36:
-        queue = "F36cpu"
-    else:
-        queue = "F144cpu"
+    node = math.ceil(nproc / ncore)
     if not os.path.isfile("band.sh"):
         with open("band.sh", 'w') as f:
             print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue, file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
             print("#QSUB -node", node, file=f)
             print("#PBS -l walltime=8:00:00", file=f)
             print("source ~/.bashrc", file=f)

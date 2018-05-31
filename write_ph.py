@@ -1,7 +1,7 @@
 import os
 
 
-def write_ph(prefix, nq, ecutwfc, nelec):
+def write_ph(prefix, nq, ecutwfc, nbnd):
     #
     # ph.in : Phonon
     #
@@ -112,7 +112,7 @@ def write_ph(prefix, nq, ecutwfc, nelec):
             print("&SCDFT", file=f)
             print("             temp = 0.1", file=f)
             print("             fbee = 1", file=f)
-            print("             lbee = %d" % nelec, file=f)
+            print("             lbee = %d" % nbnd, file=f)
             print("              xic = -1.0", file=f)
             print("              nmf = 10", file=f)
             print("               nx = 100", file=f)
