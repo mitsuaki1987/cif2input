@@ -25,20 +25,20 @@ def write_openmx(prefix, skp, nq, rel):
         print("level.of.fileout     0 #0-2", file=f)
         print("data.path     /work/i0012/i001200/DFT_DATA13/", file=f)
         print("HS.fileout     off   # on|off", file=f)
+        print("scf.restart     off", file=f)
         #
         print("#", file=f)
         print("# Atomic Structure", file=f)
         print("#", file=f)
-        print("Species.Number  %d" % ntyp, file=f)
+        print("Species.Number  %d" % (ntyp*2), file=f)
         print("<Definition.of.Atomic.Species", file=f)
         for ityp in typ:
             print(" %s  %s%s-%s  %s  %f" % (
                 ityp, ityp, omx_radius_dict[str(ityp)], omx_pao_dict[str(ityp)], omx_pot_dict[str(ityp)],
                 pymatgen.Element(ityp).atomic_mass), file=f)
-        print("Definition.of.Atomic.Species>", file=f)
-        for ityp in typ:
-            print("# proj%s  %s%s-s1p1d1  %s" % (
+            print("proj%s  %s%s-s1p1d1  %s" % (
                 ityp, ityp, omx_radius_dict[str(ityp)], omx_pot_dict[str(ityp)]), file=f)
+        print("Definition.of.Atomic.Species>", file=f)
         print("Atoms.Number  %d" % nat, file=f)
         print("Atoms.SpeciesAndCoordinates.Unit   Ang", file=f)
         print("<Atoms.SpeciesAndCoordinates", file=f)
@@ -186,16 +186,20 @@ def write_openmx(prefix, skp, nq, rel):
         print("# Wannier", file=f)
         print("#", file=f)
         print("Wannier.Func.Calc off", file=f)
-        print("Wannier.Func.Num 3", file=f)
+        print("Wannier.Func.Num %d" % (nat*9), file=f)
         print("Wannier.Outer.Window.Bottom  -1.5", file=f)
         print("Wannier.Outer.Window.Top      7.0", file=f)
         print("Wannier.Inner.Window.Bottom  -1.5", file=f)
         print("Wannier.Inner.Window.Top      1.2", file=f)
-        print("Wannier.Initial.Projectors.Unit FRAC", file=f)
+        print("Wannier.Initial.Projectors.Unit ANG", file=f)
         print("<Wannier.Initial.Projectors", file=f)
-        print("proj-dxy 0.5 0.5 0.5  0.0 0.0 1.0  1.0 0.0 0.0", file=f)
-        print("proj-dxz 0.5 0.5 0.5  0.0 0.0 1.0  1.0 0.0 0.0", file=f)
-        print("proj-dyz 0.5 0.5 0.5  0.0 0.0 1.0  1.0 0.0 0.0", file=f)
+        for iat in range(nat):
+            pos2 = numpy.dot(pos[iat, :], avec)
+            for prj in "s", "px", "py", "pz", "dxy", "dyz", "dxz", \
+                       "dx2-y2", "dz2":
+                 print("proj%s-%s %f %f %f  0.0 0.0 1.0  1.0 0.0 0.0" % (
+                       atom[iat], prj,
+                       pos2[0], pos2[1], pos2[2]), file=f)
         print("Wannier.Initial.Projectors>", file=f)
         print("Wannier.Interpolated.Bands             off", file=f)
         print("Wannier.Function.Plot                  off", file=f)

@@ -8,6 +8,7 @@ def write_wannier(prefix, skp, nbnd, nq):
     # Lattice information
     #
     avec = skp["primitive_lattice"]
+    bvec = skp["reciprocal_primitive_lattice"]
     pos = skp["primitive_positions"]
     nat = len(skp["primitive_types"])
     atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
@@ -167,22 +168,27 @@ def write_wannier(prefix, skp, nbnd, nq):
             print("          Num_freq_grid = 1", file=f)
             print("!          Ecut_for_eps = ", file=f)
             print("               flg_cRPA = 1", file=f)
-            print(" MPI_num_proc_per_qcomm = 1", file=f)
-            print("          MPI_num_qcomm = 1", file=f)
-            print("          flg_calc_type = 2", file=f)
-            print("               n_calc_q = 1", file=f)
+            print("! MPI_num_proc_per_qcomm = 1", file=f)
+            print("!          MPI_num_qcomm = 1", file=f)
+            print("!          flg_calc_type = 2", file=f)
+            print("!               n_calc_q = 1", file=f)
             print("/", file=f)
-            print("1", file=f)
             print("&PARAM_WANNIER", file=f)
             print("           N_wannier = ", file=f)
             print("     N_initial_guess = ", file=f)
             print(" Lower_energy_window = ", file=f)
             print(" Upper_energy_window = ", file=f)
+            print("!flg_initial_guess_direc = 1", file=f)
             print("!   set_inner_window =.true.", file=f)
             print("! Lower_inner_window = ", file=f)
             print("! Upper_inner_window = ", file=f)
             print("/", file=f)
-            print("", file=f)
+            for iat in range(nat):
+                for prj in "s", "px", "py", "pz", "dxy", "dyz", "dzx", "dx2", "dz2":
+                    print("%s 0.2 %f %f %f !%s%d" %
+                          (prj, pos[iat][0], pos[iat][1], pos[iat][2],
+                           atom[iat], iat+1), file=f)
+            print("&PARAM_INTERPOLATION", file=f)
             n_sym_points = 1
             final = 0
             for ipath in range(len(skp["path"])):
@@ -192,7 +198,6 @@ def write_wannier(prefix, skp, nbnd, nq):
                     final = skp["explicit_segments"][ipath][1] - 1
                 else:
                     break
-            print("&PARAM_INTERPOLATION", file=f)
             print(" N_sym_points = %d" % n_sym_points, file=f)
             print("!       dense = %d, %d, %d" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
             print("/", file=f)
@@ -250,3 +255,91 @@ def write_wannier(prefix, skp, nbnd, nq):
                     skp["explicit_kpoints_rel"][ik][1],
                     skp["explicit_kpoints_rel"][ik][2]),
                       file=f)
+    #
+    # respack.in : Input file for RESPACK
+    #
+    if not os.path.isfile("dcore.ini"):
+        with open("dcore.ini", 'w') as f:
+            print("[model]", file=f)
+            print("lattice = wannier90", file=f)
+            print("ncor = ", file=f)
+            print("nelec = ", file=f)
+            print("norb = ", file=f)
+            print("seedname = %s" % prefix, file=f)
+            print("equiv = None", file=f)
+            print("bvec = [(%f, %f, %f)," % (bvec[0][0], bvec[0][1], bvec[0][2]), file=f)
+            print("        (%f, %f, %f)," % (bvec[1][0], bvec[1][1], bvec[1][2]), file=f)
+            print("        (%f, %f, %f)]" % (bvec[2][0], bvec[2][1], bvec[2][2]), file=f)
+            print("spin_orbit = False", file=f)
+            print("interaction = respack", file=f)
+            print("density_density = False", file=f)
+            print("kanamori = None", file=f)
+            print("slater_f = None", file=f)
+            print("slater_uj = None", file=f)
+            print("non_colinear = False", file=f)
+            print("", file=f)
+            print("[system]", file=f)
+            print("beta = 40.0", file=f)
+            print("n_iw = 2048", file=f)
+            print("n_tau = 10000", file=f)
+            print("fix_mu = False", file=f)
+            print("mu = 0.0", file=f)
+            print("nk0 = %d" % (nq[0]*4), file=f)
+            print("nk1 = %d" % (nq[1]*4), file=f)
+            print("nk2 = %d" % (nq[2]*4), file=f)
+            print("prec_mu = 0.0001", file=f)
+            print("with_dc = True", file=f)
+            print("perform_tail_fit = False", file=f)
+            print("fit_max_moment = 2", file=f)
+            print("fit_min_w = 5.0", file=f)
+            print("fit_max_w = 10.0", file=f)
+            print("n_l = 0", file=f)
+            print("", file=f)
+            print("[impurity_solver]", file=f)
+            print("verbosity{int} = 10", file=f)
+            print("#name = TRIQS/hubbard-I", file=f)
+            print("#name = TRIQS/cthyb", file=f)
+            print("#n_cycles{int} = 5000", file=f)
+            print("#n_warmup_cycles{int} = 5000", file=f)
+            print("#length_cycle{int} = 50", file=f)
+            print("name = ALPS/cthyb", file=f)
+            print("thermalization_time{int} = 60", file=f)
+            print("max_time{int} = 120", file=f)
+            print("", file=f)
+            print("[control]", file=f)
+            print("max_step = 100", file=f)
+            print("sigma_mix = 0.5", file=f)
+            print("restart = False", file=f)
+            print("", file=f)
+            print("[tool]", file=f)
+            print("nk_line = 20", file=f)
+            final = 0
+            n_sym_points = 1
+            print("knode = [(%s, %f, %f, %f)" % (
+                skp["explicit_kpoints_labels"][final],
+                skp["explicit_kpoints_rel"][final][0],
+                skp["explicit_kpoints_rel"][final][1],
+                skp["explicit_kpoints_rel"][final][2]),
+                  file=f, end="")
+            for ipath in range(len(skp["path"])):
+                start = skp["explicit_segments"][ipath][0]
+                if start == final:
+                    n_sym_points += 1
+                    final = skp["explicit_segments"][ipath][1] - 1
+                    print(",\n         (%s, %f, %f, %f)" % (
+                        skp["explicit_kpoints_labels"][final],
+                        skp["explicit_kpoints_rel"][final][0],
+                        skp["explicit_kpoints_rel"][final][1],
+                        skp["explicit_kpoints_rel"][final][2]),
+                        file=f, end="")
+                else:
+                    break
+            print("]", file=f)
+            print("nnode = %d" % n_sym_points, file=f)
+            print("omega_min = -1", file=f)
+            print("omega_max = 1", file=f)
+            print("Nomega = 100", file=f)
+            print("broadening = 0.1", file=f)
+            print("eta = 0.0", file=f)
+            print("omega_pade = 5.0", file=f)
+            print("omega_check = 5.0", file=f)
