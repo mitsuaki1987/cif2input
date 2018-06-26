@@ -29,7 +29,14 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     #
     # Band path and primitive lattice
     #
-    skp = seekpath.get_explicit_k_path((structure.lattice.matrix, structure.frac_coords,
+    frac_coord2 = numpy.array(structure.frac_coords)
+    for ipos in range(len(frac_coord2)):
+        for iaxis in range(3):
+            coord3 = frac_coord2[ipos, iaxis] * 6.0
+            if abs(round(coord3) - coord3) < 0.001:
+                frac_coord2[ipos, iaxis] = float(round(coord3)) / 6.0
+    #
+    skp = seekpath.get_explicit_k_path((structure.lattice.matrix, frac_coord2,
                                         [pymatgen.Element(str(spc)).number for spc in structure.species]),
                                        reference_distance=dk_path)
     #
