@@ -41,4 +41,4 @@ if __name__ == '__main__':
             print("Fractional occupancy, may be disordered.")
             continue
         #
-        print(cif_file[0:len(cif_file) - 4], structure2.volume)
+        print(cif_file[0:len(cif_file) - 4], structure2.volume, structure2.lattice.abc, structure2.lattice.angles)
