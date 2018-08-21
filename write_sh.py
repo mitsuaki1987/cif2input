@@ -27,7 +27,7 @@ def good_proc(nproc, ncore):
     return nproc
 
 
-def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict, queue):
+def write_sh(nks, nkd, nk_path, atom, atomwfc_dict, queue):
     pw = "~/program/QE/qe-6.2.1/bin/pw.x"
     proj = "~/program/QE/qe-6.2.1/bin/projwfc.x"
     vf = "~/program/QE/qe-6.2.1/bin/fermi_velocity.x"
@@ -131,8 +131,8 @@ def write_sh(nks, nkd, nk_path, atom, prefix, atomwfc_dict, queue):
             #
             for ityp in typ:
                 for il in range(len(atomwfc_dict[ityp][1])):
-                    print("%s %s.pdos_atm*\\(%s\\)_wfc#%d* > %s.pdos_%s%s"
-                          % (sumpdos, prefix, ityp, il+1, prefix, ityp, atomwfc_dict[ityp][1][il]), file=f)
+                    print("sumpdos pwscf.pdos_atm*\\(%s\\)_wfc#%d* > pdos_%s%s"
+                          % (ityp, il+1, ityp, atomwfc_dict[ityp][1][il]), file=f)
             #
             # Fermi surface with atomic projection
             #

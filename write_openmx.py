@@ -4,7 +4,7 @@ import numpy
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def write_openmx(prefix, skp, nq, rel):
+def write_openmx(skp, nq, rel):
     #
     # Lattice information
     #
@@ -15,12 +15,12 @@ def write_openmx(prefix, skp, nq, rel):
     typ = set(atom)
     ntyp = len(typ)
     #
-    with open("openmx.in", 'w') as f:
+    with open("openmx.dat", 'w') as f:
         print("#", file=f)
         print("# File Name", file=f)
         print("#", file=f)
         print("System.CurrrentDirectory    ./", file=f)
-        print("System.Name          %s" % prefix, file=f)
+        print("System.Name          openmx", file=f)
         print("level.of.stdout      1 #1-3", file=f)
         print("level.of.fileout     0 #0-2", file=f)
         print("data.path     /work/i0012/i001200/DFT_DATA13/", file=f)
@@ -197,9 +197,9 @@ def write_openmx(prefix, skp, nq, rel):
             pos2 = numpy.dot(pos[iat, :], avec)
             for prj in "s", "px", "py", "pz", "dxy", "dyz", "dxz", \
                        "dx2-y2", "dz2":
-                 print("proj%s-%s %f %f %f  0.0 0.0 1.0  1.0 0.0 0.0" % (
-                       atom[iat], prj,
-                       pos2[0], pos2[1], pos2[2]), file=f)
+                print("proj%s-%s %f %f %f  0.0 0.0 1.0  1.0 0.0 0.0" % (
+                      atom[iat], prj,
+                      pos2[0], pos2[1], pos2[2]), file=f)
         print("Wannier.Initial.Projectors>", file=f)
         print("Wannier.Interpolated.Bands             off", file=f)
         print("Wannier.Function.Plot                  off", file=f)
@@ -348,10 +348,10 @@ def write_openmx(prefix, skp, nq, rel):
         print("# NEGF", file=f)
         print("#", file=f)
         print("NEGF.output_hks    off", file=f)
-        print("NEGF.filename.hks  %s.hks" % prefix, file=f)
+        print("NEGF.filename.hks  left.hks", file=f)
         #
-        print("NEGF.filename.hks.l   %s.hks" % prefix, file=f)
-        print("NEGF.filename.hks.r   %s.hks" % prefix, file=f)
+        print("NEGF.filename.hks.l   left.hks", file=f)
+        print("NEGF.filename.hks.r   right.hks", file=f)
         print("LeftLeadAtoms.Number  %d" % nat, file=f)
         print("<LeftLeadAtoms.SpeciesAndCoordinates         ", file=f)
         for iat in range(nat):
@@ -399,6 +399,6 @@ def write_openmx(prefix, skp, nq, rel):
         print("NEGF.Dos.Kgrid             1 1", file=f)
         #
         print("NEGF.tran.interpolate         off    # on|off", file=f)
-        print("NEGF.tran.interpolate.file1  %s.tranb" % prefix, file=f)
-        print("NEGF.tran.interpolate.file2  %s.tranb" % prefix, file=f)
+        print("NEGF.tran.interpolate.file1  start.tranb", file=f)
+        print("NEGF.tran.interpolate.file2  end.tranb", file=f)
         print("NEGF.tran.interpolate.coes   1.0 0.0", file=f)

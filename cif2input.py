@@ -8,9 +8,9 @@ if __name__ == '__main__':
     args = sys.argv
     if len(args) < 2:
         print("Usage:")
-        print("$ cif2input.py cif-file [prefix] [dk_path] [dq_grid] [pseudo_kind] [pseudo_path] [queue] [rel]")
+        print("$ cif2input.py cif-file [dk_path] [dq_grid] [pseudo_kind] [pseudo_path] [queue] [rel]")
         print("Default:")
-        print("$ cif2input.py cif-file cif-file 0.1 0.3359385398275 sssp /work/i0012/i001200/pseudo/ F4cpus")
+        print("$ cif2input.py cif-file 0.1 0.3359385398275 sssp /work/i0012/i001200/pseudo/ F4cpus")
         exit(0)
     #
     # CIF parser
@@ -19,7 +19,6 @@ if __name__ == '__main__':
     #
     # Default value
     #
-    prefix = args[1][0:len(args[1]) - 4]
     dk_path = 0.1
     dq_grid = 0.3359385398275
     pseudo_kind = "sssp"
@@ -28,21 +27,18 @@ if __name__ == '__main__':
     rel = False
     #
     if len(args) > 2:
-        prefix = args[2]
+        dk_path = float(args[2])
         if len(args) > 3:
-            dk_path = float(args[3])
+            dq_grid = float(args[3])
             if len(args) > 4:
-                dq_grid = float(args[4])
+                pseudo_kind = args[4]
                 if len(args) > 5:
-                    pseudo_kind = args[5]
+                    pseudo_dir = args[5]
                     if len(args) > 6:
-                        pseudo_dir = args[6]
+                        queue = args[6]
                         if len(args) > 7:
-                            queue = args[7]
-                            if len(args) > 8:
-                                rel = True
+                            rel = True
     #
-    print("  prefix : {0}".format(prefix))
     print("  dk for band : {0}".format(dk_path))
     print("  dq for grid : {0}".format(dq_grid))
     print("  Pseudo kind is ", pseudo_kind)
@@ -50,4 +46,4 @@ if __name__ == '__main__':
 
     structure.remove_oxidation_states()
 
-    structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue, rel)
+    structure2input(structure, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue, rel)

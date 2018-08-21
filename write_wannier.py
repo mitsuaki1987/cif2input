@@ -3,7 +3,7 @@ import numpy
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def write_wannier(prefix, skp, nbnd, nq):
+def write_wannier(skp, nbnd, nq):
     #
     # Lattice information
     #
@@ -94,14 +94,14 @@ def write_wannier(prefix, skp, nbnd, nq):
                     break
             print("plot[:][Emin:Emax] \\", file=f)
             print("        \"bands.out.gnu\" u 1:($2-EF) w p ls 3, \\", file=f)
-            print("        \"%s_band.dat\" u ($1/%f):($2-EF) w p ls 3, \\" % (prefix, x0), file=f)
+            print("        \"wannier_band.dat\" u ($1/%f):($2-EF) w p ls 3, \\" % x0, file=f)
             print("        \"dir-wan/dat.iband\" u ($1*x%d):($2-EF) w l ls 4" % n_sym_points, file=f)
             print("pause -1", file=f)
     #
-    # {prefix}.win : wannier90 input
+    # wannier.win : wannier90 input
     #
-    if not os.path.isfile(prefix + ".win"):
-        with open(prefix + ".win", 'w') as f:
+    if not os.path.isfile("wannier.win"):
+        with open("wannier.win", 'w') as f:
             print("num_bands = %d" % nbnd, file=f)
             print(" num_wann = ", file=f)
             print("", file=f)
@@ -242,11 +242,16 @@ def write_wannier(prefix, skp, nbnd, nq):
     if not os.path.isfile("disp.in"):
         with open("disp.in", 'w') as f:
             print("&INPUT", file=f)
-            print(" fildyn = \'matdyn\'", file=f)
+            print(" flfrc = \'ifc.dat\'", file=f)
+            print(" fldos = \' \'", file=f)
+            print(" flfrq = \'matdyn.freq\'", file=f)
+            print(" flvec = \' \'", file=f)
+            print(" fleig = \' \'", file=f)
+            print(" fldyn = \' \'", file=f)
+            print(" fltau = \' \'", file=f)
             print("   la2f = .true.", file=f)
             print("   q_in_cryst_coord = .true.", file=f)
             print("   asr = \'crystal\'", file=f)
-            print("  flfrc = \'ifc.dat\'", file=f)
             print("/", file=f)
             print(len(skp["explicit_kpoints_rel"]), file=f)
             for ik in range(len(skp["explicit_kpoints_rel"])):
@@ -265,7 +270,7 @@ def write_wannier(prefix, skp, nbnd, nq):
             print("ncor = ", file=f)
             print("nelec = ", file=f)
             print("norb = ", file=f)
-            print("seedname = %s" % prefix, file=f)
+            print("seedname = wannier", file=f)
             print("equiv = None", file=f)
             print("bvec = [(%f, %f, %f)," % (bvec[0][0], bvec[0][1], bvec[0][2]), file=f)
             print("        (%f, %f, %f)," % (bvec[1][0], bvec[1][1], bvec[1][2]), file=f)

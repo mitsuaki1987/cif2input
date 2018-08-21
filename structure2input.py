@@ -12,7 +12,7 @@ from write_sh import write_sh
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue, rel):
+def structure2input(structure, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue, rel):
 
     if pseudo_kind == "sg15":
         if rel:
@@ -87,6 +87,7 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     nbnd = 0
     for iat in atom:
         nbnd += valence_dict[iat]
+    nbnd = nbnd / 2 + len(atom)*20
     if rel:
         nbnd *= 2
     #
@@ -98,25 +99,25 @@ def structure2input(structure, prefix, dk_path, dq_grid, pseudo_kind, pseudo_dir
     middle = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*2, nq[1]*2, nq[2]*2), is_shift=(0, 0, 0))
     dense = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*4, nq[1]*4, nq[2]*4), is_shift=(0, 0, 0))
     print("Number of irreducible k : ", len(middle), len(dense))
-    write_sh(len(middle), len(dense), len(skp["explicit_kpoints_rel"]), atom, prefix, atomwfc_dict, queue)
+    write_sh(len(middle), len(dense), len(skp["explicit_kpoints_rel"]), atom, atomwfc_dict, queue)
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
-    write_pwx(prefix, skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel)
+    write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel)
     #
     # ph.in, elph.in, epmat.in, phdos.in, rpa.in, scdft.in
     #
-    write_ph(prefix, nq, ecutwfc, nbnd)
+    write_ph(nq, ecutwfc, nbnd)
     #
     # bands.in, pp.in, proj.in, pw2wan.in, q2r.in
     #
-    write_pp(prefix)
+    write_pp()
     #
-    # band.gp, {prefix}.win, respack.in, disp.in
+    # band.gp, pwscf.win, respack.in, disp.in
     #
-    write_wannier(prefix, skp, nbnd, nq)
+    write_wannier(skp, nbnd, nq)
     #
     # openmx.in : Input file for openmx
     #
-    if not os.path.isfile("openmx.in"):
-        write_openmx(prefix, skp, nq, rel)
+    if not os.path.isfile("openmx.dat"):
+        write_openmx(skp, nq, rel)

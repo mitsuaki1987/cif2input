@@ -11,7 +11,6 @@ for lib in pslibrary, sg15, sssp:
             print("&CONTROL", file=f)
             print(" calculation = \'scf\'", file=f)
             print("  pseudo_dir = \'/work/i0012/i001200/pseudo/\'", file=f)
-            print("      prefix = \'%s\'" % atom, file=f)
             print("/", file=f)
             print("&SYSTEM", file=f)
             print("       ibrav = 1", file=f)

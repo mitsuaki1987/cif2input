@@ -1,7 +1,7 @@
 import os
 
 
-def write_ph(prefix, nq, ecutwfc, nbnd):
+def write_ph(nq, ecutwfc, nbnd):
     #
     # ph.in : Phonon
     #
@@ -9,7 +9,6 @@ def write_ph(prefix, nq, ecutwfc, nbnd):
         with open("ph.in", 'w') as f:
             print("Phonon", file=f)
             print("&INPUTPH", file=f)
-            print("     prefix = \'%s\'" % prefix, file=f)
             print("   lshift_q = .true.", file=f)
             print("      ldisp = .true.", file=f)
             print(" search_sym = .false.", file=f)
@@ -30,7 +29,6 @@ def write_ph(prefix, nq, ecutwfc, nbnd):
         with open("elph.in", 'w') as f:
             print("Electron-phonon", file=f)
             print("&INPUTPH", file=f)
-            print("          prefix = \'%s\'" % prefix, file=f)
             print("        lshift_q = .true.", file=f)
             print("           ldisp = .true.", file=f)
             print("!       reduce_io = .true.", file=f)
@@ -56,7 +54,6 @@ def write_ph(prefix, nq, ecutwfc, nbnd):
         with open("epmat.in", 'w') as f:
             print("Electron-phonon matrix", file=f)
             print("&INPUTPH", file=f)
-            print("          prefix = \'%s\'" % prefix, file=f)
             print("        lshift_q = .true.", file=f)
             print("           ldisp = .true.", file=f)
             print("!       reduce_io = .true.", file=f)
@@ -80,11 +77,16 @@ def write_ph(prefix, nq, ecutwfc, nbnd):
     if not os.path.isfile("phdos.in"):
         with open("phdos.in", 'w') as f:
             print("&INPUT", file=f)
-            print(" fildyn = \'matdyn\'", file=f)
+            print(" flfrc = \'ifc.dat\'", file=f)
+            print(" fldos = \'matdyn.dos\'", file=f)
+            print(" flfrq = \' \'", file=f)
+            print(" flvec = \' \'", file=f)
+            print(" fleig = \' \'", file=f)
+            print(" fldyn = \' \'", file=f)
+            print(" fltau = \' \'", file=f)
             print("   la2f = .true.", file=f)
             print("    dos = .true.", file=f)
             print("    asr = \'crystal\'", file=f)
-            print("  flfrc = \'ifc.dat\'", file=f)
             print("    nk1 = %d" % (nq[0]*2), file=f)
             print("    nk2 = %d" % (nq[1]*2), file=f)
             print("    nk3 = %d" % (nq[2]*2), file=f)
@@ -96,7 +98,6 @@ def write_ph(prefix, nq, ecutwfc, nbnd):
     if not os.path.isfile("sctk.in"):
         with open("sctk.in", 'w') as f:
             print("&CONTROL", file=f)
-            print("      prefix = \'%s\'" % prefix, file=f)
             print(" calculation = kel", file=f)
             print("/", file=f)
             print("&KEL", file=f)
