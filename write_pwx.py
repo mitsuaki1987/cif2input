@@ -107,6 +107,51 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
             print("K_POINTS automatic", file=f)
             print(" %d %d %d 0 0 0" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
     #
+    # nscf_p.in : Phonon pre-process
+    #
+    if not os.path.isfile("nscf_p.in"):
+        with open("nscf_p.in", 'w') as f:
+            print("&CONTROL", file=f)
+            print(" calculation = \'nscf\'", file=f)
+            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            print(" occupations = \'tetrahedra_opt\'", file=f)
+            print("/", file=f)
+            print("&ELECTRONS", file=f)
+            print("/", file=f)
+            write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
+            print("K_POINTS automatic", file=f)
+            print(" %d %d %d 0 0 0" % (nq[0]*2, nq[1]*2, nq[2]*2), file=f)
+    #
+    # nscf_pd.in : Electron-Phonon pre-process
+    #
+    if not os.path.isfile("nscf_pd.in"):
+        with open("nscf_pd.in", 'w') as f:
+            print("&CONTROL", file=f)
+            print(" calculation = \'nscf\'", file=f)
+            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            print(" occupations = \'tetrahedra_opt\'", file=f)
+            print("/", file=f)
+            print("&ELECTRONS", file=f)
+            print("/", file=f)
+            write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
+            print("K_POINTS automatic", file=f)
+            print(" %d %d %d 0 0 0" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
+    #
+    # nscf_pc.in : Electron-Phonon matrix pre-process
+    #
+    if not os.path.isfile("nscf_pc.in"):
+        with open("nscf_pc.in", 'w') as f:
+            print("&CONTROL", file=f)
+            print(" calculation = \'nscf\'", file=f)
+            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            print(" occupations = \'tetrahedra_opt\'", file=f)
+            print("/", file=f)
+            print("&ELECTRONS", file=f)
+            print("/", file=f)
+            write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
+            print("K_POINTS automatic", file=f)
+            print(" %d %d %d 0 0 0" % (nq[0], nq[1], nq[2]), file=f)
+    #
     # band.in : Plot band
     #
     if not os.path.isfile("band.in"):

@@ -27,13 +27,15 @@ def good_proc(nproc, ncore):
     return nproc
 
 
-def write_sh(nks, nkd, nk_path, atom, atomwfc_dict, queue):
-    pw = "~/program/QE/qe-6.2.1/bin/pw.x"
-    proj = "~/program/QE/qe-6.2.1/bin/projwfc.x"
-    vf = "~/program/QE/qe-6.2.1/bin/fermi_velocity.x"
-    bands = "~/program/QE/qe-6.2.1/bin/bands.x"
-    sumpdos = "~/program/QE/qe-6.2.1/bin/sumpdos.x"
-    fproj = "~/program/QE/qe-6.2.1/bin/fermi_proj.x"
+def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
+    pw = "~/program/QE/qe-dev/bin/pw.x"
+    ph = "~/program/QE/qe-dev/bin/ph.x"
+    proj = "~/program/QE/qe-dev/bin/projwfc.x"
+    vf = "~/program/QE/qe-dev/bin/fermi_velocity.x"
+    bands = "~/program/QE/qe-dev/bin/bands.x"
+    sumpdos = "~/program/QE/qe-dev/bin/sumpdos.x"
+    fproj = "~/program/QE/qe-dev/bin/fermi_proj.x"
+    sctk = "~/program/QE/qe-dev/bin/sctk.x"
     typ = set(atom)
     #
     if queue == "F4cpus":
@@ -94,6 +96,22 @@ def write_sh(nks, nkd, nk_path, atom, atomwfc_dict, queue):
             print("mpijob -n %d %s -nk %d -ntg %d -in scf.in > scf.out"
                   % (nproc, pw, nk, ntg), file=f)
     #
+    # Phonon
+    #
+    if not os.path.isfile("ph.sh"):
+        with open("ph.sh", 'w') as f:
+            print("#!/bin/sh", file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
+            print("#QSUB -node", node, file=f)
+            print("#PBS -l walltime=8:00:00", file=f)
+            print("source ~/.bashrc", file=f)
+            print("cd $PBS_O_WORKDIR", file=f)
+            print("mpijob -n %d %s -nk %d -ntg %d -in nscf_p.in > nscf_p.out"
+                  % (nproc, pw, nk, ntg), file=f)
+            print("mpijob -n %d %s -nk %d -ntg %d -in ph.in > ph.out"
+                  % (nproc, ph, nk, ntg), file=f)
+            print("find ./ -name \"*.wfc*\" -delete", file=f)
+    #
     # Projected DOS
     #
     nk = min(ncore*maxnode, nkd)
@@ -131,8 +149,8 @@ def write_sh(nks, nkd, nk_path, atom, atomwfc_dict, queue):
             #
             for ityp in typ:
                 for il in range(len(atomwfc_dict[ityp][1])):
-                    print("sumpdos pwscf.pdos_atm*\\(%s\\)_wfc#%d* > pdos_%s%s"
-                          % (ityp, il+1, ityp, atomwfc_dict[ityp][1][il]), file=f)
+                    print("%s pwscf.pdos_atm*\\(%s\\)_wfc#%d* > pdos_%s%s"
+                          % (sumpdos, ityp, il+1, ityp, atomwfc_dict[ityp][1][il]), file=f)
             #
             # Fermi surface with atomic projection
             #
@@ -144,6 +162,22 @@ def write_sh(nks, nkd, nk_path, atom, atomwfc_dict, queue):
                     print("' proj.in > proj_f.in", file=f)
                     print("mpijob -n 1 %s -in proj_f.in" % fproj, file=f)
                     print("mv proj.frmsf %s%s.frmsf" % (ityp, atomwfc_dict[ityp][1][il]), file=f)
+    #
+    # Electron-phonon
+    #
+    if not os.path.isfile("elph.sh"):
+        with open("elph.sh", 'w') as f:
+            print("#!/bin/sh", file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
+            print("#QSUB -node", node, file=f)
+            print("#PBS -l walltime=8:00:00", file=f)
+            print("source ~/.bashrc", file=f)
+            print("cd $PBS_O_WORKDIR", file=f)
+            print("mpijob -n %d %s -nk %d -ntg %d -in nscf_pd.in > nscf_pd.out"
+                  % (nproc, pw, nk, ntg), file=f)
+            print("mpijob -n %d %s -nk %d -ntg %d -in elph.in > elph.out"
+                  % (nproc, ph, nk, ntg), file=f)
+            print("find ./ -name \"*.wfc*\" -delete", file=f)
     #
     # Band
     #
@@ -163,3 +197,48 @@ def write_sh(nks, nkd, nk_path, atom, atomwfc_dict, queue):
                   % (nproc, pw, nk, ntg), file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in bands.in > bands.out"
                   % (nproc, bands, nk_path, ntg), file=f)
+    #
+    # Electron-phonon matrix
+    #
+    nk = min(ncore * maxnode, nkc)
+    ntg = good_proc(int(ncore * maxnode / nk), ncore) / 2
+    nproc = nk * ntg
+    node = math.ceil(nproc / ncore)
+    if not os.path.isfile("epmat.sh"):
+        with open("epmat.sh", 'w') as f:
+            print("#!/bin/sh", file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
+            print("#QSUB -node", node, file=f)
+            print("#PBS -l walltime=8:00:00", file=f)
+            print("source ~/.bashrc", file=f)
+            print("cd $PBS_O_WORKDIR", file=f)
+            print("bmax=`grep \"Highest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
+                  file=f)
+            print("bmin=`grep \"Lowest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
+                  file=f)
+            print("sed -i -e \"/elph_nbnd_min/c elph_nbnd_min=$bmin\" "
+                  "-e \"/elph_nbnd_max/c elph_nbnd_max=$bmax\" epmat.in", file=f)
+            print("mpijob -n %d %s -nk %d -ntg %d -in nscf_pc.in > nscf_pc.out"
+                  % (nproc, pw, nk, ntg), file=f)
+            print("mpijob -n %d %s -nk %d -ntg %d -in epmat.in > epmat.out"
+                  % (nproc, ph, nk, ntg), file=f)
+            print("find ./ -name \"*.wfc*\" -delete", file=f)
+    #
+    # Coulomb matrix
+    #
+    nk = min(ncore * maxnode, nkcbz*2)
+    ntg = 1
+    nproc = nk * ntg
+    node = math.ceil(nproc / ncore)
+    if not os.path.isfile("kel.sh"):
+        with open("kel.sh", 'w') as f:
+            print("#!/bin/sh", file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
+            print("#QSUB -node", node, file=f)
+            print("#PBS -l walltime=8:00:00", file=f)
+            print("source ~/.bashrc", file=f)
+            print("cd $PBS_O_WORKDIR", file=f)
+            print("mpijob -n %d %s -nk %d -in twin.in > twin.out"
+                  % (nproc, pw, nk), file=f)
+            print("mpijob -n %d %s -nk %d -in sctk.in > sctk.out"
+                  % (nproc, sctk, nk), file=f)

@@ -96,10 +96,12 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue,
     structure2 = pymatgen.Structure(skp["primitive_lattice"],
                                     skp["primitive_types"], skp["primitive_positions"])
     spg_analysis = SpacegroupAnalyzer(structure2)
+    coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0], nq[1], nq[2]), is_shift=(0, 0, 0))
     middle = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*2, nq[1]*2, nq[2]*2), is_shift=(0, 0, 0))
     dense = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*4, nq[1]*4, nq[2]*4), is_shift=(0, 0, 0))
-    print("Number of irreducible k : ", len(middle), len(dense))
-    write_sh(len(middle), len(dense), len(skp["explicit_kpoints_rel"]), atom, atomwfc_dict, queue)
+    print("Number of irreducible k : ", len(coarse), len(middle), len(dense))
+    write_sh(nq[0]*nq[1]*nq[2], len(coarse), len(middle), len(dense),
+             len(skp["explicit_kpoints_rel"]), atom, atomwfc_dict, queue)
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
