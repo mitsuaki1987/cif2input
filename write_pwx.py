@@ -113,6 +113,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
         with open("nscf_p.in", 'w') as f:
             print("&CONTROL", file=f)
             print(" calculation = \'nscf\'", file=f)
+            print("  wf_collect = .false.", file=f)
             write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("/", file=f)
@@ -128,6 +129,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
         with open("nscf_pd.in", 'w') as f:
             print("&CONTROL", file=f)
             print(" calculation = \'nscf\'", file=f)
+            print("  wf_collect = .false.", file=f)
             write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("/", file=f)
@@ -143,6 +145,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
         with open("nscf_pc.in", 'w') as f:
             print("&CONTROL", file=f)
             print(" calculation = \'nscf\'", file=f)
+            print("  wf_collect = .false.", file=f)
             write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("/", file=f)
@@ -172,7 +175,6 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
                     skp["explicit_kpoints_rel"][ik][1],
                     skp["explicit_kpoints_rel"][ik][2]),
                       file=f)
-
     #
     # nscf_w.in : Non-scf for wannier90
     #

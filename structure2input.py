@@ -45,6 +45,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue,
     bvec = skp["reciprocal_primitive_lattice"]
     atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
     typ = set(atom)
+    print("Bravais lattice : ", skp["bravais_lattice"])
+    print("Space group : ", skp['spacegroup_international'])
     #
     # WFC and Rho cutoff
     #
@@ -63,6 +65,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue,
         norm = numpy.sqrt(numpy.dot(bvec[ii][:], bvec[ii][:]))
         nq[ii] = round(norm / dq_grid)
         print(norm)
+        if nq[ii] == 0:
+            nq[ii] = 1
     print("Coarse grid : ", nq[0], nq[1], nq[2])
     #
     # Band path

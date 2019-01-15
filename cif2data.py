@@ -5,6 +5,7 @@ import glob
 import pymatgen
 from pymatgen.analysis.structure_matcher import StructureMatcher
 import numpy
+import re
 
 
 if __name__ == '__main__':
@@ -20,7 +21,11 @@ if __name__ == '__main__':
         #
         # PyMatGen structure from CIF file
         #
-        structure = pymatgen.Structure.from_file(cif_file)
+        try:
+            structure = pymatgen.Structure.from_file(cif_file)
+        except ValueError:
+            print("Invalid structure.")
+            continue
         structure.remove_oxidation_states()
         #
         # Refine 3-folded Wyckoff position
@@ -57,7 +62,7 @@ if __name__ == '__main__':
         #
         if not known:
             #
-            xsf_file = structure2.formula.replace(" ", "")+"_"+skp['spacegroup_international'].replace("/", "s")+'_' \
-                       + cif_file[0:len(cif_file) - 4].replace("MyBaseFileNameCollCode", "")+".xsf"
+            xsf_file = structure2.formula.replace(" ", "")+"_"+skp['spacegroup_international'].replace("/", "%")+'_' \
+                       + re.sub("\D", "", cif_file)+".xsf"
             print("Write to "+xsf_file)
             structure2.to(fmt="xsf", filename=xsf_file)

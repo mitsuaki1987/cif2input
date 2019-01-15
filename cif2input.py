@@ -8,9 +8,9 @@ if __name__ == '__main__':
     args = sys.argv
     if len(args) < 2:
         print("Usage:")
-        print("$ cif2input.py cif-file [dk_path] [dq_grid] [pseudo_kind] [pseudo_path] [queue] [rel]")
+        print("$ cif2input.py cif-file [dk_path] [dq_grid] [pseudo_kind] [queue] [rel]")
         print("Default:")
-        print("$ cif2input.py cif-file 0.1 0.3359385398275 sssp /work/i0012/i001200/pseudo/ F4cpus")
+        print("$ cif2input.py cif-file 0.1 0.3359385398275 sg15 F4cpue")
         exit(0)
     #
     # CIF parser
@@ -21,9 +21,9 @@ if __name__ == '__main__':
     #
     dk_path = 0.1
     dq_grid = 0.3359385398275
-    pseudo_kind = "sssp"
+    pseudo_kind = "sg15"
     pseudo_dir = "/work/i0012/i001200/pseudo/"
-    queue = "F4cpus"
+    queue = "F4cpue"
     rel = False
     #
     if len(args) > 2:
@@ -33,11 +33,9 @@ if __name__ == '__main__':
             if len(args) > 4:
                 pseudo_kind = args[4]
                 if len(args) > 5:
-                    pseudo_dir = args[5]
+                    queue = args[5]
                     if len(args) > 6:
-                        queue = args[6]
-                        if len(args) > 7:
-                            rel = True
+                        rel = True
     #
     print("  dk for band : {0}".format(dk_path))
     print("  dq for grid : {0}".format(dq_grid))

@@ -67,6 +67,7 @@ def write_openmx(skp, nq, rel):
         print("<scf.SO.factor", file=f)
         for ityp in typ:
             print(" %s  s 1.0 p 1.0 d 1.0 f 1.0" % ityp, file=f)
+            print("proj%s  s 1.0 p 1.0 d 1.0 f 1.0" % ityp, file=f)
         print("scf.SO.factor>", file=f)
         print("scf.ElectronicTemperature   5000", file=f)
         print("scf.maxIter                  40", file=f)
@@ -94,6 +95,7 @@ def write_openmx(skp, nq, rel):
         print("<Hubbard.U.values", file=f)
         for ityp in typ:
             print(" %s  1s 0.0 1p 0.0 1d 0.0" % ityp, file=f)
+            print("proj%s  1s 0.0 1p 0.0 1d 0.0" % ityp, file=f)
         print("Hubbard.U.values>", file=f)
         #
         print("#", file=f)

@@ -108,9 +108,12 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
             print("cd $PBS_O_WORKDIR", file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in nscf_p.in > nscf_p.out"
                   % (nproc, pw, nk, ntg), file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in ph.in > ph.out"
+            print("for i in `seq 1 %d`; do" % nkcbz, file=f)
+            print("sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" ph.in", file=f)
+            print("mpijob -n %d %s -nk %d -ntg %d -in ph.in >> ph.out"
                   % (nproc, ph, nk, ntg), file=f)
             print("find ./ -name \"*.wfc*\" -delete", file=f)
+            print("done", file=f)
     #
     # Projected DOS
     #
@@ -175,9 +178,12 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
             print("cd $PBS_O_WORKDIR", file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in nscf_pd.in > nscf_pd.out"
                   % (nproc, pw, nk, ntg), file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in elph.in > elph.out"
+            print("for i in `seq 1 %d`; do" % nkcbz, file=f)
+            print("sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" elph.in", file=f)
+            print("mpijob -n %d %s -nk %d -ntg %d -in elph.in >> elph.out"
                   % (nproc, ph, nk, ntg), file=f)
             print("find ./ -name \"*.wfc*\" -delete", file=f)
+            print("done", file=f)
     #
     # Band
     #
@@ -201,7 +207,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
     # Electron-phonon matrix
     #
     nk = min(ncore * maxnode, nkc)
-    ntg = good_proc(int(ncore * maxnode / nk), ncore) / 2
+    ntg = int(good_proc(int(ncore * maxnode / nk), ncore) / 2)
     nproc = nk * ntg
     node = math.ceil(nproc / ncore)
     if not os.path.isfile("epmat.sh"):
@@ -220,14 +226,17 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
                   "-e \"/elph_nbnd_max/c elph_nbnd_max=$bmax\" epmat.in", file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in nscf_pc.in > nscf_pc.out"
                   % (nproc, pw, nk, ntg), file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in epmat.in > epmat.out"
+            print("for i in `seq 1 %d`; do" % nkcbz, file=f)
+            print("sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
+            print("mpijob -n %d %s -nk %d -ntg %d -in epmat.in >> epmat.out"
                   % (nproc, ph, nk, ntg), file=f)
             print("find ./ -name \"*.wfc*\" -delete", file=f)
+            print("done", file=f)
     #
     # Coulomb matrix
     #
-    nk = min(ncore * maxnode, nkcbz*2)
-    ntg = 1
+    nk = min(ncore * maxnode, nkcbz)
+    ntg = good_proc(int(ncore*maxnode / nk), ncore)
     nproc = nk * ntg
     node = math.ceil(nproc / ncore)
     if not os.path.isfile("kel.sh"):
@@ -238,7 +247,48 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
             print("#PBS -l walltime=8:00:00", file=f)
             print("source ~/.bashrc", file=f)
             print("cd $PBS_O_WORKDIR", file=f)
-            print("mpijob -n %d %s -nk %d -in twin.in > twin.out"
-                  % (nproc, pw, nk), file=f)
-            print("mpijob -n %d %s -nk %d -in sctk.in > sctk.out"
+            print("mpijob -n %d %s -nk %d -ntg %d -in twin.in > twin.out"
+                  % (nproc, pw, nk, ntg), file=f)
+            print("export OMP_NUM_THREADS=%d" % ntg, file=f)
+            print("mpijob -n %d %s -nk %d -in sctk.in >> kel.out"
                   % (nproc, sctk, nk), file=f)
+    #
+    # Coulomb matrix
+    #
+    node = maxnode
+    if not os.path.isfile("scdft0.sh"):
+        with open("scdft0.sh", 'w') as f:
+            print("#!/bin/sh", file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
+            print("#QSUB -node", node, file=f)
+            print("#QSUB -mpi", node, file=f)
+            print("#QSUB -omp", ncore, file=f)
+            print("#PBS -l walltime=3:00:00", file=f)
+            print("source ~/.bashrc", file=f)
+            print("cd $PBS_O_WORKDIR", file=f)
+            print("sed -i -e \'/calculation/c calculation = \"lambda_mu_k\"\' sctk.in", file=f)
+            print("mpijob -n %d %s -nk %d -in sctk.in > lambda_mu_k.out"
+                  % (node, sctk, node), file=f)
+            print("sed -i -e \'/calculation/c calculation = \"scdft\"\' sctk.in", file=f)
+            print("mpijob -n %d %s -nk %d -in sctk.in > scdft0.out"
+                  % (node, sctk, node), file=f)
+    #
+    # Coulomb matrix
+    #
+    node = maxnode
+    if not os.path.isfile("scdft.sh"):
+        with open("scdft.sh", 'w') as f:
+            print("#!/bin/sh", file=f)
+            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
+            print("#QSUB -node", node, file=f)
+            print("#QSUB -mpi", node, file=f)
+            print("#QSUB -omp", ncore, file=f)
+            print("#PBS -l walltime=3:00:00", file=f)
+            print("source ~/.bashrc", file=f)
+            print("cd $PBS_O_WORKDIR", file=f)
+            print("sed -i -e \'/calculation/c calculation = \"scdft_tc\"\' sctk.in", file=f)
+            print("mpijob -n %d %s -nk %d -in sctk.in > tc.out"
+                  % (node, sctk, node), file=f)
+            print("sed -i -e \'/calculation/c calculation = \"deltaf\"\' sctk.in", file=f)
+            print("mpijob -n %d %s -nk %d -in sctk.in > deltaf.out"
+                  % (node, sctk, node), file=f)
