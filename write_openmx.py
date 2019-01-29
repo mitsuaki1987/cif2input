@@ -323,17 +323,31 @@ def write_openmx(skp, nq, rel):
         print("Unfolding.Electronic.Band      off    # on|off", file=f)
         print("Unfolding.LowerBound        -10", file=f)
         print("Unfolding.UpperBound          10", file=f)
-        print("Unfolding.Nkpoint          4", file=f)
         print("<Unfolding.kpoint", file=f)
-        print("K 0.33333333333 0.33333333333 0.0000000000", file=f)
-        print("G 0.00000000000 0.00000000000 0.0000000000", file=f)
-        print("M 0.50000000000 0.00000000000 0.0000000000", file=f)
-        print("K 0.33333333333 0.33333333333 0.0000000000", file=f)
+        final = 0
+        ii = 1
+        print("%s %f %f %f" % (
+            skp["explicit_kpoints_labels"][final],
+            skp["explicit_kpoints_rel"][final][0],
+            skp["explicit_kpoints_rel"][final][1],
+            skp["explicit_kpoints_rel"][final][2]),
+              file=f)
+        for ipath in range(len(skp["path"])):
+            start = skp["explicit_segments"][ipath][0]
+            if start == final:
+                final = skp["explicit_segments"][ipath][1] - 1
+                ii += 1
+                print("%s %f %f %f" % (
+                    skp["explicit_kpoints_labels"][final],
+                    skp["explicit_kpoints_rel"][final][0],
+                    skp["explicit_kpoints_rel"][final][1],
+                    skp["explicit_kpoints_rel"][final][2]),
+                      file=f)
+            else:
+                break
         print("Unfolding.kpoint>", file=f)
-        print("Unfolding.desired_totalnkpt    30", file=f)
-        print("<Unfolding.ReferenceOrigin", file=f)
-        print("0.1 0.2 0.3", file=f)
-        print("Unfolding.ReferenceOrigin>", file=f)
+        print("Unfolding.Nkpoint     %d" % ii, file=f)
+        print("Unfolding.desired_totalnkpt    100", file=f)
         #
         print("#", file=f)
         print("# Draw Kohn-Sham orbital", file=f)
