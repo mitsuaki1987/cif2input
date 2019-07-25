@@ -48,6 +48,18 @@ if __name__ == '__main__':
             print("Fractional occupancy, may be disordered.")
             continue
         #
+        # Number of atoms
+        #
+        nat_cut = 10
+        if structure2.num_sites > nat_cut:
+            print("Number of atoms > " + str(nat_cut))
+            continue
+        #
+        #
+        #
+        #dismat = structure2.distance_matrix
+        #print(structure2.species)
+        #
         # This structure is the same or not as the known structures
         #
         known = False

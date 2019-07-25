@@ -7,9 +7,11 @@ do
         dos=`awk 'NR==2{printf "%f", $2}' ${dir}/${dir}.pdos_tot`
         printf "%s (%.3f [states/eV/u.c./spin]) </br>\n" ${name} ${dos}
         echo '<table border="0"><tr align="center">'
-        for p in ${dir}/*.png
+        for p in `find ${dir} -name "*.frmsf" |awk -F/ '{print $NF}'`
         do
-            printf '<td><a href="./%s"><img src="./%s" height="200"></a></td>\n' ${p%.png}.frmsf ${p}
+            #printf '<td><a href="./%s" download="%s"><img src="./%s" height="200"></a></td>\n' \
+            printf '<td><a href="./%s"><img src="./%s" height="200"></a></td>\n' \
+                   ${dir}${p} ${dir}${p%frmsf}png
         done
         echo '</tr><tr align="center">'
         for p in ${dir}/${dir}.pdos_*[1-9]?

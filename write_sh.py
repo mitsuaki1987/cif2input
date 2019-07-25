@@ -28,14 +28,14 @@ def good_proc(nproc, ncore):
 
 
 def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
-    pw = "~/program/QE/qe-dev/bin/pw.x"
-    ph = "~/program/QE/qe-dev/bin/ph.x"
-    proj = "~/program/QE/qe-dev/bin/projwfc.x"
-    vf = "~/program/QE/qe-dev/bin/fermi_velocity.x"
-    bands = "~/program/QE/qe-dev/bin/bands.x"
-    sumpdos = "~/program/QE/qe-dev/bin/sumpdos.x"
-    fproj = "~/program/QE/qe-dev/bin/fermi_proj.x"
-    sctk = "~/program/QE/qe-dev/bin/sctk.x"
+    pw = "~/bin/pw.x"
+    ph = "~/bin/ph.x"
+    proj = "~/bin/projwfc.x"
+    vf = "~/bin/fermi_velocity.x"
+    bands = "~/bin/bands.x"
+    sumpdos = "~/bin/sumpdos.x"
+    fproj = "~/bin/fermi_proj.x"
+    sctk = "~/bin/sctk.x"
     typ = set(atom)
     #
     if queue == "F4cpus":
@@ -108,12 +108,23 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
             print("cd $PBS_O_WORKDIR", file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in nscf_p.in > nscf_p.out"
                   % (nproc, pw, nk, ntg), file=f)
-            print("for i in `seq 1 %d`; do" % nkcbz, file=f)
-            print("sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" ph.in", file=f)
+            #
+            # Compute number of q
+            #
+            print("sed -i -e \"/only_init/c only_init = .true.\" ph.in", file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in ph.in >> ph.out"
                   % (nproc, ph, nk, ntg), file=f)
-            print("find ./ -name \"*.wfc*\" -delete", file=f)
+            print("sed -i -e \"/only_init/c only_init = .false.\" ph.in", file=f)
+            print("nq=`awk \'NR==2{print $1}\' matdyn0`" % nkcbz, file=f)
+            #
+            print("for i in `seq 1 ${nq}`; do" % nkcbz, file=f)
+            print("  test -s matdyn${i} && continue", file=f)
+            print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" ph.in", file=f)
+            print("  mpijob -n %d %s -nk %d -ntg %d -in ph.in >> ph.out"
+                  % (nproc, ph, nk, ntg), file=f)
+            print("  find ./ -name \"*.wfc*\" -delete", file=f)
             print("done", file=f)
+            print("touch PH_DONE", file=f)
     #
     # Projected DOS
     #
@@ -178,12 +189,15 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
             print("cd $PBS_O_WORKDIR", file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in nscf_pd.in > nscf_pd.out"
                   % (nproc, pw, nk, ntg), file=f)
-            print("for i in `seq 1 %d`; do" % nkcbz, file=f)
-            print("sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" elph.in", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in elph.in >> elph.out"
+            print("nq=`awk \'NR==2{print $1}\' matdyn0`" % nkcbz, file=f)
+            print("for i in `seq 1 ${nq}`; do" % nkcbz, file=f)
+            print("  test -s matdyn${i}.elph.${i} && continue", file=f)
+            print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" elph.in", file=f)
+            print("  mpijob -n %d %s -nk %d -ntg %d -in elph.in >> elph.out"
                   % (nproc, ph, nk, ntg), file=f)
-            print("find ./ -name \"*.wfc*\" -delete", file=f)
+            print("  find ./ -name \"*.wfc*\" -delete", file=f)
             print("done", file=f)
+            print("touch ELPH_DONE", file=f)
     #
     # Band
     #
@@ -226,12 +240,15 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
                   "-e \"/elph_nbnd_max/c elph_nbnd_max=$bmax\" epmat.in", file=f)
             print("mpijob -n %d %s -nk %d -ntg %d -in nscf_pc.in > nscf_pc.out"
                   % (nproc, pw, nk, ntg), file=f)
-            print("for i in `seq 1 %d`; do" % nkcbz, file=f)
-            print("sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in epmat.in >> epmat.out"
+            print("nq=`awk \'NR==2{print $1}\' matdyn0`" % nkcbz, file=f)
+            print("for i in `seq 1 ${nq}`; do" % nkcbz, file=f)
+            print("  test -s elph${i}.dat && continue", file=f)
+            print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
+            print("  mpijob -n %d %s -nk %d -ntg %d -in epmat.in >> epmat.out"
                   % (nproc, ph, nk, ntg), file=f)
-            print("find ./ -name \"*.wfc*\" -delete", file=f)
+            print("  find ./ -name \"*.wfc*\" -delete", file=f)
             print("done", file=f)
+            print("touch EPMAT_DONE", file=f)
     #
     # Coulomb matrix
     #
@@ -250,8 +267,15 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
             print("mpijob -n %d %s -nk %d -ntg %d -in twin.in > twin.out"
                   % (nproc, pw, nk, ntg), file=f)
             print("export OMP_NUM_THREADS=%d" % ntg, file=f)
-            print("mpijob -n %d %s -nk %d -in sctk.in >> kel.out"
+            print("sed -i -e \'/calculation/c calculation = \"kel\"\' sctk.in", file=f)
+            print("nq=`awk \'NR==2{print $1}\' matdyn0`" % nkcbz, file=f)
+            print("for i in `seq 1 ${nq}`; do" % nkcbz, file=f)
+            print("  test -s vel${i}.dat && continue", file=f)
+            print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" sctk.in", file=f)
+            print("  mpijob -n %d %s -nk %d -in sctk.in >> kel.out"
                   % (nproc, sctk, nk), file=f)
+            print("done", file=f)
+            print("touch KEL_DONE", file=f)
     #
     # Coulomb matrix
     #
