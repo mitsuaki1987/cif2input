@@ -31,7 +31,7 @@ class Simulator:
 
     def __call__(self, action):
 
-        structure = pymatgen.Structure.from_file(self.filename[action])
+        structure = pymatgen.Structure.from_file(self.filename[action[0]])
         structure.remove_oxidation_states()
         frac_coord2 = numpy.array(structure.frac_coords)
         for ipos in range(len(frac_coord2)):
@@ -116,7 +116,6 @@ class Simulator:
         root = tree.getroot()
         child = root.find('output').find('band_structure')
         efermi = float(child.find('fermi_energy').text) * 13.60569228 * 2.0
-        print(efermi)
         #
         # DOS file
         #
@@ -136,6 +135,8 @@ class Simulator:
             f.readline()
             line = f.readline()
             dos = float(line.split()[1]) / nat
+        #
+        print(self.filename[action[0]], efermi, dos)
         #
         return dos
 
