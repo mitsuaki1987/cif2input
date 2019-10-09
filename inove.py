@@ -11,9 +11,17 @@ import numpy
 
 
 def load_data():
-    temp = numpy.asarray(numpy.loadtxt('desc.csv', skiprows=1, delimiter=','))
-    descriptor0 = temp[:, 0:3]
-    filename0 = temp[:, 3]
+    with open("desc.dat", "r") as f:
+        ndata = int(f.readline())
+        filename0 = [""]*ndata
+        descriptor0 = numpy.zeros((ndata, 3), numpy.float_)
+        for idata in range(ndata):
+            line = f.readline()
+            filename0[idata] = line.split()[0]
+            descriptor0[idata, 0] = float(line.split()[1])
+            descriptor0[idata, 1] = float(line.split()[2])
+            descriptor0[idata, 2] = 1.0 / descriptor0[idata, 0]
+
     return descriptor0, filename0
 
 
