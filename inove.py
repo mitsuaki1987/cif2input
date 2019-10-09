@@ -136,7 +136,7 @@ class Simulator:
             line = f.readline()
             dos = float(line.split()[1]) / float(nat)
         #
-        print(self.filename[action[0]], efermi, dos)
+        print(action[0], self.filename[action[0]], efermi, dos)
         #
         return dos
 
