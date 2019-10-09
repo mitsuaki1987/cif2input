@@ -134,7 +134,7 @@ class Simulator:
         with open("pwscf.dos", "r") as f:
             f.readline()
             line = f.readline()
-            dos = float(line.split()[1]) / nat
+            dos = float(line.split()[1]) / float(nat)
         #
         print(self.filename[action[0]], efermi, dos)
         #
