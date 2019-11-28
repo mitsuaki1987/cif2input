@@ -77,8 +77,6 @@ class Simulator:
         with open("scf.in", 'w') as f:
             print("&CONTROL", file=f)
             print(" calculation = \'scf\'", file=f)
-            print("  pseudo_dir = '/home/kawamura/work/pseudo/'", file=f)
-            # print("  pseudo_dir = '/work/i0012/i001200/pseudo/'", file=f)
             print("/", file=f)
             print("&SYSTEM", file=f)
             print("       ibrav = 0", file=f)
@@ -124,6 +122,7 @@ class Simulator:
             print("      emin = %f" % efermi, file=f)
             print("      emax = %f" % efermi, file=f)
             print("    deltae = 0.1", file=f)
+            print("    bz_sum = \"tetrahedra_opt\"", file=f)
             print("/", file=f)
         #
         # Run DOS

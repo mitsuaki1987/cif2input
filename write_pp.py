@@ -21,6 +21,17 @@ def write_pp():
             print("    deltae = 0.1", file=f)
             print("/", file=f)
     #
+    # dos.in : Read by dos.x
+    #
+    if not os.path.isfile("dos.in"):
+        with open("dos.in", 'w') as f:
+            print("&DOS", file=f)
+            print("      emin = ", file=f)
+            print("      emax = ", file=f)
+            print("    deltae = 0.1", file=f)
+            print("    bz_sum = \"tetrahedra_opt\"", file=f)
+            print("/", file=f)
+    #
     # pw2wan.in : PW & wannier90 interface
     #
     if not os.path.isfile("pw2wan.in"):

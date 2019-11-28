@@ -22,7 +22,6 @@ if __name__ == '__main__':
     dk_path = 0.1
     dq_grid = 0.3359385398275
     pseudo_kind = "sg15"
-    pseudo_dir = "/work/i0012/i001200/pseudo/"
     queue = "F4cpue"
     rel = False
     #
@@ -40,8 +39,7 @@ if __name__ == '__main__':
     print("  dk for band : {0}".format(dk_path))
     print("  dq for grid : {0}".format(dq_grid))
     print("  Pseudo kind is ", pseudo_kind)
-    print("  Pseudo is at ", pseudo_dir)
 
     structure.remove_oxidation_states()
 
-    structure2input(structure, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue, rel)
+    structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel)

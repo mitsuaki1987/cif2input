@@ -16,8 +16,9 @@ def write_atom(f, avec, typ, nat, pos, atom, pseudo_dict):
             atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
 
 
-def write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel):
-    print("  pseudo_dir = \'%s\'" % pseudo_dir, file=f)
+def write_head(f, calculation, nat, ntyp, ecutwfc, ecutrho, rel):
+    print("&CONTROL", file=f)
+    print(" calculation = \'%s\'" % calculation, file=f)
     print("/", file=f)
     print("&SYSTEM", file=f)
     print("       ibrav = 0", file=f)
@@ -33,7 +34,7 @@ def write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel):
         print("     lspinorb = .FALSE.", file=f)
 
 
-def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
+def write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     # Lattice information
     #
@@ -48,9 +49,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("rx.in"):
         with open("rx.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'vc-relax\'", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "vc-relax", nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
@@ -74,9 +73,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("scf.in"):
         with open("scf.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'scf\'", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "scf", nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("    smearing = \'m-p\'", file=f)
             print("     degauss = 0.05", file=f)
@@ -94,9 +91,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("nscf.in"):
         with open("nscf.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'nscf\'", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "nscf", nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("        nbnd = %d" % nbnd, file=f)
             print("        la2f = .true.", file=f)
@@ -111,10 +106,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("nscf_p.in"):
         with open("nscf_p.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'nscf\'", file=f)
-            print("  wf_collect = .false.", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "nscf", nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
@@ -127,10 +119,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("nscf_pd.in"):
         with open("nscf_pd.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'nscf\'", file=f)
-            print("  wf_collect = .false.", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "nscf", nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
@@ -143,10 +132,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("nscf_pc.in"):
         with open("nscf_pc.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'nscf\'", file=f)
-            print("  wf_collect = .false.", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "nscf", nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
@@ -159,9 +145,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("band.in"):
         with open("band.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'bands\'", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "bands", nat, ntyp, ecutwfc, ecutrho, rel)
             print("        nbnd = %d" % nbnd, file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
@@ -180,10 +164,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("nscf_w.in"):
         with open("nscf_w.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'bands\'", file=f)
-            print("  wf_collect = .true.", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "bands", nat, ntyp, ecutwfc, ecutrho, rel)
             print("        nbnd = %d" % nbnd, file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
@@ -205,10 +186,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("nscf_r.in"):
         with open("nscf_r.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'nscf\'", file=f)
-            print("  wf_collect = .true.", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "nscf", nat, ntyp, ecutwfc, ecutrho, rel)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("        nbnd = %d" % nbnd, file=f)
             print("/", file=f)
@@ -222,10 +200,7 @@ def write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     #
     if not os.path.isfile("twin.in"):
         with open("twin.in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'bands\'", file=f)
-            print("  wf_collect = .true.", file=f)
-            write_middle(f, pseudo_dir, nat, ntyp, ecutwfc, ecutrho, rel)
+            write_head(f, "bands", nat, ntyp, ecutwfc, ecutrho, rel)
             print("        nbnd = %d" % nbnd, file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)

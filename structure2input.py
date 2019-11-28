@@ -12,7 +12,7 @@ from write_sh import write_sh
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def structure2input(structure, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue, rel):
+def structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel):
 
     if pseudo_kind == "sg15":
         if rel:
@@ -109,7 +109,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, pseudo_dir, queue,
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
-    write_pwx(skp, pseudo_dir, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel)
+    write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel)
     #
     # ph.in, elph.in, epmat.in, phdos.in, rpa.in, scdft.in
     #
