@@ -57,10 +57,10 @@ if __name__ == '__main__':
         #
         # Number of atoms
         #
-        nat_cut = 10
-        if structure2.num_sites > nat_cut:
-            print("Number of atoms > " + str(nat_cut))
-            continue
+        # nat_cut = 10
+        # if structure2.num_sites > nat_cut:
+        #     print("Number of atoms > " + str(nat_cut))
+        #     continue
         #
         #
         #
