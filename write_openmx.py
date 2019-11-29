@@ -19,11 +19,11 @@ def write_openmx(skp, nq, rel):
         print("#", file=f)
         print("# File Name", file=f)
         print("#", file=f)
-        print("System.CurrrentDirectory    ./", file=f)
+        print("System.CurrentDirectory    ./", file=f)
         print("System.Name          openmx", file=f)
         print("level.of.stdout      1 #1-3", file=f)
         print("level.of.fileout     0 #0-2", file=f)
-        print("data.path     /work/i0012/i001200/DFT_DATA13/", file=f)
+        print("data.path     ../DFT_DATA13/", file=f)
         print("HS.fileout     off   # on|off", file=f)
         print("scf.restart     off", file=f)
         #

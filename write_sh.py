@@ -296,6 +296,9 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
             print("sed -i -e \'/calculation/c calculation = \"scdft\"\' sctk.in", file=f)
             print("mpijob -n %d %s -nk %d -in sctk.in > scdft0.out"
                   % (node, sctk, node), file=f)
+            print("sed -i -e \'/calculation/c calculation = \"deltaf\"\' sctk.in", file=f)
+            print("mpijob -n %d %s -nk %d -in sctk.in > deltaf.out"
+                  % (node, sctk, node), file=f)
     #
     # Coulomb matrix
     #
@@ -312,7 +315,4 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
             print("cd $PBS_O_WORKDIR", file=f)
             print("sed -i -e \'/calculation/c calculation = \"scdft_tc\"\' sctk.in", file=f)
             print("mpijob -n %d %s -nk %d -in sctk.in > tc.out"
-                  % (node, sctk, node), file=f)
-            print("sed -i -e \'/calculation/c calculation = \"deltaf\"\' sctk.in", file=f)
-            print("mpijob -n %d %s -nk %d -in sctk.in > deltaf.out"
                   % (node, sctk, node), file=f)

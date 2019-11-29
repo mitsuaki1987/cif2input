@@ -57,8 +57,8 @@ if __name__ == '__main__':
         #
         #
         #
-        #dismat = structure2.distance_matrix
-        #print(structure2.species)
+        # dismat = structure2.distance_matrix
+        # print(structure2.species)
         #
         # This structure is the same or not as the known structures
         #
