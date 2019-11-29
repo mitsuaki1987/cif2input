@@ -26,7 +26,14 @@ if __name__ == '__main__':
         except ValueError:
             print("Invalid structure.")
             continue
-        structure.remove_oxidation_states()
+        #
+        # Remove oxidation state. Excepting "D" (deuterium)
+        #
+        try:
+            structure.remove_oxidation_states()
+        except ValueError:
+            print("Invalid element.")
+            continue
         #
         # Refine 3-folded Wyckoff position
         #
