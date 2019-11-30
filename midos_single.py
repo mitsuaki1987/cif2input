@@ -156,7 +156,14 @@ def main():
     descriptor = combo.misc.centering(descriptor)
     policy = combo.search.discrete.policy(test_X=descriptor)
     policy.set_seed(1)
-    random_search = policy.random_search(max_num_probes=5, simulator=Simulator())
+    #
+    # Read previous result
+    #
+    action, result = load_result(len(descriptor))
+    if len(action) == 0:
+        random_search = policy.random_search(max_num_probes=5, simulator=Simulator())
+    else:
+        policy.write(action, result)
     bayes_search = policy.bayes_search(max_num_probes=30, simulator=Simulator(), score='TS',
                                        interval=1, num_rand_basis=5000)
 
