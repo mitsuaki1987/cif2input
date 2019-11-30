@@ -2,7 +2,6 @@
 import sys
 import seekpath
 import pymatgen
-from pymatgen.analysis.structure_matcher import StructureMatcher
 import numpy
 from pymatgen.core.periodic_table import get_el_sp
 
@@ -111,7 +110,6 @@ def main():
         "Fm": 3,
     }
 
-    matcher = StructureMatcher()
     args = sys.argv
     #
     # Read All files specified as command-line arguments
@@ -144,11 +142,36 @@ def main():
             print("Fractional occupancy, may be disordered.")
             continue
         #
-        vol = structure2.volume
         nat = len(structure2.atomic_numbers)
         atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
+        #
+        # vol : Volume per atom
+        #
+        vol = structure2.volume / float(nat)
+        #
+        # density : 1 / Volume
+        #
+        density = 1.0 / vol
+        #
+        # oxidization : Average oxidization
+        #
         oxidization = 0
         for iat in atom:
             oxidization += valence_dict[iat]
-        print(cif_file, vol/nat, oxidization/nat)
-        # print(structure2.distance_matrix)
+        oxidization /= float(nat)
+        #
+        # distance_min : Minimum distance
+        #
+        if nat == 1:
+            distance_min = numpy.min(structure2.lattice.abc)
+        else:
+            distance_matrix = structure2.distance_matrix
+            distance_min = distance_matrix[0, 1]
+            for iat in range(nat):
+                for jat in range(iat+1, nat):
+                    distance_min = min(distance_min, distance_matrix[iat, jat])
+
+        print(cif_file, vol, density, oxidization, distance_min)
+
+
+main()

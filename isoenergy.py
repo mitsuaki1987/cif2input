@@ -33,3 +33,6 @@ for lib in pslibrary, sg15, sssp:
             print("ATOMIC_POSITIONS crystal", file=f)
             print(" %s 0.0 0.0 0.0" % atom, file=f)
             print("K_POINTS gamma", file=f)
+
+
+main()

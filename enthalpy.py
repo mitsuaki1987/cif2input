@@ -35,3 +35,6 @@ def main():
                 enthalpy0 /= float(natom)
 
                 print(rx_file, enthalpy, enthalpy0, enthalpy - enthalpy0)
+
+
+main()

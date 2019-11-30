@@ -12,27 +12,25 @@ import numpy
 
 def load_descriptor():
     with open("desc.dat", "r") as f:
-        ndata = int(f.readline())
-        filename = [""]*ndata
-        descriptor = numpy.zeros((ndata, 3), numpy.float_)
-        for idata in range(ndata):
-            line = f.readline()
-            filename[idata] = line.split()[0]
-            descriptor[idata, 0] = float(line.split()[1])
-            descriptor[idata, 1] = float(line.split()[2])
-            descriptor[idata, 2] = 1.0 / descriptor[idata, 0]
+        lines = f.readlines()
+        filename = []
+        descriptor = []
+        for line in lines:
+            filename.append(line.split()[0])
+            descriptor.append(numpy.array(line.split()[1:], dtype=numpy.float_))
 
-    return descriptor, filename
+    return numpy.array(descriptor), filename
 
 
-def load_result(num_action):
-    action = []
-    result = []
-    for i_action in range(num_action):
-        if os.path.isfile(str(num_action) + "/dos.dat"):
-            action.append(int(i_action))
-            with open(str(num_action) + "/dos.dat", 'w') as f:
-                result.append(float(f.readline()))
+def load_result():
+
+    with open("dos.dat", "r") as f:
+        lines = f.readlines()
+        action = []
+        result = []
+        for line in lines:
+            action.append(line.split()[0])
+            result.append(line.split()[1])
 
     return numpy.array(action), numpy.array(result)
 
@@ -147,7 +145,8 @@ class Simulator:
             line = f.readline()
             dos = float(line.split()[1]) / float(nat)
         #
-        print(action[0], self.filename[action[0]], efermi, dos)
+        with open("dos.dat", "a") as f:
+            print(action[0], dos, self.filename[action[0]], file=f)
         #
         return dos
 
@@ -170,3 +169,6 @@ def main():
     print(best_action)
     print('history of chosen actions=')
     print(bayes_search.chosed_actions[0:bayes_search.total_num_search])
+
+
+main()

@@ -12,17 +12,14 @@ import numpy
 
 def load_descriptor():
     with open("desc.dat", "r") as f:
-        ndata = int(f.readline())
-        filename = [""]*ndata
-        descriptor = numpy.zeros((ndata, 3), numpy.float_)
-        for idata in range(ndata):
-            line = f.readline()
-            filename[idata] = line.split()[0]
-            descriptor[idata, 0] = float(line.split()[1])
-            descriptor[idata, 1] = float(line.split()[2])
-            descriptor[idata, 2] = 1.0 / descriptor[idata, 0]
+        lines = f.readlines()
+        filename = []
+        descriptor = []
+        for line in lines:
+            filename.append(line.split()[0])
+            descriptor.append(numpy.array(line.split()[1:], dtype=numpy.float_))
 
-    return descriptor, filename
+    return numpy.array(descriptor), filename
 
 
 def load_result(num_action):
@@ -31,7 +28,7 @@ def load_result(num_action):
     for i_action in range(num_action):
         if os.path.isfile(str(num_action) + "/dos.dat"):
             action.append(int(i_action))
-            with open(str(num_action) + "/dos.dat", 'w') as f:
+            with open(str(num_action) + "/dos.dat", 'r') as f:
                 result.append(float(f.readline()))
 
     return numpy.array(action), numpy.array(result)
@@ -92,7 +89,9 @@ def qsub_action(file_name, i_action):
     #
     with open("scf.sh", 'w') as f:
         print("#!/bin/sh -e", file=f)
+        print("#PBS -l nodes=1:ppn=28", file=f)
         print("#PBS -l walltime=8:00:00", file=f)
+        print("#PBS -n", file=f)
         print("source ~/.bashrc", file=f)
         print("mkdir $PBS_O_WORKDIR/%d" % i_action, file=f)
         print("cd $PBS_O_WORKDIR/%d" % i_action, file=f)
@@ -172,3 +171,6 @@ def main():
                                      simulator=None, score='EI', interval=0, num_rand_basis=0)
     for i_action in action:
         qsub_action(filename[i_action], i_action)
+
+
+main()

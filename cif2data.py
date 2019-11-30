@@ -84,3 +84,6 @@ def main():
                        + re.sub("\D", "", cif_file)+".xsf"
             print("Write to "+xsf_file)
             structure2.to(fmt="xsf", filename=xsf_file)
+
+
+main()

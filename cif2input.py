@@ -43,3 +43,6 @@ def main():
     structure.remove_oxidation_states()
 
     structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel)
+
+
+main()

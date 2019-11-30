@@ -8,7 +8,6 @@ import numpy
 
 def main():
 
-    matcher = StructureMatcher()
     args = sys.argv
     #
     # Read All files specified as command-line arguments
@@ -42,3 +41,6 @@ def main():
             continue
         #
         print(cif_file[0:len(cif_file) - 4], structure2.volume, structure2.lattice.abc, structure2.lattice.angles)
+
+
+main()

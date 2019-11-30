@@ -61,3 +61,6 @@ def main():
                     structure2.to(fmt="xsf", filename=xsf_file)
             else:
                 print("Not converged.")
+
+
+main()
