@@ -16,7 +16,7 @@ def load_descriptor():
         filename = []
         descriptor = []
         for line in lines:
-            filename.append(line.split()[0])
+            filename.append(str(line.split()[0]))
             descriptor.append(numpy.array(line.split()[1:], dtype=numpy.float_))
 
     return numpy.array(descriptor), filename
@@ -29,8 +29,8 @@ def load_result():
         action = []
         result = []
         for line in lines:
-            action.append(line.split()[0])
-            result.append(line.split()[1])
+            action.append(int(line.split()[0]))
+            result.append(float(line.split()[1]))
 
     return numpy.array(action), numpy.array(result)
 
@@ -159,7 +159,7 @@ def main():
     #
     # Read previous result
     #
-    action, result = load_result(len(descriptor))
+    action, result = load_result()
     if len(action) == 0:
         random_search = policy.random_search(max_num_probes=5, simulator=Simulator())
     else:

@@ -16,7 +16,7 @@ def load_descriptor():
         filename = []
         descriptor = []
         for line in lines:
-            filename.append(line.split()[0])
+            filename.append(str(line.split()[0]))
             descriptor.append(numpy.array(line.split()[1:], dtype=numpy.float_))
 
     return numpy.array(descriptor), filename
