@@ -10,24 +10,36 @@ import subprocess
 import numpy
 
 
-def load_data():
+def load_descriptor():
     with open("desc.dat", "r") as f:
         ndata = int(f.readline())
-        filename0 = [""]*ndata
-        descriptor0 = numpy.zeros((ndata, 3), numpy.float_)
+        filename = [""]*ndata
+        descriptor = numpy.zeros((ndata, 3), numpy.float_)
         for idata in range(ndata):
             line = f.readline()
-            filename0[idata] = line.split()[0]
-            descriptor0[idata, 0] = float(line.split()[1])
-            descriptor0[idata, 1] = float(line.split()[2])
-            descriptor0[idata, 2] = 1.0 / descriptor0[idata, 0]
+            filename[idata] = line.split()[0]
+            descriptor[idata, 0] = float(line.split()[1])
+            descriptor[idata, 1] = float(line.split()[2])
+            descriptor[idata, 2] = 1.0 / descriptor[idata, 0]
 
-    return descriptor0, filename0
+    return descriptor, filename
+
+
+def load_result(num_action):
+    action = []
+    result = []
+    for i_action in range(num_action):
+        if os.path.isfile(str(num_action) + "/dos.dat"):
+            action.append(int(i_action))
+            with open(str(num_action) + "/dos.dat", 'w') as f:
+                result.append(float(f.readline()))
+
+    return numpy.array(action), numpy.array(result)
 
 
 class Simulator:
     def __init__(self):
-        _, self.filename = load_data()
+        _, self.filename = load_descriptor()
 
     def __call__(self, action):
 
@@ -140,20 +152,21 @@ class Simulator:
         return dos
 
 
-descriptor, filename = load_data()
-descriptor = combo.misc.centering(descriptor)
-policy = combo.search.discrete.policy(test_X=descriptor)
-policy.set_seed(1)
-random_search = policy.random_search(max_num_probes=5, simulator=Simulator())
-bayes_search = policy.bayes_search(max_num_probes=30, simulator=Simulator(), score='TS',
-                                   interval=1, num_rand_basis=5000)
+def main():
+    descriptor, filename = load_descriptor()
+    descriptor = combo.misc.centering(descriptor)
+    policy = combo.search.discrete.policy(test_X=descriptor)
+    policy.set_seed(1)
+    random_search = policy.random_search(max_num_probes=5, simulator=Simulator())
+    bayes_search = policy.bayes_search(max_num_probes=30, simulator=Simulator(), score='TS',
+                                       interval=1, num_rand_basis=5000)
 
-print('f(x)=')
-print(bayes_search.fx[0:bayes_search.total_num_search])
-best_fx, best_action = bayes_search.export_all_sequence_best_fx()
-print('current best')
-print(best_fx)
-print('current best action=')
-print(best_action)
-print('history of chosen actions=')
-print(bayes_search.chosed_actions[0:bayes_search.total_num_search])
+    print('f(x)=')
+    print(bayes_search.fx[0:bayes_search.total_num_search])
+    best_fx, best_action = bayes_search.export_all_sequence_best_fx()
+    print('current best')
+    print(best_fx)
+    print('current best action=')
+    print(best_action)
+    print('history of chosen actions=')
+    print(bayes_search.chosed_actions[0:bayes_search.total_num_search])

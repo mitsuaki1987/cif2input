@@ -8,8 +8,7 @@ import numpy
 import re
 
 
-if __name__ == '__main__':
-
+def main():
     matcher = StructureMatcher()
     args = sys.argv
     #

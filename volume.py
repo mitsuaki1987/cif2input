@@ -6,7 +6,7 @@ from pymatgen.analysis.structure_matcher import StructureMatcher
 import numpy
 
 
-if __name__ == '__main__':
+def main():
 
     matcher = StructureMatcher()
     args = sys.argv

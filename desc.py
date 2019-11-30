@@ -7,8 +7,7 @@ import numpy
 from pymatgen.core.periodic_table import get_el_sp
 
 
-if __name__ == '__main__':
-
+def main():
     valence_dict = {
         "H": 0,
         "He": 0,

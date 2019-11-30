@@ -3,8 +3,8 @@ import sys
 import pymatgen
 from structure2input import structure2input
 
-if __name__ == '__main__':
 
+def main():
     args = sys.argv
     if len(args) < 2:
         print("Usage:")
