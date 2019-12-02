@@ -5,7 +5,6 @@ import seekpath
 from pymatgen.core.periodic_table import get_el_sp
 from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict
 from xml.etree import ElementTree
-import combo
 import subprocess
 import numpy
 
@@ -22,26 +21,13 @@ def load_descriptor():
     return numpy.array(descriptor), filename
 
 
-def load_result():
+def run_calculation(file_names):
 
-    with open("dos.dat", "r") as f:
-        lines = f.readlines()
-        action = []
-        result = []
-        for line in lines:
-            action.append(int(line.split()[0]))
-            result.append(float(line.split()[1]))
+    ii = 0
 
-    return numpy.array(action), numpy.array(result)
+    for filename in file_names:
 
-
-class Simulator:
-    def __init__(self):
-        _, self.filename = load_descriptor()
-
-    def __call__(self, action):
-
-        structure = pymatgen.Structure.from_file(self.filename[action[0]])
+        structure = pymatgen.Structure.from_file(filename)
         structure.remove_oxidation_states()
         frac_coord2 = numpy.array(structure.frac_coords)
         for ipos in range(len(frac_coord2)):
@@ -84,9 +70,10 @@ class Simulator:
         #
         # SCF file
         #
-        with open("scf.in", 'w') as f:
+        with open("scf" + str(ii) + ".in", 'w') as f:
             print("&CONTROL", file=f)
             print(" calculation = \'scf\'", file=f)
+            print(" prefix = \'%s\'" % str(ii), file=f)
             print("/", file=f)
             print("&SYSTEM", file=f)
             print("       ibrav = 0", file=f)
@@ -114,12 +101,13 @@ class Simulator:
         #
         # Run DFT
         #
-        subprocess.call("mpirun -hostfile $PBS_NODEFILE ~/bin/pw.x -nk 28 -in scf.in > scf.out", shell=True)
+        subprocess.call("mpirun -hostfile $PBS_NODEFILE ~/bin/pw.x -nk 28 -in scf%d.in > scf%d.out"
+                        % (ii, ii), shell=True)
         # subprocess.call("mpirun -np 2 ~/bin/pw.x -nk 2 -in scf.in > scf.out", shell=True)
         #
         # Extract DOS
         #
-        xmlfile = os.path.join("pwscf.save/", 'data-file-schema.xml')
+        xmlfile = os.path.join(str(ii) + ".save/", 'data-file-schema.xml')
         tree = ElementTree.parse(xmlfile)
         root = tree.getroot()
         child = root.find('output').find('band_structure')
@@ -127,8 +115,9 @@ class Simulator:
         #
         # DOS file
         #
-        with open("dos.in", 'w') as f:
+        with open("dos" + str(ii) + ".in", 'w') as f:
             print("&DOS", file=f)
+            print("    prefix = \'%s\'" % str(ii), file=f)
             print("      emin = %f" % efermi, file=f)
             print("      emax = %f" % efermi, file=f)
             print("    deltae = 0.1", file=f)
@@ -137,45 +126,24 @@ class Simulator:
         #
         # Run DOS
         #
-        subprocess.call("mpirun -n 1 ~/bin/dos.x -in dos.in > dos.out", shell=True)
-        # subprocess.call("mpirun -np 2 ~/bin/dos.x -in dos.in > dos.out", shell=True)
+        subprocess.call("mpirun -n 1 ~/bin/dos.x -in dos%d.in > dos%d.out" % (ii, ii), shell=True)
         #
-        with open("pwscf.dos", "r") as f:
+        with open(str(ii) + ".dos", "r") as f:
             f.readline()
             line = f.readline()
             dos = float(line.split()[1]) / float(nat)
         #
         with open("dos.dat", "a") as f:
-            print(action[0], dos, self.filename[action[0]], file=f)
+            print(ii, dos, filename, file=f)
         #
-        return dos
+        ii += 1
 
 
 def main():
     descriptor, filename = load_descriptor()
-    descriptor = combo.misc.centering(descriptor)
-    policy = combo.search.discrete.policy(test_X=descriptor)
-    policy.set_seed(1)
     #
     # Read previous result
     #
-    action, result = load_result()
-    if len(action) == 0:
-        random_search = policy.random_search(max_num_probes=5, simulator=Simulator())
-    else:
-        policy.write(action, result)
-    bayes_search = policy.bayes_search(max_num_probes=30, simulator=Simulator(), score='EI',
-                                       interval=1, num_rand_basis=5000)
-
-    print('f(x)=')
-    print(bayes_search.fx[0:bayes_search.total_num_search])
-    best_fx, best_action = bayes_search.export_all_sequence_best_fx()
-    print('current best')
-    print(best_fx)
-    print('current best action=')
-    print(best_action)
-    print('history of chosen actions=')
-    print(bayes_search.chosed_actions[0:bayes_search.total_num_search])
-
+    run_calculation(filename)
 
 main()
