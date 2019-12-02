@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 import combo
 import subprocess
 import numpy
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
 def load_descriptor():
@@ -82,11 +83,21 @@ class Simulator:
             if nk[ii] == 0:
                 nk[ii] = 1
         #
+        # Number of k in IBZ
+        #
+        structure2 = pymatgen.Structure(skp["primitive_lattice"],
+                                        skp["primitive_types"],
+                                        skp["primitive_positions"])
+        spg_analysis = SpacegroupAnalyzer(structure2)
+        coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
+        n_proc = min(28, coarse)
+        #
         # SCF file
         #
-        with open("scf.in", 'w') as f:
+        with open("scf" + str(action[0]) + ".in", 'w') as f:
             print("&CONTROL", file=f)
             print(" calculation = \'scf\'", file=f)
+            print(" prefix = \'%s\'" % str(action[0]), file=f)
             print("/", file=f)
             print("&SYSTEM", file=f)
             print("       ibrav = 0", file=f)
@@ -114,12 +125,12 @@ class Simulator:
         #
         # Run DFT
         #
-        subprocess.call("mpirun -hostfile $PBS_NODEFILE ~/bin/pw.x -nk 28 -in scf.in > scf.out", shell=True)
-        # subprocess.call("mpirun -np 2 ~/bin/pw.x -nk 2 -in scf.in > scf.out", shell=True)
+        subprocess.call("mpirun -hostfile $PBS_NODEFILE -np %d ~/bin/pw.x -nk %d -in scf%d.in > scf%d.out"
+                        % (n_proc, n_proc, action[0], action[0]), shell=True)
         #
         # Extract DOS
         #
-        xmlfile = os.path.join("pwscf.save/", 'data-file-schema.xml')
+        xmlfile = os.path.join(str(action[0]) + ".save/", 'data-file-schema.xml')
         tree = ElementTree.parse(xmlfile)
         root = tree.getroot()
         child = root.find('output').find('band_structure')
@@ -127,8 +138,9 @@ class Simulator:
         #
         # DOS file
         #
-        with open("dos.in", 'w') as f:
+        with open("dos" + str(action[0]) + ".in", 'w') as f:
             print("&DOS", file=f)
+            print("    prefix = \'%s\'" % str(action[0]), file=f)
             print("      emin = %f" % efermi, file=f)
             print("      emax = %f" % efermi, file=f)
             print("    deltae = 0.1", file=f)
@@ -137,16 +149,17 @@ class Simulator:
         #
         # Run DOS
         #
-        subprocess.call("mpirun -n 1 ~/bin/dos.x -in dos.in > dos.out", shell=True)
-        # subprocess.call("mpirun -np 2 ~/bin/dos.x -in dos.in > dos.out", shell=True)
+        subprocess.call("mpirun -np 1 ~/bin/dos.x -in dos%d.in > dos%d.out" % (action[0], action[0]), shell=True)
         #
-        with open("pwscf.dos", "r") as f:
+        with open(str(action[0]) + ".dos", "r") as f:
             f.readline()
             line = f.readline()
             dos = float(line.split()[1]) / float(nat)
         #
         with open("dos.dat", "a") as f:
             print(action[0], dos, self.filename[action[0]], file=f)
+        #
+        subprocess.call("rm -rf %d.save" % action, shell=True)
         #
         return dos
 

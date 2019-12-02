@@ -7,6 +7,7 @@ from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict
 from xml.etree import ElementTree
 import subprocess
 import numpy
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
 def load_descriptor():
@@ -68,6 +69,15 @@ def run_calculation(file_names):
             if nk[ii] == 0:
                 nk[ii] = 1
         #
+        # Number of k in IBZ
+        #
+        structure2 = pymatgen.Structure(skp["primitive_lattice"],
+                                        skp["primitive_types"],
+                                        skp["primitive_positions"])
+        spg_analysis = SpacegroupAnalyzer(structure2)
+        coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
+        n_proc = min(28, coarse)
+        #
         # SCF file
         #
         with open("scf" + str(action) + ".in", 'w') as f:
@@ -101,9 +111,8 @@ def run_calculation(file_names):
         #
         # Run DFT
         #
-        subprocess.call("mpirun -hostfile $PBS_NODEFILE ~/bin/pw.x -nk 28 -in scf%d.in > scf%d.out"
-                        % (action, action), shell=True)
-        # subprocess.call("mpirun -np 2 ~/bin/pw.x -nk 2 -in scf.in > scf.out", shell=True)
+        subprocess.call("mpirun -hostfile $PBS_NODEFILE -np %d ~/bin/pw.x -nk %d -in scf%d.in > scf%d.out"
+                        % (n_proc, n_proc, action, action), shell=True)
         #
         # Extract DOS
         #
@@ -126,7 +135,7 @@ def run_calculation(file_names):
         #
         # Run DOS
         #
-        subprocess.call("mpirun -n 1 ~/bin/dos.x -in dos%d.in > dos%d.out" % (action, action), shell=True)
+        subprocess.call("mpirun -np 1 ~/bin/dos.x -in dos%d.in > dos%d.out" % (action, action), shell=True)
         #
         with open(str(action) + ".dos", "r") as f:
             f.readline()
@@ -135,6 +144,8 @@ def run_calculation(file_names):
         #
         with open("dos.dat", "a") as f:
             print(action, dos, filename, file=f)
+        #
+        subprocess.call("rm -rf %d.save" % action, shell=True)
         #
         action += 1
 
