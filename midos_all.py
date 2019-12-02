@@ -76,7 +76,7 @@ def run_calculation(file_names):
                                         skp["primitive_positions"])
         spg_analysis = SpacegroupAnalyzer(structure2)
         coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
-        n_proc = min(28, coarse)
+        n_proc = min(28, len(coarse))
         #
         # SCF file
         #
