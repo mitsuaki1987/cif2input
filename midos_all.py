@@ -23,7 +23,7 @@ def load_descriptor():
 
 def run_calculation(file_names):
 
-    ii = 0
+    action = 0
 
     for filename in file_names:
 
@@ -70,10 +70,10 @@ def run_calculation(file_names):
         #
         # SCF file
         #
-        with open("scf" + str(ii) + ".in", 'w') as f:
+        with open("scf" + str(action) + ".in", 'w') as f:
             print("&CONTROL", file=f)
             print(" calculation = \'scf\'", file=f)
-            print(" prefix = \'%s\'" % str(ii), file=f)
+            print(" prefix = \'%s\'" % str(action), file=f)
             print("/", file=f)
             print("&SYSTEM", file=f)
             print("       ibrav = 0", file=f)
@@ -102,12 +102,12 @@ def run_calculation(file_names):
         # Run DFT
         #
         subprocess.call("mpirun -hostfile $PBS_NODEFILE ~/bin/pw.x -nk 28 -in scf%d.in > scf%d.out"
-                        % (ii, ii), shell=True)
+                        % (action, action), shell=True)
         # subprocess.call("mpirun -np 2 ~/bin/pw.x -nk 2 -in scf.in > scf.out", shell=True)
         #
         # Extract DOS
         #
-        xmlfile = os.path.join(str(ii) + ".save/", 'data-file-schema.xml')
+        xmlfile = os.path.join(str(action) + ".save/", 'data-file-schema.xml')
         tree = ElementTree.parse(xmlfile)
         root = tree.getroot()
         child = root.find('output').find('band_structure')
@@ -115,9 +115,9 @@ def run_calculation(file_names):
         #
         # DOS file
         #
-        with open("dos" + str(ii) + ".in", 'w') as f:
+        with open("dos" + str(action) + ".in", 'w') as f:
             print("&DOS", file=f)
-            print("    prefix = \'%s\'" % str(ii), file=f)
+            print("    prefix = \'%s\'" % str(action), file=f)
             print("      emin = %f" % efermi, file=f)
             print("      emax = %f" % efermi, file=f)
             print("    deltae = 0.1", file=f)
@@ -126,17 +126,17 @@ def run_calculation(file_names):
         #
         # Run DOS
         #
-        subprocess.call("mpirun -n 1 ~/bin/dos.x -in dos%d.in > dos%d.out" % (ii, ii), shell=True)
+        subprocess.call("mpirun -n 1 ~/bin/dos.x -in dos%d.in > dos%d.out" % (action, action), shell=True)
         #
-        with open(str(ii) + ".dos", "r") as f:
+        with open(str(action) + ".dos", "r") as f:
             f.readline()
             line = f.readline()
             dos = float(line.split()[1]) / float(nat)
         #
         with open("dos.dat", "a") as f:
-            print(ii, dos, filename, file=f)
+            print(action, dos, filename, file=f)
         #
-        ii += 1
+        action += 1
 
 
 def main():
