@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import sys
 import seekpath
 import glob
 import pymatgen
@@ -9,13 +8,14 @@ import re
 
 
 def main():
+    with open("list.txt", "r") as f:
+        files = f.readlines()
     matcher = StructureMatcher()
-    args = sys.argv
     #
     # Read All files specified as command-line arguments
     #
-    for ifile in range(len(args)-1):
-        cif_file = args[ifile+1]
+    for cif_file in files:
+        cif_file = cif_file.strip("\n")
         print("Reading "+cif_file+" ... ", end="")
         #
         # PyMatGen structure from CIF file
@@ -80,8 +80,10 @@ def main():
         #
         if not known:
             #
-            xsf_file = structure2.formula.replace(" ", "")+"_"+skp['spacegroup_international'].replace("/", "%")+'_' \
-                       + re.sub("\D", "", cif_file)+".xsf"
+            xsf_file = ""
+            for spc in structure2.composition.elements:
+                xsf_file += str(spc) + "_" + str(structure2.species.count(spc))
+            xsf_file += "-" + re.sub("\D", "", cif_file.split("/")[-1])+".xsf"
             print("Write to "+xsf_file)
             structure2.to(fmt="xsf", filename=xsf_file)
 
