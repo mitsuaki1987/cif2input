@@ -5,6 +5,7 @@ import pymatgen
 from pymatgen.analysis.structure_matcher import StructureMatcher
 import numpy
 import re
+import seekpath.hpkot
 
 
 def main():
@@ -24,6 +25,9 @@ def main():
             structure = pymatgen.Structure.from_file(cif_file)
         except ValueError:
             print("Invalid structure.")
+            continue
+        except AssertionError:
+            print("Invalid data.")
             continue
         #
         # Remove oxidation state. Excepting "D" (deuterium)
@@ -52,6 +56,12 @@ def main():
                                             skp["primitive_types"], skp["primitive_positions"])
         except AttributeError:
             print("Fractional occupancy, may be disordered.")
+            continue
+        except seekpath.hpkot.SymmetryDetectionError:
+            print("Except seekpath.hpkot.SymmetryDetection: Spglib could not detect the symmetry of the system")
+            continue
+        except ValueError:
+            print("Problem creating primitive cell, I found the following group of atoms with len != 1: (0, 5)")
             continue
         #
         # Number of atoms
