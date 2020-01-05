@@ -4,110 +4,111 @@ import seekpath
 import pymatgen
 import numpy
 from pymatgen.core.periodic_table import get_el_sp
+import math
 
 
 def main():
     valence_dict = {
-        "H": 0,
-        "He": 0,
-        "Li": 1,
-        "Be": 1.5,
-        "B": 3,
-        "C": 0,
-        "N": 1,
-        "O": -0.125,
-        "F": -0.5,
-        "Ne": 0,
-        "Na": 1,
-        "Mg": 2,
-        "Al": 3,
-        "Si": 0.5,
-        "P": 0.833333,
-        "S": 1.42857,
-        "Cl": 3.125,
-        "Ar": 0,
-        "K": 1,
-        "Ca": 2,
-        "Sc": 3,
-        "Ti": 3,
-        "V": 2.8,
-        "Cr": 2.75,
-        "Mn": 3,
-        "Fe": 2.75,
-        "Co": 1,
-        "Ni": 1.66667,
-        "Cu": 1.5,
-        "Zn": 2,
-        "Ga": 3,
-        "Ge": 3,
-        "As": 1.66667,
-        "Se": 2.66667,
-        "Br": 2.5,
-        "Kr": 2,
-        "Rb": 1,
-        "Sr": 2,
-        "Y": 3,
-        "Zr": 2,
-        "Nb": 3,
-        "Mo": 3.33333,
-        "Tc": 3,
-        "Ru": 3,
-        "Rh": 2.5,
-        "Pd": 3,
-        "Ag": 1.5,
-        "Cd": 2,
-        "In": 2,
-        "Sn": 3,
-        "Sb": 1.66667,
-        "Te": 2.5,
-        "I": 2.5,
-        "Xe": 4,
-        "Cs": 1,
-        "Ba": 2,
-        "La": 3,
-        "Ce": 3.5,
-        "Pr": 3.5,
-        "Nd": 3,
-        "Pm": 3,
-        "Sm": 2.5,
-        "Eu": 2.5,
-        "Gd": 3,
-        "Tb": 3.5,
-        "Dy": 3,
-        "Ho": 3,
-        "Er": 3,
-        "Tm": 2.5,
-        "Yb": 2.5,
-        "Lu": 3,
-        "Hf": 4,
-        "Ta": 5,
-        "W": 3.33333,
-        "Re": 3.71429,
-        "Os": 3,
-        "Ir": 2.14286,
-        "Pt": 2,
-        "Au": 2,
-        "Hg": 1.5,
-        "Tl": 2,
-        "Pb": 2,
-        "Bi": 4,
-        "Po": 2.5,
-        "At": 3,
-        "Rn": 5,
-        "Fr": 1.5,
-        "Ra": 2,
-        "Ac": 3,
-        "Th": 4,
-        "Pa": 4.5,
-        "U": 4.5,
-        "Np": 5,
-        "Pu": 4.5,
-        "Am": 4.5,
-        "Cm": 3.5,
-        "Bk": 3.5,
-        "Cf": 3,
-        "Es": 3,
-        "Fm": 3,
+        "H":  [1,  0, 0, 0],
+        "He": [1,  0, 0, 0],
+        "Li": [2,  1, 0, 0],
+        "Be": [2,  2, 0, 0],
+        "B":  [2,  3, 0, 0],
+        "C":  [2,  4, 0, 0],
+        "N":  [2, -3, 0, 0],
+        "O":  [2, -2, 0, 0],
+        "F":  [2, -1, 0, 0],
+        "Ne": [2,  0, 0, 0],
+        "Na": [3,  1, 0, 0],
+        "Mg": [3,  2, 0, 0],
+        "Al": [3,  3, 0, 0],
+        "Si": [3,  4, 0, 0],
+        "P":  [3, -3, 0, 0],
+        "S":  [3, -2, 0, 0],
+        "Cl": [3, -1, 0, 0],
+        "Ar": [3,  0, 0, 0],
+        "K":  [4,  1, 0, 0],
+        "Ca": [4,  2, 0, 0],
+        "Sc": [4,  2, 1, 0],
+        "Ti": [4,  2, 2, 0],
+        "V":  [4,  2, 3, 0],
+        "Cr": [4,  2, 4, 0],
+        "Mn": [4,  2, 5, 0],
+        "Fe": [4,  2, 6, 0],
+        "Co": [4,  2, 7, 0],
+        "Ni": [4,  2, 8, 0],
+        "Cu": [4,  1, 0, 0],
+        "Zn": [4,  2, 0, 0],
+        "Ga": [4,  3, 0, 0],
+        "Ge": [4,  4, 0, 0],
+        "As": [4, -3, 0, 0],
+        "Se": [4, -2, 0, 0],
+        "Br": [4, -1, 0, 0],
+        "Kr": [4,  0, 0, 0],
+        "Rb": [5,  1, 0, 0],
+        "Sr": [5,  2, 0, 0],
+        "Y":  [5,  2, 1, 0],
+        "Zr": [5,  2, 2, 0],
+        "Nb": [5,  2, 3, 0],
+        "Mo": [5,  2, 4, 0],
+        "Tc": [5,  2, 5, 0],
+        "Ru": [5,  2, 6, 0],
+        "Rh": [5,  2, 7, 0],
+        "Pd": [5,  2, 8, 0],
+        "Ag": [5,  1, 0, 0],
+        "Cd": [5,  2, 0, 0],
+        "In": [5,  3, 0, 0],
+        "Sn": [5,  4, 0, 0],
+        "Sb": [5, -3, 0, 0],
+        "Te": [5, -2, 0, 0],
+        "I":  [5, -1, 0, 0],
+        "Xe": [5,  0, 0, 0],
+        "Cs": [6,  1, 0, 0],
+        "Ba": [6,  2, 0, 0],
+        "La": [6,  2, 1, 0],
+        "Ce": [6,  2, 1, 1],
+        "Pr": [6,  2, 0, 3],
+        "Nd": [6,  2, 0, 4],
+        "Pm": [6,  2, 0, 5],
+        "Sm": [6,  2, 0, 6],
+        "Eu": [6,  2, 0, 7],
+        "Gd": [6,  2, 0, 8],
+        "Tb": [6,  2, 0, 9],
+        "Dy": [6,  2, 0, 10],
+        "Ho": [6,  2, 0, 11],
+        "Er": [6,  2, 0, 12],
+        "Tm": [6,  2, 0, 13],
+        "Yb": [6,  2, 0, 0],
+        "Lu": [6,  2, 1, 0],
+        "Hf": [6,  2, 2, 0],
+        "Ta": [6,  2, 3, 0],
+        "W":  [6,  2, 4, 0],
+        "Re": [6,  2, 5, 0],
+        "Os": [6,  2, 6, 0],
+        "Ir": [6,  2, 7, 0],
+        "Pt": [6,  2, 8, 0],
+        "Au": [6,  1, 0, 0],
+        "Hg": [6,  2, 0, 0],
+        "Tl": [6,  3, 0, 0],
+        "Pb": [6,  4, 0, 0],
+        "Bi": [6, -3, 0, 0],
+        "Po": [6, -2, 0, 0],
+        "At": [6, -1, 0, 0],
+        "Rn": [6,  0, 0, 0],
+        "Fr": [7,  1, 0, 0],
+        "Ra": [7,  2, 0, 0],
+        "Ac": [7,  2, 1, 0],
+        "Th": [7,  2, 1, 1],
+        "Pa": [7,  2, 0, 3],
+        "U":  [7,  2, 0, 4],
+        "Np": [7,  2, 0, 5],
+        "Pu": [7,  2, 0, 6],
+        "Am": [7,  2, 0, 7],
+        "Cm": [7,  2, 0, 8],
+        "Bk": [7,  2, 0, 9],
+        "Cf": [7,  2, 0, 10],
+        "Es": [7,  2, 0, 11],
+        "Fm": [7,  2, 0, 12],
     }
 
     args = sys.argv
@@ -149,16 +150,32 @@ def main():
         #
         vol = structure2.volume / float(nat)
         #
-        # density : 1 / Volume
-        #
-        density = 1.0 / vol
-        #
         # oxidization : Average oxidization
+        # d-electron
         #
-        oxidization = 0
+        period = 0.0
+        num_e_d = 0.0
+        oxidization_ave = 0.0
         for iat in atom:
-            oxidization += valence_dict[iat]
-        oxidization /= float(nat)
+            period += valence_dict[iat][0]
+            oxidization_ave += valence_dict[iat][1] \
+                + valence_dict[iat][2] \
+                + valence_dict[iat][3]
+            num_e_d += valence_dict[iat][2]
+        period /= float(nat)
+        oxidization_ave /= float(nat)
+        num_e_d /= float(nat)
+        #
+        # oxidization : Variance
+        #
+        oxidization_var = 0
+        for iat in atom:
+            oxidization_var += (oxidization_ave
+                                - valence_dict[iat][1]
+                                - valence_dict[iat][2]
+                                - valence_dict[iat][3])**2
+        oxidization_var /= float(nat)
+        oxidization_var = math.sqrt(oxidization_var)
         #
         # distance_min : Minimum distance
         #
@@ -170,8 +187,15 @@ def main():
             for iat in range(nat):
                 for jat in range(iat+1, nat):
                     distance_min = min(distance_min, distance_matrix[iat, jat])
-
-        print(cif_file, vol, density, oxidization, distance_min)
+        
+        print(cif_file,
+              vol, vol**2, 1.0/vol, 1.0/vol**2,
+              period, period**2, 1.0/period, 1.0/period**2,
+              num_e_d, num_e_d**2,
+              oxidization_ave, oxidization_ave**2,
+              oxidization_var, oxidization_var**2,
+              distance_min, distance_min**2, 1.0/distance_min, 1.0/distance_min**2
+              )
 
 
 main()

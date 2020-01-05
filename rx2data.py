@@ -56,7 +56,7 @@ def main():
                 #
                 if not known:
                     #
-                    xsf_file = rx_file[0:len(rx_file) - 9] + ".xsf"
+                    xsf_file = rx_file + ".xsf"
                     print("Write to " + xsf_file)
                     structure2.to(fmt="xsf", filename=xsf_file)
             else:

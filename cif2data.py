@@ -9,20 +9,29 @@ import seekpath.hpkot
 
 
 def main():
+    #
+    # Collect known structures
+    #
+    known_structures = []
+    for known_file in glob.glob("*.xsf"):
+        known_structures.append(pymatgen.Structure.from_file(known_file))
+    print("Number of known structure : ", len(known_structures))
+    #
     with open("list.txt", "r") as f:
         files = f.readlines()
     matcher = StructureMatcher()
     #
     # Read All files specified as command-line arguments
     #
-    for cif_file in files:
-        cif_file = cif_file.strip("\n")
-        print("Reading "+cif_file+" ... ", end="")
+    for input_file in files:
+        input_file = input_file.strip("\n")
+        print("Reading "+input_file+" ... ", end="")
         #
         # PyMatGen structure from CIF file
         #
         try:
-            structure = pymatgen.Structure.from_file(cif_file)
+            structure = pymatgen.Structure.from_file(input_file)
+            structure.merge_sites(tol=0.01, mode="average")
         except ValueError:
             print("Invalid structure.")
             continue
@@ -64,25 +73,12 @@ def main():
             print("Problem creating primitive cell, I found the following group of atoms with len != 1: (0, 5)")
             continue
         #
-        # Number of atoms
-        #
-        # nat_cut = 10
-        # if structure2.num_sites > nat_cut:
-        #     print("Number of atoms > " + str(nat_cut))
-        #     continue
-        #
-        #
-        #
-        # dismat = structure2.distance_matrix
-        # print(structure2.species)
-        #
         # This structure is the same or not as the known structures
         #
         known = False
-        for xsf_file in glob.glob("*.xsf"):
-            known_structure = pymatgen.Structure.from_file(xsf_file)
+        for known_structure in known_structures:
             if matcher.fit(structure2, known_structure):
-                print("Same as " + xsf_file)
+                print("Same as known structure")
                 known = True
                 break
         #
@@ -90,12 +86,15 @@ def main():
         #
         if not known:
             #
-            xsf_file = ""
-            for spc in structure2.composition.elements:
-                xsf_file += str(spc) + "_" + str(structure2.species.count(spc))
-            xsf_file += "-" + re.sub("\D", "", cif_file.split("/")[-1])+".xsf"
-            print("Write to "+xsf_file)
-            structure2.to(fmt="xsf", filename=xsf_file)
+            output_file = re.sub(" ", "", str(structure2.composition.alphabetical_formula))
+            #
+            if input_file.split(".")[-1] == "xsf":
+                output_file += "-" + re.sub("\D", "", input_file.split("-")[-1]) + ".xsf"
+            else:
+                output_file += "-" + re.sub("\D", "", input_file.split("/")[-1])+".xsf"
+            print("Write to "+output_file)
+            structure2.to(fmt="xsf", filename=output_file)
+            known_structures.append(structure2)
 
 
 main()

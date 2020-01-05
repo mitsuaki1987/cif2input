@@ -39,9 +39,12 @@ def main():
             action = policy.bayes_search(max_num_probes=1, num_search_each_probe=1, simulator=None,
                                          score='EI', interval=0, num_rand_basis=0)
         result = simulator(action)
-        policy.write(action, result)
+        if result < 1.0e-5:
+            policy.delete_actions(action)
+        else:
+            policy.write(action, result)
         print(i_action, action[0], result[0],
-              numpy.max(policy.history.fx[0:policy.history.total_num_search]),
+              # numpy.max(policy.history.fx[0:policy.history.total_num_search]),
               file=f
               )
     f.close()
