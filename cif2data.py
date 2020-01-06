@@ -31,7 +31,6 @@ def main():
         #
         try:
             structure = pymatgen.Structure.from_file(input_file)
-            structure.merge_sites(tol=0.01, mode="average")
         except ValueError:
             print("Invalid structure.")
             continue
@@ -63,6 +62,8 @@ def main():
                                                [pymatgen.Element(str(spc)).number for spc in structure.species]))
             structure2 = pymatgen.Structure(skp["primitive_lattice"],
                                             skp["primitive_types"], skp["primitive_positions"])
+            if len(skp["primitive_types"]) != 1:
+                structure2.merge_sites(tol=0.01, mode="average")
         except AttributeError:
             print("Fractional occupancy, may be disordered.")
             continue
