@@ -10,13 +10,6 @@ import seekpath.hpkot
 
 def main():
     #
-    # Collect known structures
-    #
-    known_structures = []
-    for known_file in glob.glob("*.xsf"):
-        known_structures.append(pymatgen.Structure.from_file(known_file))
-    print("Number of known structure : ", len(known_structures))
-    #
     with open("list.txt", "r") as f:
         files = f.readlines()
     matcher = StructureMatcher()
@@ -74,12 +67,16 @@ def main():
             print("Problem creating primitive cell, I found the following group of atoms with len != 1: (0, 5)")
             continue
         #
+        output_file = re.sub(" ", "", str(structure2.composition.alphabetical_formula))
+        #
         # This structure is the same or not as the known structures
         #
         known = False
-        for known_structure in known_structures:
+        print("Debug ", glob.glob(output_file + "-*.xsf"), " ... ", end="")
+        for known_file in glob.glob(output_file + "-*.xsf"):
+            known_structure = pymatgen.Structure.from_file(known_file)
             if matcher.fit(structure2, known_structure):
-                print("Same as known structure")
+                print("Same as " + known_file)
                 known = True
                 break
         #
@@ -87,15 +84,12 @@ def main():
         #
         if not known:
             #
-            output_file = re.sub(" ", "", str(structure2.composition.alphabetical_formula))
-            #
             if input_file.split(".")[-1] == "xsf":
                 output_file += "-" + re.sub("\D", "", input_file.split("-")[-1]) + ".xsf"
             else:
                 output_file += "-" + re.sub("\D", "", input_file.split("/")[-1])+".xsf"
             print("Write to "+output_file)
             structure2.to(fmt="xsf", filename=output_file)
-            known_structures.append(structure2)
 
 
 main()
