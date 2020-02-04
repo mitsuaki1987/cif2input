@@ -47,16 +47,27 @@ def main():
         atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
         typ = set(atom)
         ntyp = len(typ)
+        if nat > 100:
+            print("Too many atoms in ", input_file)
+            continue
         #
         # WFC and Rho cutoff
         #
         ecutwfc = 0.0
         ecutrho = 0.0
+        unsupported_element = False
         for ityp in typ:
-            if ecutwfc < ecutwfc_dict[str(ityp)]:
-                ecutwfc = ecutwfc_dict[str(ityp)]
-            if ecutrho < ecutrho_dict[str(ityp)]:
-                ecutrho = ecutrho_dict[str(ityp)]
+            if str(ityp) in ecutwfc_dict:
+                if ecutwfc < ecutwfc_dict[str(ityp)]:
+                    ecutwfc = ecutwfc_dict[str(ityp)]
+                if ecutrho < ecutrho_dict[str(ityp)]:
+                    ecutrho = ecutrho_dict[str(ityp)]
+            else:
+                unsupported_element = True
+                print("Unsupported element in ", input_file)
+                break
+        if unsupported_element:
+            continue
         #
         # k grid
         #
