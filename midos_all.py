@@ -10,25 +10,23 @@ import numpy
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
-def load_descriptor():
-    with open("desc.dat", "r") as f:
-        lines = f.readlines()
-        filename = []
-        descriptor = []
-        for line in lines:
-            filename.append(str(line.split()[0]))
-            descriptor.append(numpy.array(line.split()[1:], dtype=numpy.float_))
-
-    return numpy.array(descriptor), filename
+def clean(prefix):
+    subprocess.call("rm -rf %s.save %s.dos %s.xml %s.wfc* %s.mix*"
+                    % (prefix, prefix, prefix, prefix, prefix), shell=True)
 
 
-def run_calculation(file_names):
-
-    action = 0
-
-    for filename in file_names:
-
-        structure = pymatgen.Structure.from_file(filename)
+def main():
+    #
+    with open("list.txt", "r") as f:
+        input_list = f.readlines()
+    #
+    # Read previous result
+    #
+    for input_file in input_list:
+        #
+        input_file = input_file.strip("\n")
+        #
+        structure = pymatgen.Structure.from_file(input_file)
         structure.remove_oxidation_states()
         frac_coord2 = numpy.array(structure.frac_coords)
         for ipos in range(len(frac_coord2)):
@@ -78,12 +76,18 @@ def run_calculation(file_names):
         coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
         n_proc = min(28, len(coarse))
         #
+        prefix = input_file.split("/")[-1].split(".")[0]
+        scf_input = "scf_" + prefix + ".in"
+        scf_output = "scf_" + prefix + ".out"
+        dos_input = "dos_" + prefix + ".in"
+        dos_output = "dos_" + prefix + ".out"
+        #
         # SCF file
         #
-        with open("scf" + str(action) + ".in", 'w') as f:
+        with open(scf_input, 'w') as f:
             print("&CONTROL", file=f)
             print(" calculation = \'scf\'", file=f)
-            print(" prefix = \'%s\'" % str(action), file=f)
+            print(" prefix = \'%s\'" % prefix, file=f)
             print("/", file=f)
             print("&SYSTEM", file=f)
             print("       ibrav = 0", file=f)
@@ -95,6 +99,7 @@ def run_calculation(file_names):
             print("/", file=f)
             print("&ELECTRONS", file=f)
             print(" mixing_beta = 0.3", file=f)
+            print(" conv_thr = %e" % (float(nat)*1.0e-7), file=f)
             print("/", file=f)
             print("CELL_PARAMETERS angstrom", file=f)
             for ii in range(3):
@@ -111,12 +116,17 @@ def run_calculation(file_names):
         #
         # Run DFT
         #
-        subprocess.call("mpirun -hostfile $PBS_NODEFILE -np %d ~/bin/pw.x -nk %d -in scf%d.in > scf%d.out"
-                        % (n_proc, n_proc, action, action), shell=True)
+        try:
+            subprocess.check_call("mpirun -hostfile $PBS_NODEFILE -np %d ~/bin/pw.x -nk %d -in %s > %s"
+                                  % (n_proc, n_proc, scf_input, scf_output), shell=True)
+        except subprocess.CalledProcessError:
+            print("SCF error in ", prefix)
+            clean(prefix)
+            continue
         #
         # Extract DOS
         #
-        xmlfile = os.path.join(str(action) + ".save/", 'data-file-schema.xml')
+        xmlfile = os.path.join(prefix + ".save/", 'data-file-schema.xml')
         tree = ElementTree.parse(xmlfile)
         root = tree.getroot()
         child = root.find('output').find('band_structure')
@@ -124,9 +134,9 @@ def run_calculation(file_names):
         #
         # DOS file
         #
-        with open("dos" + str(action) + ".in", 'w') as f:
+        with open(dos_input, 'w') as f:
             print("&DOS", file=f)
-            print("    prefix = \'%s\'" % str(action), file=f)
+            print("    prefix = \'%s\'" % prefix, file=f)
             print("      emin = %f" % efermi, file=f)
             print("      emax = %f" % efermi, file=f)
             print("    deltae = 0.1", file=f)
@@ -135,26 +145,22 @@ def run_calculation(file_names):
         #
         # Run DOS
         #
-        subprocess.call("mpirun -np 1 ~/bin/dos.x -in dos%d.in > dos%d.out" % (action, action), shell=True)
+        try:
+            subprocess.check_call("mpirun -np 1 ~/bin/dos.x -in %s > %s" % (dos_input, dos_output), shell=True)
+        except subprocess.CalledProcessError:
+            print("DOS error in ", prefix)
+            clean(prefix)
+            continue
         #
-        with open(str(action) + ".dos", "r") as f:
+        with open(prefix + ".dos", "r") as f:
             f.readline()
             line = f.readline()
             dos = float(line.split()[1]) / float(nat)
         #
-        with open("dos.dat", "a") as f:
-            print(action, dos, filename, file=f)
+        with open("dos_" + prefix + ".dat", "a") as f:
+            print(dos, file=f)
         #
-        subprocess.call("rm -rf %d.save" % action, shell=True)
-        #
-        action += 1
+        clean(prefix)
 
-
-def main():
-    descriptor, filename = load_descriptor()
-    #
-    # Read previous result
-    #
-    run_calculation(filename)
 
 main()
