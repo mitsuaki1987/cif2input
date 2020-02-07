@@ -6,6 +6,7 @@ from pymatgen.analysis.structure_matcher import StructureMatcher
 import numpy
 import re
 import seekpath.hpkot
+import CifFile
 
 
 def main():
@@ -24,6 +25,12 @@ def main():
         #
         try:
             structure = pymatgen.Structure.from_file(input_file)
+            if input_file.split(".")[-1] == "cif":
+                cf = CifFile.ReadCif(input_file)
+                attached_hydrogens = cf.get_all("_atom_site_attached_hydrogens")
+                if attached_hydrogens != ['0'] and attached_hydrogens != [] and attached_hydrogens != ['.']:
+                    print("Implicit hydrogen.", attached_hydrogens)
+                    continue
         except ValueError:
             print("Invalid structure.")
             continue
