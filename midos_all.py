@@ -25,6 +25,12 @@ def main():
     for input_file in input_list:
         #
         input_file = input_file.strip("\n")
+        prefix = input_file.split("/")[-1].split(".")[0]
+        dos_file = 0
+        if os.path.isfile("dos_" + prefix + ".dat"):
+            dos_file = os.path.getsize("dos_" + prefix + ".dat")
+        if dos_file == 0:
+            continue
         #
         structure = pymatgen.Structure.from_file(input_file)
         structure.remove_oxidation_states()
@@ -48,7 +54,7 @@ def main():
         typ = set(atom)
         ntyp = len(typ)
         if nat > 100:
-            print("Too many atoms in ", input_file)
+            print("Too many atoms in ", prefix)
             continue
         #
         # WFC and Rho cutoff
@@ -64,7 +70,7 @@ def main():
                     ecutrho = ecutrho_dict[str(ityp)]
             else:
                 unsupported_element = True
-                print("Unsupported element in ", input_file)
+                print("Unsupported element in ", prefix)
                 break
         if unsupported_element:
             continue
@@ -87,7 +93,6 @@ def main():
         coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
         n_proc = min(28, len(coarse))
         #
-        prefix = input_file.split("/")[-1].split(".")[0]
         scf_input = "scf_" + prefix + ".in"
         scf_output = "scf_" + prefix + ".out"
         dos_input = "dos_" + prefix + ".in"
@@ -168,7 +173,7 @@ def main():
             line = f.readline()
             dos = float(line.split()[1]) / float(nat)
         #
-        with open("dos_" + prefix + ".dat", "a") as f:
+        with open("dos_" + prefix + ".dat", "w") as f:
             print(dos, file=f)
         #
         clean(prefix)
