@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 import subprocess
 import numpy
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+import sys
 
 
 def clean(prefix):
@@ -17,7 +18,8 @@ def clean(prefix):
 
 def main():
     #
-    with open("list.txt", "r") as f:
+    args = sys.argv
+    with open(str(args[1]), "r") as f:
         input_list = f.readlines()
     #
     # Read previous result
