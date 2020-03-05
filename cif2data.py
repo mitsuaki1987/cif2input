@@ -51,6 +51,9 @@ def main():
             except IndexError:
                 print("No chemical formula.")
                 continue
+            except ValueError:
+                print("Invalid chemical formula string.")
+                continue
             formula_data = str(structure.composition.hill_formula).split(" ")
             formula_input_dict = {re.sub("[^a-zA-Z]", "", chem):
                                   1.0 if re.sub("[a-zA-Z]", "", chem) == "" else float(re.sub("[a-zA-Z]", "", chem))
