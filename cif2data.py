@@ -51,13 +51,14 @@ def main():
             except IndexError:
                 print("No chemical formula.")
                 continue
+            formula_data = str(structure.composition.hill_formula).split(" ")
+            try:
+                formula_input_dict = {re.sub("[^a-zA-Z]", "", chem):
+                                      1.0 if re.sub("[a-zA-Z]", "", chem) == "" else float(re.sub("[a-zA-Z]", "", chem))
+                                      for chem in formula_input}
             except ValueError:
                 print("Invalid chemical formula string.")
                 continue
-            formula_data = str(structure.composition.hill_formula).split(" ")
-            formula_input_dict = {re.sub("[^a-zA-Z]", "", chem):
-                                  1.0 if re.sub("[a-zA-Z]", "", chem) == "" else float(re.sub("[a-zA-Z]", "", chem))
-                                  for chem in formula_input}
             formula_data_dict = {re.sub("[^a-zA-Z]", "", chem):
                                  1.0 if re.sub("[a-zA-Z]", "", chem) == "" else float(re.sub("[a-zA-Z]", "", chem))
                                  for chem in formula_data}
