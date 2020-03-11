@@ -31,7 +31,8 @@ def main():
         dos_file = 0
         if os.path.isfile("dos_" + prefix + ".dat"):
             dos_file = os.path.getsize("dos_" + prefix + ".dat")
-        if dos_file == 0:
+        if dos_file != 0:
+            print("already done", prefix)
             continue
         #
         structure = pymatgen.Structure.from_file(input_file)
