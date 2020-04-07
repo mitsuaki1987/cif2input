@@ -1,7 +1,7 @@
 import os
 
 
-def write_ph(nq, ecutwfc, nbnd):
+def write_ph(nq, ecutrho, nbnd):
     #
     # ph.in : Phonon
     #
@@ -113,7 +113,7 @@ def write_ph(nq, ecutwfc, nbnd):
             print("     nci = 10", file=f)
             print("  laddxc = 0", file=f)
             print("     lsf = 1", file=f)
-            print(" ecutwfc = %f" % ecutwfc, file=f)
+            print(" ecutfock = %f" % ecutrho * 0.25, file=f)
             print("     nq1 = %d" % nq[0], file=f)
             print("     nq2 = %d" % nq[1], file=f)
             print("     nq3 = %d" % nq[2], file=f)

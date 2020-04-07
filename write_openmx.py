@@ -23,7 +23,7 @@ def write_openmx(skp, nq, rel):
         print("System.Name          openmx", file=f)
         print("level.of.stdout      1 #1-3", file=f)
         print("level.of.fileout     0 #0-2", file=f)
-        print("data.path     ../DFT_DATA13/", file=f)
+        print("data.path     ../DFT_DATA19/", file=f)
         print("HS.fileout     off   # on|off", file=f)
         print("scf.restart     off", file=f)
         #
@@ -225,6 +225,7 @@ def write_openmx(skp, nq, rel):
         print("Dos.fileout      off", file=f)
         print("Dos.Erange       -20.0  20.0", file=f)
         print("Dos.Kgrid     %d %d %d" % (nq[0] * 4, nq[1] * 4, nq[2] * 4), file=f)
+        print("FermiSurfer.fileout         on", file=f)
         print("OpticalConductivity.fileout    off", file=f)
         #
         print("#", file=f)

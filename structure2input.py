@@ -113,7 +113,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel):
     #
     # ph.in, elph.in, epmat.in, phdos.in, rpa.in, scdft.in
     #
-    write_ph(nq, ecutwfc, nbnd)
+    write_ph(nq, ecutrho, nbnd)
     #
     # bands.in, pp.in, proj.in, pw2wan.in, q2r.in
     #
