@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 import combo
 import numpy
+import sys
 
 
-def load_data():
-    with open("mi.dat", "r") as f:
+def load_data(filename):
+    with open(filename, "r") as f:
         lines = f.readlines()
         result = []
         descriptor = []
@@ -16,16 +17,18 @@ def load_data():
 
 
 class Simulator:
-    def __init__(self):
-        _, self.result = load_data()
+    def __init__(self, filename):
+        _, self.result = load_data(filename)
 
     def __call__(self, action):
         return self.result[action]
 
 
 def main():
-    descriptor, _ = load_data()
-    simulator = Simulator()
+    args = sys.argv
+
+    descriptor, exact = load_data(args[1])
+    simulator = Simulator(args[1])
     descriptor = combo.misc.centering(descriptor)
     policy = combo.search.discrete.policy(test_X=descriptor)
     policy.set_seed(3)
@@ -44,11 +47,36 @@ def main():
         else:
             policy.write(action, result)
         print(i_action, action[0], result[0],
-              # numpy.max(policy.history.fx[0:policy.history.total_num_search]),
+              numpy.max(policy.history.fx[0:policy.history.total_num_search]),
               file=f
               )
     f.close()
-    print(numpy.sort(policy.history.chosed_actions[0:policy.history.total_num_search]))
+    #
+    # Print regression and error
+    #
+    X_train = numpy.array(descriptor[policy.history.chosed_actions[0:policy.history.total_num_search], :])
+    y_train = numpy.array(exact[policy.history.chosed_actions[0:policy.history.total_num_search]])
+
+    cov = combo.gp.cov.gauss(X_train.shape[1], ard=False)
+    mean = combo.gp.mean.const()
+    lik = combo.gp.lik.gauss()
+    gp = combo.gp.model(lik=lik, mean=mean, cov=cov)
+    config = combo.misc.set_config()
+    gp.fit(X_train, y_train, config)
+    gp.prepare(X_train, y_train)
+    fmean = gp.get_post_fmean(X_train, descriptor)
+    fcov = gp.get_post_fcov(X_train, descriptor)
+
+    with open("combo.dat", mode="w") as f:
+        for i in range(len(exact)):
+            print(exact[i], fmean[i], numpy.sqrt(fcov[i]), file=f)
+
+    fmean = gp.get_post_fmean(X_train, X_train)
+    fcov = gp.get_post_fcov(X_train, X_train)
+
+    with open("combo2.dat", mode="w") as f:
+        for i in range(len(y_train)):
+            print(y_train[i], fmean[i], numpy.sqrt(fcov[i]), file=f)
 
 
 main()

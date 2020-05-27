@@ -113,7 +113,7 @@ def write_ph(nq, ecutrho, nbnd):
             print("     nci = 10", file=f)
             print("  laddxc = 0", file=f)
             print("     lsf = 1", file=f)
-            print(" ecutfock = %f" % ecutrho * 0.25, file=f)
+            print(" ecutfock = %f" % (ecutrho * 0.25), file=f)
             print("     nq1 = %d" % nq[0], file=f)
             print("     nq2 = %d" % nq[1], file=f)
             print("     nq3 = %d" % nq[2], file=f)

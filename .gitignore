@@ -4,3 +4,4 @@ __pycache__/
 cif2input.pyproj
 cif2input.sln
 .vs/
+*.x

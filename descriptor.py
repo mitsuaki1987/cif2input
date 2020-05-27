@@ -9,118 +9,120 @@ import math
 
 def main():
     valence_dict = {
-        "H":  [1,  0, 0, 0],
-        "He": [1,  0, 0, 0],
-        "Li": [2,  1, 0, 0],
-        "Be": [2,  2, 0, 0],
-        "B":  [2,  3, 0, 0],
-        "C":  [2,  4, 0, 0],
-        "N":  [2, -3, 0, 0],
-        "O":  [2, -2, 0, 0],
-        "F":  [2, -1, 0, 0],
-        "Ne": [2,  0, 0, 0],
-        "Na": [3,  1, 0, 0],
-        "Mg": [3,  2, 0, 0],
-        "Al": [3,  3, 0, 0],
-        "Si": [3,  4, 0, 0],
-        "P":  [3, -3, 0, 0],
-        "S":  [3, -2, 0, 0],
-        "Cl": [3, -1, 0, 0],
-        "Ar": [3,  0, 0, 0],
-        "K":  [4,  1, 0, 0],
-        "Ca": [4,  2, 0, 0],
-        "Sc": [4,  2, 1, 0],
-        "Ti": [4,  2, 2, 0],
-        "V":  [4,  2, 3, 0],
-        "Cr": [4,  2, 4, 0],
-        "Mn": [4,  2, 5, 0],
-        "Fe": [4,  2, 6, 0],
-        "Co": [4,  2, 7, 0],
-        "Ni": [4,  2, 8, 0],
-        "Cu": [4,  1, 0, 0],
-        "Zn": [4,  2, 0, 0],
-        "Ga": [4,  3, 0, 0],
-        "Ge": [4,  4, 0, 0],
-        "As": [4, -3, 0, 0],
-        "Se": [4, -2, 0, 0],
-        "Br": [4, -1, 0, 0],
-        "Kr": [4,  0, 0, 0],
-        "Rb": [5,  1, 0, 0],
-        "Sr": [5,  2, 0, 0],
-        "Y":  [5,  2, 1, 0],
-        "Zr": [5,  2, 2, 0],
-        "Nb": [5,  2, 3, 0],
-        "Mo": [5,  2, 4, 0],
-        "Tc": [5,  2, 5, 0],
-        "Ru": [5,  2, 6, 0],
-        "Rh": [5,  2, 7, 0],
-        "Pd": [5,  2, 8, 0],
-        "Ag": [5,  1, 0, 0],
-        "Cd": [5,  2, 0, 0],
-        "In": [5,  3, 0, 0],
-        "Sn": [5,  4, 0, 0],
-        "Sb": [5, -3, 0, 0],
-        "Te": [5, -2, 0, 0],
-        "I":  [5, -1, 0, 0],
-        "Xe": [5,  0, 0, 0],
-        "Cs": [6,  1, 0, 0],
-        "Ba": [6,  2, 0, 0],
-        "La": [6,  2, 1, 0],
-        "Ce": [6,  2, 1, 1],
-        "Pr": [6,  2, 0, 3],
-        "Nd": [6,  2, 0, 4],
-        "Pm": [6,  2, 0, 5],
-        "Sm": [6,  2, 0, 6],
-        "Eu": [6,  2, 0, 7],
-        "Gd": [6,  2, 0, 8],
-        "Tb": [6,  2, 0, 9],
-        "Dy": [6,  2, 0, 10],
-        "Ho": [6,  2, 0, 11],
-        "Er": [6,  2, 0, 12],
-        "Tm": [6,  2, 0, 13],
-        "Yb": [6,  2, 0, 0],
-        "Lu": [6,  2, 1, 0],
-        "Hf": [6,  2, 2, 0],
-        "Ta": [6,  2, 3, 0],
-        "W":  [6,  2, 4, 0],
-        "Re": [6,  2, 5, 0],
-        "Os": [6,  2, 6, 0],
-        "Ir": [6,  2, 7, 0],
-        "Pt": [6,  2, 8, 0],
-        "Au": [6,  1, 0, 0],
-        "Hg": [6,  2, 0, 0],
-        "Tl": [6,  3, 0, 0],
-        "Pb": [6,  4, 0, 0],
-        "Bi": [6, -3, 0, 0],
-        "Po": [6, -2, 0, 0],
-        "At": [6, -1, 0, 0],
-        "Rn": [6,  0, 0, 0],
-        "Fr": [7,  1, 0, 0],
-        "Ra": [7,  2, 0, 0],
-        "Ac": [7,  2, 1, 0],
-        "Th": [7,  2, 1, 1],
-        "Pa": [7,  2, 0, 3],
-        "U":  [7,  2, 0, 4],
-        "Np": [7,  2, 0, 5],
-        "Pu": [7,  2, 0, 6],
-        "Am": [7,  2, 0, 7],
-        "Cm": [7,  2, 0, 8],
-        "Bk": [7,  2, 0, 9],
-        "Cf": [7,  2, 0, 10],
-        "Es": [7,  2, 0, 11],
-        "Fm": [7,  2, 0, 12],
+        "H":  [1,  0,  0, 0],
+        "He": [1,  0,  0, 0],
+        "Li": [2,  1,  0, 0],
+        "Be": [2,  2,  0, 0],
+        "B":  [2,  3,  0, 0],
+        "C":  [2,  4,  0, 0],
+        "N":  [2, -3,  0, 0],
+        "O":  [2, -2,  0, 0],
+        "F":  [2, -1,  0, 0],
+        "Ne": [2,  0,  0, 0],
+        "Na": [3,  1,  0, 0],
+        "Mg": [3,  2,  0, 0],
+        "Al": [3,  3,  0, 0],
+        "Si": [3,  4,  0, 0],
+        "P":  [3, -3,  0, 0],
+        "S":  [3, -2,  0, 0],
+        "Cl": [3, -1,  0, 0],
+        "Ar": [3,  0,  0, 0],
+        "K":  [4,  1,  0, 0],
+        "Ca": [4,  2,  0, 0],
+        "Sc": [4,  2,  1, 0],
+        "Ti": [4,  2,  2, 0],
+        "V":  [4,  2,  3, 0],
+        "Cr": [4,  2,  4, 0],
+        "Mn": [4,  2,  5, 0],
+        "Fe": [4,  2,  6, 0],
+        "Co": [4,  2,  7, 0],
+        "Ni": [4,  2,  8, 0],
+        "Cu": [4,  2,  9, 0],
+        "Zn": [4,  2, 10, 0],
+        "Ga": [4,  3,  0, 0],
+        "Ge": [4,  4,  0, 0],
+        "As": [4, -3,  0, 0],
+        "Se": [4, -2,  0, 0],
+        "Br": [4, -1,  0, 0],
+        "Kr": [4,  0,  0, 0],
+        "Rb": [5,  1,  0, 0],
+        "Sr": [5,  2,  0, 0],
+        "Y":  [5,  2,  1, 0],
+        "Zr": [5,  2,  2, 0],
+        "Nb": [5,  2,  3, 0],
+        "Mo": [5,  2,  4, 0],
+        "Tc": [5,  2,  5, 0],
+        "Ru": [5,  2,  6, 0],
+        "Rh": [5,  2,  7, 0],
+        "Pd": [5,  2,  8, 0],
+        "Ag": [5,  2,  9, 0],
+        "Cd": [5,  2, 10, 0],
+        "In": [5,  3,  0, 0],
+        "Sn": [5,  4,  0, 0],
+        "Sb": [5, -3,  0, 0],
+        "Te": [5, -2,  0, 0],
+        "I":  [5, -1,  0, 0],
+        "Xe": [5,  0,  0, 0],
+        "Cs": [6,  1,  0, 0],
+        "Ba": [6,  2,  0, 0],
+        "La": [6,  2,  1, 0],
+        "Ce": [6,  2,  1, 1],
+        "Pr": [6,  2,  0, 3],
+        "Nd": [6,  2,  0, 4],
+        "Pm": [6,  2,  0, 5],
+        "Sm": [6,  2,  0, 6],
+        "Eu": [6,  2,  0, 7],
+        "Gd": [6,  2,  0, 8],
+        "Tb": [6,  2,  0, 9],
+        "Dy": [6,  2,  0, 10],
+        "Ho": [6,  2,  0, 11],
+        "Er": [6,  2,  0, 12],
+        "Tm": [6,  2,  0, 13],
+        "Yb": [6,  2,  0, 14],
+        "Lu": [6,  2,  1, 0],
+        "Hf": [6,  2,  2, 0],
+        "Ta": [6,  2,  3, 0],
+        "W":  [6,  2,  4, 0],
+        "Re": [6,  2,  5, 0],
+        "Os": [6,  2,  6, 0],
+        "Ir": [6,  2,  7, 0],
+        "Pt": [6,  2,  8, 0],
+        "Au": [6,  2,  9, 0],
+        "Hg": [6,  2, 10, 0],
+        "Tl": [6,  3,  0, 0],
+        "Pb": [6,  4,  0, 0],
+        "Bi": [6, -3,  0, 0],
+        "Po": [6, -2,  0, 0],
+        "At": [6, -1,  0, 0],
+        "Rn": [6,  0,  0, 0],
+        "Fr": [7,  1,  0, 0],
+        "Ra": [7,  2,  0, 0],
+        "Ac": [7,  2,  1, 0],
+        "Th": [7,  2,  1, 1],
+        "Pa": [7,  2,  0, 3],
+        "U":  [7,  2,  0, 4],
+        "Np": [7,  2,  0, 5],
+        "Pu": [7,  2,  0, 6],
+        "Am": [7,  2,  0, 7],
+        "Cm": [7,  2,  0, 8],
+        "Bk": [7,  2,  0, 9],
+        "Cf": [7,  2,  0, 10],
+        "Es": [7,  2,  0, 11],
+        "Fm": [7,  2,  0, 12],
     }
 
     args = sys.argv
+    with open(str(args[1]), "r") as f:
+        input_list = f.readlines()
     #
     # Read All files specified as command-line arguments
     #
-    for ifile in range(len(args)-1):
-        cif_file = args[ifile+1]
+    for input_file in input_list:
+        input_file = input_file.strip("\n")
         #
         # PyMatGen structure from CIF file
         #
-        structure = pymatgen.Structure.from_file(cif_file)
+        structure = pymatgen.Structure.from_file(input_file)
         structure.remove_oxidation_states()
         #
         # Refine 3-folded Wyckoff position
@@ -150,32 +152,36 @@ def main():
         #
         vol = structure2.volume / float(nat)
         #
-        # oxidization : Average oxidization
-        # d-electron
+        # Average : oxidization, d-electron, period
         #
-        period = 0.0
-        num_e_d = 0.0
-        oxidization_ave = 0.0
+        ave_period = 0.0
+        ave_num_d = 0.0
+        ave_oxidization = 0.0
         for iat in atom:
-            period += valence_dict[iat][0]
-            oxidization_ave += valence_dict[iat][1] \
+            ave_period += valence_dict[iat][0]
+            ave_num_d += valence_dict[iat][2]
+            ave_oxidization += valence_dict[iat][1] \
                 + valence_dict[iat][2] \
                 + valence_dict[iat][3]
-            num_e_d += valence_dict[iat][2]
-        period /= float(nat)
-        oxidization_ave /= float(nat)
-        num_e_d /= float(nat)
+        ave_period /= float(nat)
+        ave_num_d /= float(nat)
+        ave_oxidization /= float(nat)
         #
-        # oxidization : Variance
+        # Variance : oxidization, d-electron, period
         #
-        oxidization_var = 0
+        var_period = 0.0
+        var_num_d = 0.0
+        var_oxidization = 0.0
         for iat in atom:
-            oxidization_var += (oxidization_ave
+            var_period += (ave_period - valence_dict[iat][0])**2
+            var_num_d += (ave_num_d - valence_dict[iat][2])**2
+            var_oxidization += (ave_oxidization
                                 - valence_dict[iat][1]
                                 - valence_dict[iat][2]
                                 - valence_dict[iat][3])**2
-        oxidization_var /= float(nat)
-        oxidization_var = math.sqrt(oxidization_var)
+        var_period = math.sqrt(var_period / float(nat))
+        var_num_d = math.sqrt(var_num_d / float(nat))
+        var_oxidization = math.sqrt(var_oxidization / float(nat))
         #
         # distance_min : Minimum distance
         #
@@ -188,13 +194,12 @@ def main():
                 for jat in range(iat+1, nat):
                     distance_min = min(distance_min, distance_matrix[iat, jat])
         
-        print(cif_file,
-              vol, vol**2, 1.0/vol, 1.0/vol**2,
-              period, period**2, 1.0/period, 1.0/period**2,
-              num_e_d, num_e_d**2,
-              oxidization_ave, oxidization_ave**2,
-              oxidization_var, oxidization_var**2,
-              distance_min, distance_min**2, 1.0/distance_min, 1.0/distance_min**2
+        print(input_file,
+              vol, ave_period, ave_num_d, ave_oxidization, var_period, var_num_d, var_oxidization, distance_min,
+              vol**2, ave_period**2, ave_num_d**2, ave_oxidization**2,
+              var_period**2, var_num_d**2, var_oxidization**2, distance_min**2,
+              1.0/vol, 1.0/ave_period, 1.0/distance_min,
+              1.0/vol**2, 1.0/ave_period**2, 1.0/distance_min**2
               )
 
 
