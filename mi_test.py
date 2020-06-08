@@ -26,21 +26,37 @@ class Simulator:
 
 def main():
     args = sys.argv
+    if len(args) < 2:
+        print("Usage:")
+        print("$ mi_test.py result-desc-file [rand_seed] [max_action] [max_rand]")
+        print("Default:")
+        print("$ cif2input.py result-desc-file 1 200 10")
+        exit(0)
 
-    descriptor, exact = load_data(args[1])
-    simulator = Simulator(args[1])
+    rand_seed = 1
+    max_action = 200
+    max_rand = 10
+    result_desc = args[1]
+    if len(args) > 2:
+        rand_seed = int(args[2])
+        if len(args) > 3:
+            max_action = int(args[3])
+            if len(args) > 4:
+                max_rand = int(args[4])
+
+    descriptor, exact = load_data(result_desc)
+    simulator = Simulator(result_desc)
     descriptor = combo.misc.centering(descriptor)
     policy = combo.search.discrete.policy(test_X=descriptor)
-    policy.set_seed(3)
+    policy.set_seed(rand_seed)
     #
     f = open("history.dat", 'w')
-    max_action = 50
     for i_action in range(max_action):
-        if i_action < 10:
+        if i_action < max_rand:
             action = policy.random_search(max_num_probes=1, num_search_each_probe=1, simulator=None)
         else:
             action = policy.bayes_search(max_num_probes=1, num_search_each_probe=1, simulator=None,
-                                         score='EI', interval=0, num_rand_basis=0)
+                                         score='TS', interval=0, num_rand_basis=0)
         result = simulator(action)
         if result < 1.0e-5:
             policy.delete_actions(action)
@@ -48,7 +64,7 @@ def main():
             policy.write(action, result)
         print(i_action, action[0], result[0],
               numpy.max(policy.history.fx[0:policy.history.total_num_search]),
-              file=f
+              file=f, flush=True
               )
     f.close()
     #

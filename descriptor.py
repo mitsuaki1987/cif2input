@@ -8,6 +8,109 @@ import math
 
 
 def main():
+    e_ion_dict ={
+        "H": 1311.3,
+        "He": 2361.3,
+        "Li": 519.9,
+        "Be": 898.8,
+        "B": 800.2,
+        "C": 1085.7,
+        "N": 1401.5,
+        "O": 1313.1,
+        "F": 1680.0,
+        "Ne": 2079.4,
+        "Na": 495.6,
+        "Mg": 737.3,
+        "Al": 577.5,
+        "Si": 786.0,
+        "P": 1011.2,
+        "S": 999.0,
+        "Cl": 1254.9,
+        "Ar": 1519.6,
+        "K": 418.5,
+        "Ca": 589.4,
+        "Sc": 630.8,
+        "Ti": 657.8,
+        "V": 650.1,
+        "Cr": 652.4,
+        "Mn": 716.8,
+        "Fe": 759.1,
+        "Co": 758.1,
+        "Ni": 736.2,
+        "Cu": 745.0,
+        "Zn": 905.8,
+        "Ga": 578.7,
+        "Ge": 760.0,
+        "As": 946.2,
+        "Se": 940.4,
+        "Br": 1142.0,
+        "Kr": 1350.0,
+        "Rb": 402.8,
+        "Sr": 549.0,
+        "Y": 615.4,
+        "Zr": 659.7,
+        "Nb": 663.6,
+        "Mo": 684.8,
+        "Tc": 702.2,
+        "Ru": 710.3,
+        "Rh": 719.5,
+        "Pd": 803.5,
+        "Ag": 730.5,
+        "Cd": 867.5,
+        "In": 558.0,
+        "Sn": 708.2,
+        "Sb": 833.3,
+        "Te": 869.0,
+        "I": 1008.3,
+        "Xe": 1170.0,
+        "Cs": 375.5,
+        "Ba": 502.5,
+        "La": 541.1,
+        "Ce": 540.1,
+        "Pr": 526.6,
+        "Nd": 531.5,
+        "Pm": 536,
+        "Sm": 540.1,
+        "Eu": 546.9,
+        "Gd": 594.2,
+        "Tb": 569,
+        "Dy": 567,
+        "Ho": 574,
+        "Er": 581,
+        "Tm": 589,
+        "Yb": 603,
+        "Lu": 513,
+        "Hf": 575.2,
+        "Ta": 760.1,
+        "W": 769.7,
+        "Re": 759.1,
+        "Os": 819.8,
+        "Ir": 868.1,
+        "Pt": 868.1,
+        "Au": 889.3,
+        "Hg": 1006.0,
+        "Tl": 588.9,
+        "Pb": 715.2,
+        "Bi": 702.9,
+        "Po": 813.1,
+        "At": 916.3,
+        "Rn": 1036.5,
+        "Fr": 380,
+        "Ra": 509.3,
+        "Ac": 665.5,
+        "Th": 670.4,
+        "Pa": 0.0,
+        "U": 686.4,
+        "Np": 0.0,
+        "Pu": 538.3,
+        "Am": 0.0,
+        "Cm": 581,
+        "Bk": 600,
+        "Cf": 610,
+        "Es": 619,
+        "Fm": 628.5
+    }
+
     valence_dict = {
         "H":  [1,  0,  0, 0],
         "He": [1,  0,  0, 0],
@@ -193,14 +296,23 @@ def main():
             for iat in range(nat):
                 for jat in range(iat+1, nat):
                     distance_min = min(distance_min, distance_matrix[iat, jat])
-        
-        print(input_file,
-              vol, ave_period, ave_num_d, ave_oxidization, var_period, var_num_d, var_oxidization, distance_min,
-              vol**2, ave_period**2, ave_num_d**2, ave_oxidization**2,
-              var_period**2, var_num_d**2, var_oxidization**2, distance_min**2,
-              1.0/vol, 1.0/ave_period, 1.0/distance_min,
-              1.0/vol**2, 1.0/ave_period**2, 1.0/distance_min**2
-              )
 
+        desc = []
+        desc.append(vol)  # 2
+        desc.append(ave_period)  # 3
+        desc.append(ave_num_d)  # 4
+        desc.append(ave_oxidization)  # 5
+        desc.append(var_period)  # 6
+        desc.append(var_num_d)  # 7
+        desc.append(var_oxidization)  # 8
+        desc.append(distance_min)  # 9
+        
+        print(input_file, end=" ")
+        for i_desc in range(len(desc)):
+            print(desc[i_desc], end=" ")
+        for i_desc in range(len(desc)):
+            for j_desc in range(i_desc+1):
+                print(desc[i_desc]*desc[j_desc], end=" ")
+        print("")
 
 main()
