@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 import os
 import pymatgen
-import seekpath
 from pymatgen.core.periodic_table import get_el_sp
-from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict
+# from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict
+from sg15 import pseudo_dict, ecutwfc_dict, ecutrho_dict
 from xml.etree import ElementTree
 import subprocess
 import numpy
@@ -28,34 +28,14 @@ def main():
         #
         input_file = input_file.strip("\n")
         prefix = input_file.split("/")[-1].split(".")[0]
-        dos_file = 0
-        if os.path.isfile("dos_" + prefix + ".dat"):
-            dos_file = os.path.getsize("dos_" + prefix + ".dat")
-        if dos_file != 0:
-            print("already done", prefix)
-            continue
         #
         structure = pymatgen.Structure.from_file(input_file)
-        structure.remove_oxidation_states()
-        frac_coord2 = numpy.array(structure.frac_coords)
-        for ipos in range(len(frac_coord2)):
-            for iaxis in range(3):
-                coord3 = frac_coord2[ipos, iaxis] * 6.0
-                if abs(round(coord3) - coord3) < 0.001:
-                    frac_coord2[ipos, iaxis] = float(round(coord3)) / 6.0
-        #
-        skp = seekpath.get_path((structure.lattice.matrix, frac_coord2,
-                                 [pymatgen.Element(str(spc)).number for spc in structure.species]))
-        #
-        # Lattice information
-        #
-        avec = skp["primitive_lattice"]
-        bvec = skp["reciprocal_primitive_lattice"]
-        pos = skp["primitive_positions"]
-        nat = len(skp["primitive_types"])
-        atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
+        avec = structure.lattice.matrix
+        bvec = pymatgen.core.Lattice(structure.lattice.matrix).reciprocal_lattice.matrix
+        nat = structure.num_sites
+        atom = [str(get_el_sp(iat)) for iat in structure.atomic_numbers]
         typ = set(atom)
-        ntyp = len(typ)
+        ntyp = structure.ntypesp
         if nat > 100:
             print("Too many atoms in ", prefix)
             continue
@@ -89,17 +69,14 @@ def main():
         #
         # Number of k in IBZ
         #
-        structure2 = pymatgen.Structure(skp["primitive_lattice"],
-                                        skp["primitive_types"],
-                                        skp["primitive_positions"])
-        spg_analysis = SpacegroupAnalyzer(structure2)
+        spg_analysis = SpacegroupAnalyzer(structure)
         coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
-        n_proc = min(28, len(coarse))
+        n_proc = min(4, len(coarse))
         #
         scf_input = "scf_" + prefix + ".in"
         scf_output = "scf_" + prefix + ".out"
-        dos_input = "dos_" + prefix + ".in"
-        dos_output = "dos_" + prefix + ".out"
+        pdos_input = "pdos_" + prefix + ".in"
+        pdos_output = "pdos_" + prefix + ".out"
         #
         # SCF file
         #
@@ -122,21 +99,23 @@ def main():
             print("/", file=f)
             print("CELL_PARAMETERS angstrom", file=f)
             for ii in range(3):
-                print(" %f %f %f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
+                print(" %25.15e %25.15e %25.15e" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
             print("ATOMIC_SPECIES", file=f)
             for ityp in typ:
                 print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
             print("ATOMIC_POSITIONS crystal", file=f)
             for iat in range(nat):
-                print(" %s %f %f %f" % (
-                    atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
+                print(" %s %25.15e %25.15e %25.15e" % (
+                      atom[iat],
+                      structure.frac_coords[iat][0], structure.frac_coords[iat][1], structure.frac_coords[iat][2]),
+                      file=f)
             print("K_POINTS automatic", file=f)
             print(" %d %d %d 0 0 0" % (nk[0], nk[1], nk[2]), file=f)
         #
         # Run DFT
         #
         try:
-            subprocess.check_call("mpirun -hostfile $PBS_NODEFILE -np %d ~/bin/pw.x -nk %d -in %s > %s"
+            subprocess.check_call("mpiexec -n %d ~/bin/pw.x -nk %d -in %s > %s"
                                   % (n_proc, n_proc, scf_input, scf_output), shell=True)
         except subprocess.CalledProcessError:
             print("SCF error in ", prefix)
@@ -151,33 +130,25 @@ def main():
         child = root.find('output').find('band_structure')
         efermi = float(child.find('fermi_energy').text) * 13.60569228 * 2.0
         #
-        # DOS file
+        # proj.in : Read by projwfc.x
         #
-        with open(dos_input, 'w') as f:
-            print("&DOS", file=f)
-            print("    prefix = \'%s\'" % prefix, file=f)
-            print("      emin = %f" % efermi, file=f)
-            print("      emax = %f" % efermi, file=f)
-            print("    deltae = 0.1", file=f)
-            print("    bz_sum = \"tetrahedra_opt\"", file=f)
+        with open(pdos_input, 'w') as f:
+            print("&PROJWFC", file=f)
+            print(" prefix = \'%s\'" % prefix, file=f)
+            print("   emin = %f" % efermi, file=f)
+            print("   emax = %f" % efermi, file=f)
+            print(" deltae = 0.1", file=f)
             print("/", file=f)
         #
-        # Run DOS
+        # Run PDOS
         #
         try:
-            subprocess.check_call("mpirun -np 1 ~/bin/dos.x -in %s > %s" % (dos_input, dos_output), shell=True)
+            subprocess.check_call("mpiexec -n %d ~/bin/projwfc.x -nk %d -in %s > %s"
+                                  % (n_proc, n_proc, pdos_input, pdos_output), shell=True)
         except subprocess.CalledProcessError:
-            print("DOS error in ", prefix)
+            print("PDOS error in ", prefix)
             clean(prefix)
             continue
-        #
-        with open(prefix + ".dos", "r") as f:
-            f.readline()
-            line = f.readline()
-            dos = float(line.split()[1]) / float(nat)
-        #
-        with open("dos_" + prefix + ".dat", "w") as f:
-            print(dos, file=f)
         #
         clean(prefix)
 
