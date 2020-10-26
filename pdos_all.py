@@ -2,8 +2,8 @@
 import os
 import pymatgen
 from pymatgen.core.periodic_table import get_el_sp
-# from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict
-from sg15 import pseudo_dict, ecutwfc_dict, ecutrho_dict
+from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict
+# from sg15 import pseudo_dict, ecutwfc_dict, ecutrho_dict
 from xml.etree import ElementTree
 import subprocess
 import numpy
