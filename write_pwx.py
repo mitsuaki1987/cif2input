@@ -6,13 +6,13 @@ from pymatgen.core.periodic_table import get_el_sp
 def write_atom(f, avec, typ, nat, pos, atom, pseudo_dict):
     print("CELL_PARAMETERS angstrom", file=f)
     for ii in range(3):
-        print(" %f %f %f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
+        print(" %.12f %.12f %.12f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
         print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
-        print(" %s %f %f %f" % (
+        print(" %s %.12f %.12f %.12f" % (
             atom[iat], pos[iat][0], pos[iat][1], pos[iat][2]), file=f)
 
 

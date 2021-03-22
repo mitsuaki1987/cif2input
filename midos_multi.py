@@ -5,7 +5,7 @@ import seekpath
 from pymatgen.core.periodic_table import get_el_sp
 from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-import combo
+import physbo
 import subprocess
 import numpy
 
@@ -156,8 +156,8 @@ def qsub_action(file_name, i_action):
 
 def main():
     descriptor, filename = load_descriptor()
-    descriptor = combo.misc.centering(descriptor)
-    policy = combo.search.discrete.policy(test_X=descriptor)
+    descriptor = physbo.misc.centering(descriptor)
+    policy = physbo.search.discrete.policy(test_X=descriptor)
     policy.set_seed(1)
     #
     # Read previous result
