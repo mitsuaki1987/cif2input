@@ -1,4 +1,3 @@
-import os
 import math
 
 
@@ -27,7 +26,7 @@ def good_proc(nproc, ncore):
     return nproc
 
 
-def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
+def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     pw = "~/bin/pw.x"
     ph = "~/bin/ph.x"
     proj = "~/bin/projwfc.x"
@@ -38,100 +37,147 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
     sctk = "~/bin/sctk.x"
     typ = set(atom)
     #
-    if queue == "F4cpus":
-        maxnode = 4
-        ncore = 24
-    elif queue == "F4cpue":
-        maxnode = 4
-        ncore = 40
-    elif queue == "F36cpus":
-        maxnode = 36
-        ncore = 24
-    elif queue == "F9cpue":
-        maxnode = 9
-        ncore = 40
-    elif queue == "F36cpue":
-        maxnode = 36
-        ncore = 40
-    else:  # queue == "F144cpus":
-        maxnode = 144
-        ncore = 24
+    core_per_node = 0
+    maxnode = 0
+    required_node = 0
+    jobscript_queue = ""
+    jobscript_node = ""
+    jobscript_mpi = ""
+    jobscript_omp = ""
+    queue = ""
+    jobscript_time = ""
+    jobscript_workdir = ""
+    mpiexec = ""
+    #
+    nmem = npw_nbnd*nks*16.0/1.0e9
+    print("Estimated memory for WFC (GB) : ", nmem)
+    if host == "ohtaka":
+        mem_per_node = 256
+        core_per_node = 128
+        required_node = max(int(nmem / mem_per_node), 1)
+        if required_node == 1:
+            queue = "F1cpu"
+            maxnode = 1
+        elif required_node <= 4:
+            queue = "F4cpu"
+            maxnode = 4
+        elif required_node <= 16:
+            queue = "F16cpu"
+            maxnode = 16
+        elif required_node <= 36:
+            queue = "F36cpu"
+            maxnode = 36
+        elif required_node <= 72:
+            queue = "F72cpu"
+            maxnode = 72
+        elif required_node <= 144:
+            queue = "F144cpu"
+            maxnode = 144
+        else:
+            print("Too large system")
+            exit(-1)
+        jobscript_queue = "#SBATCH -p " + queue
+        jobscript_node = "#SBATCH -N "
+        jobscript_mpi = "#SBATCH -N "
+        jobscript_omp = "#SBATCH -c "
+        jobscript_time = "#SBATCH -t "
+        jobscript_workdir = "${SLURM_SUBMIT_DIR}"
+        mpiexec = "srun"
+    elif host == "enaga":
+        mem_per_node = 192
+        core_per_node = 40
+        required_node = max(int(nmem / mem_per_node), 1)
+        if required_node <= 4:
+            queue = "F4cpu"
+            maxnode = 4
+        elif required_node <= 9:
+            queue = "F9cpu"
+            maxnode = 9
+        elif required_node <= 36:
+            queue = "F36cpu"
+            maxnode = 36
+        else:
+            print("Too large system")
+            exit(-1)
+        jobscript_queue = "#QSUB –queue " + queue
+        jobscript_node = "#QSUB –node "
+        jobscript_mpi = "#QSUB –mpi "
+        jobscript_omp = "#QSUB –omp "
+        jobscript_time = "#PBS -l walltime="
+        jobscript_workdir = "${PBS_O_WORKDIR}"
+        mpiexec = "mpijob"
+    else:
+        print("Unsupported host")
+        exit(-1)
+    print("Required node :", nmem / mem_per_node)
     #
     # Structure optimization
     #
-    nk = min(ncore*maxnode, nks)
-    ntg = good_proc(int(ncore*maxnode / nk), ncore)
+    nk = min(core_per_node*maxnode, nks)
+    ntg = good_proc(int(core_per_node*maxnode / nk), core_per_node)
     nproc = nk*ntg
-    node = math.ceil(nproc / ncore)
-    if not os.path.isfile("rx.sh"):
-        with open("rx.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#PBS -l walltime=8:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in rx.in > rx_s.out"
-                  % (nproc, pw, nk, ntg), file=f)
-            print("sed -n -e '/occupations/c occupations=\"tetrahedra_opt\"' -e '1,/CELL_PARAMETERS/p' rx.in > rx_t.in",
-                  file=f)
-            print("grep -A 3 CELL_PARAMETERS rx_s.out | tail -n 3 >> rx_t.in", file=f)
-            print("awk '/ATOMIC_SPECIES/,/ATOMIC_POSITIONS/' rx.in >> rx_t.in", file=f)
-            print("grep -A %d ATOMIC_POSITIONS rx_s.out |tail -n %d >> rx_t.in" % (len(atom), len(atom)), file=f)
-            print("sed -n -e '/K_POINTS/,$p' rx.in >> rx_t.in", file=f)
-            print("sed -i -e '/occupations/c occupations=\"tetrahedra_opt\"' rx_t.in", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in rx_t.in > rx_t.out"
-                  % (nproc, pw, nk, ntg), file=f)
+    node = math.ceil(nproc / core_per_node)
+    with open("rx.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_omp, 1, file=f)
+        print(jobscript_time + "8:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd", jobscript_workdir, file=f)
+        print("#sed -n -e '1,/CELL_PARAMETERS/p' rx.in > temp", file=f)
+        print("#grep -A 3 CELL_PARAMETERS rx.out | tail -n 3 >> temp", file=f)
+        print("#awk '/ATOMIC_SPECIES/,/ATOMIC_POSITIONS/' rx.in >> temp", file=f)
+        print("#grep -A %d ATOMIC_POSITIONS rx.out |tail -n %d >> temp" % (len(atom), len(atom)), file=f)
+        print("#sed -n -e '/K_POINTS/,$p' rx.in >> temp", file=f)
+        print("#mv temp rx.in", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in rx.in > rx.out", file=f)
     #
     # Charge optimization
     #
-    if not os.path.isfile("scf.sh"):
-        with open("scf.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#PBS -l walltime=8:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in scf.in > scf.out"
-                  % (nproc, pw, nk, ntg), file=f)
+    with open("scf.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_omp, 1, file=f)
+        print(jobscript_time + "8:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd", jobscript_workdir, file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in scf.in > scf.out", file=f)
     #
     # Phonon
     #
-    if not os.path.isfile("ph.sh"):
-        with open("ph.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#PBS -l walltime=8:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in nscf_p.in > nscf_p.out"
-                  % (nproc, pw, nk, ntg), file=f)
-            #
-            # Compute number of q
-            #
-            print("sed -i -e \"/only_init/c only_init = .true.\" ph.in", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in ph.in >> ph.out"
-                  % (nproc, ph, nk, ntg), file=f)
-            print("sed -i -e \"/only_init/c only_init = .false.\" ph.in", file=f)
-            print("nq=`awk \'NR==2{print $1}\' matdyn0`" % nkcbz, file=f)
-            #
-            print("for i in `seq 1 ${nq}`; do" % nkcbz, file=f)
-            print("  test -s matdyn${i} && continue", file=f)
-            print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" ph.in", file=f)
-            print("  mpijob -n %d %s -nk %d -ntg %d -in ph.in >> ph.out"
-                  % (nproc, ph, nk, ntg), file=f)
-            print("  find ./ -name \"*.wfc*\" -delete", file=f)
-            print("done", file=f)
-            print("touch PH_DONE", file=f)
+    with open("ph.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_omp, 1, file=f)
+        print(jobscript_time + "8:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd", jobscript_workdir, file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in nscf_p.in > nscf_p.out", file=f)
+        #
+        # Compute number of q
+        #
+        print("sed -i -e \"/only_init/c only_init = .true.\" ph.in", file=f)
+        print(mpiexec, "-n", nproc, ph, "-nk", nk, "-ntg", ntg, "-in ph.in >> ph.out", file=f)
+        print("sed -i -e \"/only_init/c only_init = .false.\" ph.in", file=f)
+        print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
+        #
+        print("for i in `seq 1 ${nq}`; do", file=f)
+        print("  test -s matdyn${i} && continue", file=f)
+        print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" ph.in", file=f)
+        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-ntg", ntg, "-in ph.in >> ph.out", file=f)
+        print("  find ./ -name \"*.wfc*\" -delete", file=f)
+        print("done", file=f)
+        print("touch PH_DONE", file=f)
     #
     # Projected DOS
     #
-    nk = min(ncore*maxnode, nkd)
-    ntg = good_proc(int(ncore*maxnode / nk), ncore)
+    nk = min(core_per_node*maxnode, nkd)
+    ntg = good_proc(int(core_per_node*maxnode / nk), core_per_node)
     nproc = nk * ntg
-    node = math.ceil(nproc / ncore)
+    node = math.ceil(nproc / core_per_node)
     #
     # Atomwfc dictionary for fermi_proj.x
     #
@@ -143,176 +189,160 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, queue):
                 ii += 1
                 pfermi[iat][il].append(ii)
     #
-    if not os.path.isfile("proj.sh"):
-        with open("proj.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#PBS -l walltime=8:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in nscf.in > nscf.out"
-                  % (nproc, pw, nk, ntg), file=f)
-            print("mpijob -n 1 %s -in nscf.in > vfermi.out" % vf, file=f)
-            print("ef=`grep Fermi nscf.out| awk '{print $5}'`", file=f)
-            print("sed -i -e '/emin/c emin = '${ef}'' -e '/emax/c emax = '${ef}'' proj.in", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in proj.in > proj.out"
-                  % (nproc, proj, nk, ntg), file=f)
-            #
-            # Sum PDOS at each Atom and L
-            #
-            for ityp in typ:
-                for il in range(len(atomwfc_dict[ityp][1])):
-                    print("%s pwscf.pdos_atm*\\(%s\\)_wfc#%d* > pdos_%s%s"
-                          % (sumpdos, ityp, il+1, ityp, atomwfc_dict[ityp][1][il]), file=f)
-            #
-            # Fermi surface with atomic projection
-            #
-            for ityp in typ:
-                for il in range(len(atomwfc_dict[ityp][1])):
-                    print("sed -e '$a %d\\n" % len(pfermi[ityp][il]), end="", file=f)
-                    for ii in pfermi[ityp][il]:
-                        print(" %d" % ii, end="", file=f)
-                    print("' proj.in > proj_f.in", file=f)
-                    print("mpijob -n 1 %s -in proj_f.in" % fproj, file=f)
-                    print("mv proj.frmsf %s%s.frmsf" % (ityp, atomwfc_dict[ityp][1][il]), file=f)
+    with open("proj.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_omp, 1, file=f)
+        print(jobscript_time + "8:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd ", jobscript_workdir, file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in nscf.in > nscf.out", file=f)
+        print(mpiexec, "-n 1", vf, "-in nscf.in > vfermi.out", file=f)
+        print("ef=`grep Fermi nscf.out| awk '{print $5}'`", file=f)
+        print("sed -i -e '/emin/c emin = '${ef}'' -e '/emax/c emax = '${ef}'' proj.in", file=f)
+        print(mpiexec, "-n", nproc, proj, "-nk", nk, "-ntg", ntg, "-in proj.in > proj.out", file=f)
+        #
+        # Sum PDOS at each Atom and L
+        #
+        for ityp in typ:
+            for il in range(len(atomwfc_dict[ityp][1])):
+                print("%s pwscf.pdos_atm*\\(%s\\)_wfc#%d* > pdos_%s%s"
+                      % (sumpdos, ityp, il+1, ityp, atomwfc_dict[ityp][1][il]), file=f)
+        #
+        # Fermi surface with atomic projection
+        #
+        for ityp in typ:
+            for il in range(len(atomwfc_dict[ityp][1])):
+                print("sed -e '$a %d\\n" % len(pfermi[ityp][il]), end="", file=f)
+                for ii in pfermi[ityp][il]:
+                    print(" %d" % ii, end="", file=f)
+                print("' proj.in > proj_f.in", file=f)
+                print(mpiexec, "-n 1", fproj, "-in proj_f.in", file=f)
+                print("mv proj.frmsf " + ityp + atomwfc_dict[ityp][1][il] + ".frmsf", file=f)
     #
     # Electron-phonon
     #
-    if not os.path.isfile("elph.sh"):
-        with open("elph.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#PBS -l walltime=8:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in nscf_pd.in > nscf_pd.out"
-                  % (nproc, pw, nk, ntg), file=f)
-            print("nq=`awk \'NR==2{print $1}\' matdyn0`" % nkcbz, file=f)
-            print("for i in `seq 1 ${nq}`; do" % nkcbz, file=f)
-            print("  test -s matdyn${i}.elph.${i} && continue", file=f)
-            print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" elph.in", file=f)
-            print("  mpijob -n %d %s -nk %d -ntg %d -in elph.in >> elph.out"
-                  % (nproc, ph, nk, ntg), file=f)
-            print("  find ./ -name \"*.wfc*\" -delete", file=f)
-            print("done", file=f)
-            print("touch ELPH_DONE", file=f)
+    with open("elph.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_omp, 1, file=f)
+        print(jobscript_time + "8:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd ", jobscript_workdir, file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in nscf_pd.in > nscf_pd.out", file=f)
+        print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
+        print("for i in `seq 1 ${nq}`; do", file=f)
+        print("  test -s matdyn${i}.elph.${i} && continue", file=f)
+        print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" elph.in", file=f)
+        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-ntg", ntg, "-in elph.in >> elph.out", file=f)
+        print("  find ./ -name \"*.wfc*\" -delete", file=f)
+        print("done", file=f)
+        print("touch ELPH_DONE", file=f)
     #
     # Band
     #
-    nk = min(ncore*maxnode, nk_path)
-    ntg = good_proc(int(ncore*maxnode / nk), ncore)
+    nk = min(core_per_node*maxnode, nk_path)
+    ntg = good_proc(int(core_per_node*maxnode / nk), core_per_node)
     nproc = nk * ntg
-    node = math.ceil(nproc / ncore)
-    if not os.path.isfile("band.sh"):
-        with open("band.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#PBS -l walltime=8:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in band.in > band.out"
-                  % (nproc, pw, nk, ntg), file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in bands.in > bands.out"
-                  % (nproc, bands, nk_path, ntg), file=f)
+    node = math.ceil(nproc / core_per_node)
+    with open("band.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_omp, 1, file=f)
+        print(jobscript_time + "8:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd ", jobscript_workdir, file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk_path, "-ntg", ntg, "-in band.in > band.out", file=f)
+        print(mpiexec, "-n", nproc, bands, "-nk", nk_path, "-ntg", ntg, "-in bands.in > bands.out", file=f)
     #
     # Electron-phonon matrix
     #
-    nk = min(ncore * maxnode, nkc)
-    ntg = int(good_proc(int(ncore * maxnode / nk), ncore) / 2)
+    nk = min(core_per_node * maxnode, nkc)
+    ntg = int(good_proc(int(core_per_node * maxnode / nk), core_per_node) / 2)
     nproc = nk * ntg
-    node = math.ceil(nproc / ncore)
-    if not os.path.isfile("epmat.sh"):
-        with open("epmat.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#PBS -l walltime=8:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("bmax=`grep \"Highest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
-                  file=f)
-            print("bmin=`grep \"Lowest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
-                  file=f)
-            print("sed -i -e \"/elph_nbnd_min/c elph_nbnd_min=$bmin\" "
-                  "-e \"/elph_nbnd_max/c elph_nbnd_max=$bmax\" epmat.in", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in nscf_pc.in > nscf_pc.out"
-                  % (nproc, pw, nk, ntg), file=f)
-            print("nq=`awk \'NR==2{print $1}\' matdyn0`" % nkcbz, file=f)
-            print("for i in `seq 1 ${nq}`; do" % nkcbz, file=f)
-            print("  test -s elph${i}.dat && continue", file=f)
-            print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
-            print("  mpijob -n %d %s -nk %d -ntg %d -in epmat.in >> epmat.out"
-                  % (nproc, ph, nk, ntg), file=f)
-            print("  find ./ -name \"*.wfc*\" -delete", file=f)
-            print("done", file=f)
-            print("touch EPMAT_DONE", file=f)
+    node = math.ceil(nproc / core_per_node)
+    with open("epmat.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_omp, 1, file=f)
+        print(jobscript_time + "8:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd ", jobscript_workdir, file=f)
+        print("bmax=`grep \"Highest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
+              file=f)
+        print("bmin=`grep \"Lowest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
+              file=f)
+        print("sed -i -e \"/elph_nbnd_min/c elph_nbnd_min=$bmin\" "
+              "-e \"/elph_nbnd_max/c elph_nbnd_max=$bmax\" epmat.in", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in nscf_pc.in > nscf_pc.out", file=f)
+        print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
+        print("for i in `seq 1 ${nq}`; do", file=f)
+        print("  test -s elph${i}.dat && continue", file=f)
+        print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
+        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-ntg", ntg, "-in epmat.in >> epmat.out", file=f)
+        print("  find ./ -name \"*.wfc*\" -delete", file=f)
+        print("done", file=f)
+        print("touch EPMAT_DONE", file=f)
     #
     # Coulomb matrix
     #
-    nk = min(ncore * maxnode, nkcbz)
-    ntg = good_proc(int(ncore*maxnode / nk), ncore)
+    nk = min(core_per_node * maxnode, nkcbz)
+    ntg = good_proc(int(core_per_node*maxnode / nk), core_per_node)
     nproc = nk * ntg
-    node = math.ceil(nproc / ncore)
-    if not os.path.isfile("kel.sh"):
-        with open("kel.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#PBS -l walltime=8:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("mpijob -n %d %s -nk %d -ntg %d -in twin.in > twin.out"
-                  % (nproc, pw, nk, ntg), file=f)
-            print("export OMP_NUM_THREADS=%d" % ntg, file=f)
-            print("sed -i -e \'/calculation/c calculation = \"kel\"\' sctk.in", file=f)
-            print("nq=`awk \'NR==2{print $1}\' matdyn0`" % nkcbz, file=f)
-            print("for i in `seq 1 ${nq}`; do" % nkcbz, file=f)
-            print("  test -s vel${i}.dat && continue", file=f)
-            print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" sctk.in", file=f)
-            print("  mpijob -n %d %s -nk %d -in sctk.in >> kel.out"
-                  % (nproc, sctk, nk), file=f)
-            print("done", file=f)
-            print("touch KEL_DONE", file=f)
+    node = math.ceil(nproc / core_per_node)
+    with open("kel.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_omp, 1, file=f)
+        print(jobscript_time + "8:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd ", jobscript_workdir, file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in twin.in > twin.out", file=f)
+        print("export OMP_NUM_THREADS=%d" % ntg, file=f)
+        print("sed -i -e \'/calculation/c calculation = \"kel\"\' sctk.in", file=f)
+        print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
+        print("for i in `seq 1 ${nq}`; do", file=f)
+        print("  test -s vel${i}.dat && continue", file=f)
+        print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" sctk.in", file=f)
+        print(mpiexec, "-n", nproc, sctk, "-nk", nk, "-in sctk.in >> kel.out", file=f)
+        print("done", file=f)
+        print("touch KEL_DONE", file=f)
     #
-    # Coulomb matrix
+    # 0K calculation, lambda_mu_k, delta_f
     #
     node = maxnode
-    if not os.path.isfile("scdft0.sh"):
-        with open("scdft0.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#QSUB -mpi", node, file=f)
-            print("#QSUB -omp", ncore, file=f)
-            print("#PBS -l walltime=3:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("sed -i -e \'/calculation/c calculation = \"lambda_mu_k\"\' sctk.in", file=f)
-            print("mpijob -n %d %s -nk %d -in sctk.in > lambda_mu_k.out"
-                  % (node, sctk, node), file=f)
-            print("sed -i -e \'/calculation/c calculation = \"scdft\"\' sctk.in", file=f)
-            print("mpijob -n %d %s -nk %d -in sctk.in > scdft0.out"
-                  % (node, sctk, node), file=f)
-            print("sed -i -e \'/calculation/c calculation = \"deltaf\"\' sctk.in", file=f)
-            print("mpijob -n %d %s -nk %d -in sctk.in > deltaf.out"
-                  % (node, sctk, node), file=f)
+    with open("scdft0.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_mpi, node, file=f)
+        print(jobscript_omp, core_per_node, file=f)
+        print(jobscript_time + "3:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd ", jobscript_workdir, file=f)
+        print("sed -i -e \'/calculation/c calculation = \"lambda_mu_k\"\' sctk.in", file=f)
+        print(mpiexec, "-n", node, sctk, "-nk", node, "-in sctk.in > lambda_mu_k.out", file=f)
+        print("sed -i -e \'/calculation/c calculation = \"scdft\"\' sctk.in", file=f)
+        print(mpiexec, "-n", node, sctk, "-nk", node, "-in sctk.in > scdft0.out", file=f)
+        print("sed -i -e \'/calculation/c calculation = \"deltaf\"\' sctk.in", file=f)
+        print(mpiexec, "-n", node, sctk, "-nk", node, "-in sctk.in > deltaf.out", file=f)
     #
-    # Coulomb matrix
+    # Tc calculation
     #
     node = maxnode
-    if not os.path.isfile("scdft.sh"):
-        with open("scdft.sh", 'w') as f:
-            print("#!/bin/sh", file=f)
-            print("#QSUB -queue", queue[0:len(queue) - 1], file=f)
-            print("#QSUB -node", node, file=f)
-            print("#QSUB -mpi", node, file=f)
-            print("#QSUB -omp", ncore, file=f)
-            print("#PBS -l walltime=3:00:00", file=f)
-            print("source ~/.bashrc", file=f)
-            print("cd $PBS_O_WORKDIR", file=f)
-            print("sed -i -e \'/calculation/c calculation = \"scdft_tc\"\' sctk.in", file=f)
-            print("mpijob -n %d %s -nk %d -in sctk.in > tc.out"
-                  % (node, sctk, node), file=f)
+    with open("scdft.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_mpi, node, file=f)
+        print(jobscript_omp, core_per_node, file=f)
+        print(jobscript_time + "3:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd ", jobscript_workdir, file=f)
+        print("sed -i -e \'/calculation/c calculation = \"scdft_tc\"\' sctk.in", file=f)
+        print(mpiexec, "-n", node, sctk, "-nk", node, "-in sctk.in > tc.out", file=f)

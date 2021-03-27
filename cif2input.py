@@ -22,7 +22,7 @@ def main():
     dk_path = 0.1
     dq_grid = 0.3359385398275
     pseudo_kind = "sg15"
-    queue = "F4cpue"
+    host = "enaga"
     rel = False
     #
     if len(args) > 2:
@@ -32,7 +32,7 @@ def main():
             if len(args) > 4:
                 pseudo_kind = args[4]
                 if len(args) > 5:
-                    queue = args[5]
+                    host = args[5]
                     if len(args) > 6:
                         rel = True
     #
@@ -42,7 +42,7 @@ def main():
 
     structure.remove_oxidation_states()
 
-    structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel)
+    structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel)
 
 
 main()

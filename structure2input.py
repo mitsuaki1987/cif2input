@@ -2,6 +2,7 @@ import pymatgen
 import seekpath
 import numpy
 import os
+import math
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from write_openmx import write_openmx
 from write_pwx import write_pwx
@@ -12,7 +13,7 @@ from write_sh import write_sh
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel):
+def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
 
     if pseudo_kind == "sg15":
         if rel:
@@ -47,6 +48,12 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel):
     typ = set(atom)
     print("Bravais lattice : ", skp["bravais_lattice"])
     print("Space group : ", skp['spacegroup_international'])
+    bz_volume = abs(- bvec[0][2]*bvec[1][1]*bvec[2][0]
+                    + bvec[0][1]*bvec[1][2]*bvec[2][0] 
+                    + bvec[0][2]*bvec[1][0]*bvec[2][1]
+                    - bvec[0][0]*bvec[1][2]*bvec[2][1]
+                    - bvec[0][1]*bvec[1][0]*bvec[2][2]
+                    + bvec[0][0]*bvec[1][1]*bvec[2][2])
     #
     # WFC and Rho cutoff
     #
@@ -57,6 +64,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel):
             ecutwfc = ecutwfc_dict[str(ityp)]
         if ecutrho < ecutrho_dict[str(ityp)]:
             ecutrho = ecutrho_dict[str(ityp)]
+    numpw = 4.0*math.pi*math.sqrt(ecutwfc)**3/3.0/bz_volume
+    print("Estimated number of PW (WFC) :", numpw)
     #
     # k and q grid
     #
@@ -64,7 +73,6 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel):
     for ii in range(3):
         norm = numpy.sqrt(numpy.dot(bvec[ii][:], bvec[ii][:]))
         nq[ii] = round(norm / dq_grid)
-        print(norm)
         if nq[ii] == 0:
             nq[ii] = 1
     print("Coarse grid : ", nq[0], nq[1], nq[2])
@@ -94,6 +102,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel):
     nbnd = nbnd / 2 + len(atom)*20
     if rel:
         nbnd *= 2
+    print("Number of Bands : ", nbnd)
     #
     # Shell scripts
     #
@@ -105,7 +114,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, queue, rel):
     dense = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*4, nq[1]*4, nq[2]*4), is_shift=(0, 0, 0))
     print("Number of irreducible k : ", len(coarse), len(middle), len(dense))
     write_sh(nq[0]*nq[1]*nq[2], len(coarse), len(middle), len(dense),
-             len(skp["explicit_kpoints_rel"]), atom, atomwfc_dict, queue)
+             len(skp["explicit_kpoints_rel"]), atom, atomwfc_dict, host, numpw*nbnd)
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
