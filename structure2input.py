@@ -25,8 +25,12 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
             from pslibrary_rel import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
         else:
             from pslibrary import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+    elif pseudo_kind == "sssp":
+        from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
     else:
         from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+        print("Unsupported pseudo potential library :", pseudo_kind)
+        exit(1)
     #
     # Band path and primitive lattice
     #

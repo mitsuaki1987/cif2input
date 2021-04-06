@@ -39,7 +39,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     #
     core_per_node = 0
     maxnode = 0
-    required_node = 0
+    mem_per_node = 0
     jobscript_queue = ""
     jobscript_node = ""
     jobscript_mpi = ""
@@ -49,7 +49,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     jobscript_workdir = ""
     mpiexec = ""
     #
-    nmem = npw_nbnd*nks*16.0/1.0e9
+    nmem = npw_nbnd * nkcbz * 4.0**3 * 16.0 / 1.0e9 * 50.0 # Last is scale factor
     print("Estimated memory for WFC (GB) : ", nmem)
     if host == "ohtaka":
         mem_per_node = 256
@@ -99,10 +99,10 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         else:
             print("Too large system")
             exit(-1)
-        jobscript_queue = "#QSUB –queue " + queue
-        jobscript_node = "#QSUB –node "
-        jobscript_mpi = "#QSUB –mpi "
-        jobscript_omp = "#QSUB –omp "
+        jobscript_queue = "#QSUB -queue " + queue
+        jobscript_node = "#QSUB -node "
+        jobscript_mpi = "#QSUB -mpi "
+        jobscript_omp = "#QSUB -omp "
         jobscript_time = "#PBS -l walltime="
         jobscript_workdir = "${PBS_O_WORKDIR}"
         mpiexec = "mpijob"
@@ -131,7 +131,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print("#grep -A %d ATOMIC_POSITIONS rx.out |tail -n %d >> temp" % (len(atom), len(atom)), file=f)
         print("#sed -n -e '/K_POINTS/,$p' rx.in >> temp", file=f)
         print("#mv temp rx.in", file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in rx.in > rx.out", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in rx.in > rx.out", file=f)
     #
     # Charge optimization
     #
@@ -143,7 +143,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in scf.in > scf.out", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in scf.in > scf.out", file=f)
     #
     # Phonon
     #
@@ -155,19 +155,19 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in nscf_p.in > nscf_p.out", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_p.in > nscf_p.out", file=f)
         #
         # Compute number of q
         #
         print("sed -i -e \"/only_init/c only_init = .true.\" ph.in", file=f)
-        print(mpiexec, "-n", nproc, ph, "-nk", nk, "-ntg", ntg, "-in ph.in >> ph.out", file=f)
+        print(mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in ph.in >> ph.out", file=f)
         print("sed -i -e \"/only_init/c only_init = .false.\" ph.in", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
         #
         print("for i in `seq 1 ${nq}`; do", file=f)
         print("  test -s matdyn${i} && continue", file=f)
         print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" ph.in", file=f)
-        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-ntg", ntg, "-in ph.in >> ph.out", file=f)
+        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in ph.in >> ph.out", file=f)
         print("  find ./ -name \"*.wfc*\" -delete", file=f)
         print("done", file=f)
         print("touch PH_DONE", file=f)
@@ -197,11 +197,11 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in nscf.in > nscf.out", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf.in > nscf.out", file=f)
         print(mpiexec, "-n 1", vf, "-in nscf.in > vfermi.out", file=f)
         print("ef=`grep Fermi nscf.out| awk '{print $5}'`", file=f)
         print("sed -i -e '/emin/c emin = '${ef}'' -e '/emax/c emax = '${ef}'' proj.in", file=f)
-        print(mpiexec, "-n", nproc, proj, "-nk", nk, "-ntg", ntg, "-in proj.in > proj.out", file=f)
+        print(mpiexec, "-n", nproc, proj, "-nk", nk, "-pd T -ntg", ntg, "-in proj.in > proj.out", file=f)
         #
         # Sum PDOS at each Atom and L
         #
@@ -231,12 +231,12 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in nscf_pd.in > nscf_pd.out", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_pd.in > nscf_pd.out", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
         print("  test -s matdyn${i}.elph.${i} && continue", file=f)
         print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" elph.in", file=f)
-        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-ntg", ntg, "-in elph.in >> elph.out", file=f)
+        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in elph.in >> elph.out", file=f)
         print("  find ./ -name \"*.wfc*\" -delete", file=f)
         print("done", file=f)
         print("touch ELPH_DONE", file=f)
@@ -255,8 +255,8 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk_path, "-ntg", ntg, "-in band.in > band.out", file=f)
-        print(mpiexec, "-n", nproc, bands, "-nk", nk_path, "-ntg", ntg, "-in bands.in > bands.out", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk_path, "-pd T -ntg", ntg, "-in band.in > band.out", file=f)
+        print(mpiexec, "-n", nproc, bands, "-nk", nk_path, "-pd T -ntg", ntg, "-in bands.in > bands.out", file=f)
     #
     # Electron-phonon matrix
     #
@@ -278,12 +278,12 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
               file=f)
         print("sed -i -e \"/elph_nbnd_min/c elph_nbnd_min=$bmin\" "
               "-e \"/elph_nbnd_max/c elph_nbnd_max=$bmax\" epmat.in", file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in nscf_pc.in > nscf_pc.out", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_pc.in > nscf_pc.out", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
         print("  test -s elph${i}.dat && continue", file=f)
         print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
-        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-ntg", ntg, "-in epmat.in >> epmat.out", file=f)
+        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in epmat.in >> epmat.out", file=f)
         print("  find ./ -name \"*.wfc*\" -delete", file=f)
         print("done", file=f)
         print("touch EPMAT_DONE", file=f)
@@ -302,7 +302,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-ntg", ntg, "-in twin.in > twin.out", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in twin.in > twin.out", file=f)
         print("export OMP_NUM_THREADS=%d" % ntg, file=f)
         print("sed -i -e \'/calculation/c calculation = \"kel\"\' sctk.in", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)

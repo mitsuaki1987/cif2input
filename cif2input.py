@@ -8,9 +8,11 @@ def main():
     args = sys.argv
     if len(args) < 2:
         print("Usage:")
-        print("$ cif2input.py cif-file [dk_path] [dq_grid] [pseudo_kind] [queue] [rel]")
+        print("$ cif2input.py cif-file [dk_path] [dq_grid] [pseudo_kind] [host] [rel]")
         print("Default:")
-        print("$ cif2input.py cif-file 0.1 0.3359385398275 sg15 F4cpue")
+        print("$ cif2input.py cif-file 0.1 0.3359385398275 sg15 enaga")
+        print("pseudo_kind : sg15 pslibrary sssp")
+        print("host : enaga ohtaka")
         exit(0)
     #
     # CIF parser
@@ -38,7 +40,9 @@ def main():
     #
     print("  dk for band : {0}".format(dk_path))
     print("  dq for grid : {0}".format(dq_grid))
-    print("  Pseudo kind is ", pseudo_kind)
+    print("  Pseudo kind : ", pseudo_kind)
+    print("         Host : ", host)
+    print(" Relativistic : ", rel)
 
     structure.remove_oxidation_states()
 
