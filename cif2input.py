@@ -8,9 +8,9 @@ def main():
     args = sys.argv
     if len(args) < 2:
         print("Usage:")
-        print("$ cif2input.py cif-file [dk_path] [dq_grid] [pseudo_kind] [host] [rel]")
+        print("$ cif2input.py cif-file [pseudo_kind] [host] [rel] [dk_path] [dq_grid]")
         print("Default:")
-        print("$ cif2input.py cif-file 0.1 0.3359385398275 sg15 enaga")
+        print("$ cif2input.py cif-file sg15 enaga False 0.1 0.3359385398275")
         print("pseudo_kind : sg15 pslibrary sssp")
         print("host : enaga ohtaka")
         exit(0)
@@ -25,18 +25,25 @@ def main():
     dq_grid = 0.3359385398275
     pseudo_kind = "sg15"
     host = "enaga"
-    rel = False
+    irel = 0
     #
     if len(args) > 2:
-        dk_path = float(args[2])
+        pseudo_kind = args[2]
         if len(args) > 3:
-            dq_grid = float(args[3])
+            host = args[3]
             if len(args) > 4:
-                pseudo_kind = args[4]
+                irel = int(args[4])
                 if len(args) > 5:
-                    host = args[5]
+                    dk_path = float(args[5])
                     if len(args) > 6:
-                        rel = True
+                        dq_grid = float(args[6])
+    if irel == 0:
+        rel = False
+    elif irel == 1:
+        rel = True
+    else:
+        print("Invalid rel :", irel)
+        exit(irel)
     #
     print("  dk for band : {0}".format(dk_path))
     print("  dq for grid : {0}".format(dq_grid))
