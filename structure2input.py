@@ -27,6 +27,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
             from pslibrary import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
     elif pseudo_kind == "sssp":
         from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+    elif pseudo_kind == "ssspsol":
+        from ssspsol import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
     else:
         from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
         print("Unsupported pseudo potential library :", pseudo_kind)
@@ -42,11 +44,12 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
                 frac_coord2[ipos, iaxis] = float(round(coord3)) / 6.0
     #
     skp = seekpath.get_explicit_k_path((structure.lattice.matrix, frac_coord2,
-                                        [pymatgen.Element(str(spc)).number for spc in structure.species]),
+                                        [pymatgen.core.Element(str(spc)).number for spc in structure.species]),
                                        reference_distance=dk_path)
     #
     # Lattice information
     #
+    avec = skp["primitive_lattice"]
     bvec = skp["reciprocal_primitive_lattice"]
     atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
     typ = set(atom)
@@ -75,8 +78,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     #
     nq = numpy.zeros(3, numpy.int_)
     for ii in range(3):
-        norm = numpy.sqrt(numpy.dot(bvec[ii][:], bvec[ii][:]))
-        nq[ii] = round(norm / dq_grid)
+        norm = numpy.sqrt(numpy.dot(avec[ii][:], avec[ii][:]))
+        nq[ii] = round(2.0 * numpy.pi / norm / dq_grid)
         if nq[ii] == 0:
             nq[ii] = 1
     print("Coarse grid : ", nq[0], nq[1], nq[2])
@@ -110,8 +113,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     #
     # Shell scripts
     #
-    structure2 = pymatgen.Structure(skp["primitive_lattice"],
-                                    skp["primitive_types"], skp["primitive_positions"])
+    structure2 = pymatgen.core.Structure(skp["primitive_lattice"],
+                                         skp["primitive_types"], skp["primitive_positions"])
     spg_analysis = SpacegroupAnalyzer(structure2)
     coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0], nq[1], nq[2]), is_shift=(0, 0, 0))
     middle = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*2, nq[1]*2, nq[2]*2), is_shift=(0, 0, 0))

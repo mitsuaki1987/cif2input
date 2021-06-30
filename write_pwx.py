@@ -8,7 +8,7 @@ def write_atom(f, avec, typ, nat, pos, atom, pseudo_dict):
         print(" %.12f %.12f %.12f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
     print("ATOMIC_SPECIES", file=f)
     for ityp in typ:
-        print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
+        print(" %s %f %s" % (ityp, pymatgen.core.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
     print("ATOMIC_POSITIONS crystal", file=f)
     for iat in range(nat):
         print(" %s %.12f %.12f %.12f" % (

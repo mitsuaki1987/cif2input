@@ -11,18 +11,18 @@ def main():
         print("$ cif2input.py cif-file [pseudo_kind] [host] [rel] [dk_path] [dq_grid]")
         print("Default:")
         print("$ cif2input.py cif-file sg15 enaga False 0.1 0.3359385398275")
-        print("pseudo_kind : sg15 pslibrary sssp")
+        print("pseudo_kind : sg15 pslibrary sssp ssspsol")
         print("host : enaga ohtaka")
         exit(0)
     #
     # CIF parser
     #
-    structure = pymatgen.Structure.from_file(args[1])
+    structure = pymatgen.core.Structure.from_file(args[1])
     #
     # Default value
     #
     dk_path = 0.1
-    dq_grid = 0.3359385398275
+    dq_grid = 0.27
     pseudo_kind = "sg15"
     host = "enaga"
     irel = 0
@@ -37,6 +37,7 @@ def main():
                     dk_path = float(args[5])
                     if len(args) > 6:
                         dq_grid = float(args[6])
+    rel = False
     if irel == 0:
         rel = False
     elif irel == 1:
