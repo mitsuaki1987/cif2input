@@ -42,7 +42,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
                 frac_coord2[ipos, iaxis] = float(round(coord3)) / 6.0
     #
     skp = seekpath.get_explicit_k_path((structure.lattice.matrix, frac_coord2,
-                                        [pymatgen.Element(str(spc)).number for spc in structure.species]),
+                                        [pymatgen.core.Element(str(spc)).number for spc in structure.species]),
                                        reference_distance=dk_path)
     #
     # Lattice information
@@ -110,8 +110,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     #
     # Shell scripts
     #
-    structure2 = pymatgen.Structure(skp["primitive_lattice"],
-                                    skp["primitive_types"], skp["primitive_positions"])
+    structure2 = pymatgen.core.Structure(skp["primitive_lattice"],
+                                         skp["primitive_types"], skp["primitive_positions"])
     spg_analysis = SpacegroupAnalyzer(structure2)
     coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0], nq[1], nq[2]), is_shift=(0, 0, 0))
     middle = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*2, nq[1]*2, nq[2]*2), is_shift=(0, 0, 0))

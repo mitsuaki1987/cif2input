@@ -9,6 +9,14 @@ def write_pp():
         print("       lsym = .false.", file=f)
         print("/", file=f)
     #
+    # bands.in : Read by bands.x
+    #
+    with open("plotband.in", 'w') as f:
+        print("bands.out", file=f)
+        print("11 12 13", file=f)
+        print("-1.0e10 1.0e10", file=f)
+        print("band.xmgr", file=f)
+    #
     # proj.in : Read by projwfc.x
     #
     with open("proj.in", 'w') as f:
@@ -16,6 +24,7 @@ def write_pp():
         print("      emin = ", file=f)
         print("      emax = ", file=f)
         print("    deltae = 0.1", file=f)
+        print("   filproj = 'bands'", file=f)
         print("/", file=f)
     #
     # dos.in : Read by dos.x

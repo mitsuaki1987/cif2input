@@ -243,7 +243,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
                     print(" %d" % ii, end="", file=f)
                 print("' proj.in > proj_f.in", file=f)
                 print(mpiexec, "-n 1", fproj, "-in proj_f.in", file=f)
-                print("mv proj.frmsf " + ityp + atomwfc_dict[ityp][1][il] + ".frmsf", file=f)
+                print("mv pwscf_proj.frmsf " + ityp + atomwfc_dict[ityp][1][il] + ".frmsf", file=f)
         print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
         print("find ./ -name \"wfc*.dat\" -delete", file=f)
     #
@@ -265,6 +265,18 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print("cd ", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk_path, "-pd T -ntg", ntg, "-in band.in > band.out", file=f)
         print(mpiexec, "-n", nproc, bands, "-nk", nk_path, "-pd T -ntg", ntg, "-in bands.in > bands.out", file=f)
+        print(mpiexec, "-n", nproc, proj, "-nk", nk, "-pd T -ntg", ntg, "-in proj.in > pband.out", file=f)
+        #
+        # Projected band
+        #
+        print("mv bands.projwfc_up bands.out.proj", file=f)
+        for ityp in typ:
+            for il in range(len(atomwfc_dict[ityp][1])):
+                print("sed -e '2c", end="", file=f)
+                for ii in pfermi[ityp][il]:
+                    print(" %d" % ii, end="", file=f)
+                print("' -e '4c " + ityp + atomwfc_dict[ityp][1][il] + ".xmgr' plotband.in > plotpband.in", file=f)
+                print(mpiexec, "-n 1 ~/bin/plotband.x < plotpband.in", file=f)
     #
     # Electron-phonon matrix
     #

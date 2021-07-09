@@ -17,7 +17,7 @@ def main():
     #
     # CIF parser
     #
-    structure = pymatgen.Structure.from_file(args[1])
+    structure = pymatgen.core.Structure.from_file(args[1])
     #
     # Default value
     #
@@ -37,6 +37,7 @@ def main():
                     dk_path = float(args[5])
                     if len(args) > 6:
                         dq_grid = float(args[6])
+    rel = False
     if irel == 0:
         rel = False
     elif irel == 1:
