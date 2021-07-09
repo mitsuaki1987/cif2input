@@ -35,7 +35,7 @@ def main():
             print("already done", prefix)
             continue
         #
-        structure = pymatgen.Structure.from_file(input_file)
+        structure = pymatgen.core.Structure.from_file(input_file)
         structure.remove_oxidation_states()
         frac_coord2 = numpy.array(structure.frac_coords)
         for ipos in range(len(frac_coord2)):
@@ -45,7 +45,7 @@ def main():
                     frac_coord2[ipos, iaxis] = float(round(coord3)) / 6.0
         #
         skp = seekpath.get_path((structure.lattice.matrix, frac_coord2,
-                                 [pymatgen.Element(str(spc)).number for spc in structure.species]))
+                                 [pymatgen.core.Element(str(spc)).number for spc in structure.species]))
         #
         # Lattice information
         #
@@ -89,9 +89,9 @@ def main():
         #
         # Number of k in IBZ
         #
-        structure2 = pymatgen.Structure(skp["primitive_lattice"],
-                                        skp["primitive_types"],
-                                        skp["primitive_positions"])
+        structure2 = pymatgen.core.Structure(skp["primitive_lattice"],
+                                             skp["primitive_types"],
+                                             skp["primitive_positions"])
         spg_analysis = SpacegroupAnalyzer(structure2)
         coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
         n_proc = min(28, len(coarse))
@@ -125,7 +125,7 @@ def main():
                 print(" %f %f %f" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
             print("ATOMIC_SPECIES", file=f)
             for ityp in typ:
-                print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
+                print(" %s %f %s" % (ityp, pymatgen.core.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
             print("ATOMIC_POSITIONS crystal", file=f)
             for iat in range(nat):
                 print(" %s %f %f %f" % (

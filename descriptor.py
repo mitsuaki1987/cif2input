@@ -225,7 +225,7 @@ def main():
         #
         # PyMatGen structure from CIF file
         #
-        structure = pymatgen.Structure.from_file(input_file)
+        structure = pymatgen.core.Structure.from_file(input_file)
         structure.remove_oxidation_states()
         #
         # Refine 3-folded Wyckoff position
@@ -241,9 +241,9 @@ def main():
         #
         try:
             skp = seekpath.get_explicit_k_path((structure.lattice.matrix, frac_coord2,
-                                               [pymatgen.Element(str(spc)).number for spc in structure.species]))
-            structure2 = pymatgen.Structure(skp["primitive_lattice"],
-                                            skp["primitive_types"], skp["primitive_positions"])
+                                               [pymatgen.core.Element(str(spc)).number for spc in structure.species]))
+            structure2 = pymatgen.core.Structure(skp["primitive_lattice"],
+                                                 skp["primitive_types"], skp["primitive_positions"])
         except AttributeError:
             print("Fractional occupancy, may be disordered.")
             continue

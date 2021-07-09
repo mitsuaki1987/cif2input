@@ -37,7 +37,7 @@ with open(args[1][:-3] + "vesta", 'w') as f:
 
     print("CRYSTAL", file=f)
     print("CELLP", file=f)
-    structure = pymatgen.Structure.from_file(args[1])
+    structure = pymatgen.core.Structure.from_file(args[1])
     lattice = structure.lattice
     print(lattice.a, lattice.b, lattice.c, lattice.alpha, lattice.beta, lattice.gamma, file=f)
     print(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, file=f)

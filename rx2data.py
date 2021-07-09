@@ -44,19 +44,19 @@ def main():
                 pos = numpy.zeros((natom, 3), numpy.float_)
                 iatom = 0
                 for atom_pos in lines[start_atom+1:end]:
-                    atom[iatom] = pymatgen.Element(atom_pos.strip().split()[0]).number
+                    atom[iatom] = pymatgen.core.Element(atom_pos.strip().split()[0]).number
                     pos[iatom, 0:3] = numpy.array(atom_pos.strip().split()[1:4], numpy.float_)
                     iatom += 1
                 #
                 # PyMatGen structure
                 #
-                structure2 = pymatgen.Structure(avec, atom, pos)
+                structure2 = pymatgen.core.Structure(avec, atom, pos)
                 #
                 # This structure is the same or not as the known structures
                 #
                 known = False
                 for xsf_file in glob.glob("*.xsf"):
-                    known_structure = pymatgen.Structure.from_file(xsf_file)
+                    known_structure = pymatgen.core.Structure.from_file(xsf_file)
                     if matcher.fit(structure2, known_structure):
                         print("Same as " + xsf_file)
                         known = True

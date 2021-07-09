@@ -75,6 +75,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     print("Estimated number of PW (WFC) :", numpw)
     #
     # k and q grid
+    #  the number of grid proportional to the Height of b
+    #  b_i * a_i / |a_i| = 2pi / |a_i| (a_i is perpendicular to other b's)
     #
     nq = numpy.zeros(3, numpy.int_)
     for ii in range(3):

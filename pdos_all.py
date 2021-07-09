@@ -29,7 +29,7 @@ def main():
         input_file = input_file.strip("\n")
         prefix = input_file.split("/")[-1].split(".")[0]
         #
-        structure = pymatgen.Structure.from_file(input_file)
+        structure = pymatgen.core.Structure.from_file(input_file)
         avec = structure.lattice.matrix
         bvec = pymatgen.core.Lattice(structure.lattice.matrix).reciprocal_lattice.matrix
         nat = structure.num_sites
@@ -102,7 +102,7 @@ def main():
                 print(" %25.15e %25.15e %25.15e" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
             print("ATOMIC_SPECIES", file=f)
             for ityp in typ:
-                print(" %s %f %s" % (ityp, pymatgen.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
+                print(" %s %f %s" % (ityp, pymatgen.core.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
             print("ATOMIC_POSITIONS crystal", file=f)
             for iat in range(nat):
                 print(" %s %25.15e %25.15e %25.15e" % (

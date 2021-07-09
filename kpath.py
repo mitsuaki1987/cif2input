@@ -5,10 +5,10 @@ import seekpath
 import numpy
 
 args = sys.argv
-structure = pymatgen.Structure.from_file(args[1])
+structure = pymatgen.core.Structure.from_file(args[1])
 structure.remove_oxidation_states()
 skp = seekpath.get_explicit_k_path((structure.lattice.matrix, numpy.array(structure.frac_coords),
-                                   [pymatgen.Element(str(spc)).number for spc in structure.species]),
+                                   [pymatgen.core.Element(str(spc)).number for spc in structure.species]),
                                    reference_distance=0.1)
 
 print("Band.dispersion     on")
@@ -34,4 +34,3 @@ for ipath in range(len(skp["path"])):
           skp["explicit_kpoints_labels"][start],
           skp["explicit_kpoints_labels"][final]))
 print("Band.kpath>")
-

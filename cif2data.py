@@ -26,7 +26,7 @@ def main():
         # PyMatGen structure from CIF file
         #
         try:
-            structure = pymatgen.Structure.from_file(input_file)
+            structure = pymatgen.core.Structure.from_file(input_file)
         except ValueError:
             print("Invalid structure.")
             continue
@@ -109,9 +109,9 @@ def main():
         #
         try:
             skp = seekpath.get_explicit_k_path((structure.lattice.matrix, frac_coord2,
-                                               [pymatgen.Element(str(spc)).number for spc in structure.species]))
-            structure2 = pymatgen.Structure(skp["primitive_lattice"],
-                                            skp["primitive_types"], skp["primitive_positions"])
+                                               [pymatgen.core.Element(str(spc)).number for spc in structure.species]))
+            structure2 = pymatgen.core.Structure(skp["primitive_lattice"],
+                                                 skp["primitive_types"], skp["primitive_positions"])
             if len(skp["primitive_types"]) != 1:
                 structure2.merge_sites(tol=0.01, mode="average")
         except AttributeError:
@@ -131,7 +131,7 @@ def main():
         known = False
         print(glob.glob(output_file + "-*.xsf"), " ... ", end="")
         for known_file in glob.glob(output_file + "-*.xsf"):
-            known_structure = pymatgen.Structure.from_file(known_file)
+            known_structure = pymatgen.core.Structure.from_file(known_file)
             if matcher.fit(structure2, known_structure):
                 print("Same as " + known_file)
                 known = True
