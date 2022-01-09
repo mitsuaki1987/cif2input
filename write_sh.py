@@ -101,6 +101,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     #
     # Structure optimization
     #
+    print("debug", core_per_node)
     nk = min(core_per_node*maxnode, nks)
     ntg = good_proc(int(core_per_node*maxnode / nk), core_per_node)
     nproc = nk*ntg
@@ -148,7 +149,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(jobscript_queue, file=f)
         print(jobscript_node, node, file=f)
         print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "8:00:00", file=f)
+        print(jobscript_time + "24:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_p.in > nscf_p.out", file=f)
@@ -156,7 +157,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         # Compute number of q
         #
         print("sed -i -e \"/only_init/c only_init = .true.\" ph.in", file=f)
-        print(mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in ph.in >> ph.out", file=f)
+        print(mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in ph.in", file=f)
         print("sed -i -e \"/only_init/c only_init = .false.\" ph.in", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
         #
@@ -166,9 +167,17 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in ph.in >> ph.out", file=f)
         print("  find ./_ph0/ -name \"pwscf.wfc*\" -delete", file=f)
         print("  find ./_ph0/ -name \"wfc*.dat\" -delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.dwf*\" - delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.bar*\" - delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.mix*\" - delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.recover*\" - delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.prd*\" - delete", file=f)
         print("done", file=f)
         print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
         print("find ./ -name \"wfc*.dat\" -delete", file=f)
+        print("for i in `seq 1 ${nq}`; do", file=f)
+        print("  test -s matdyn${i} || exit", file=f)
+        print("done", file=f)
         print("touch PH_DONE", file=f)
     #
     # Electron-phonon
@@ -180,7 +189,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(jobscript_omp, 1, file=f)
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
-        print("cd ", jobscript_workdir, file=f)
+        print("cd", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_pd.in > nscf_pd.out", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
@@ -189,10 +198,55 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in elph.in >> elph.out", file=f)
         print("  find ./_ph0/ -name \"pwscf.wfc*\" -delete", file=f)
         print("  find ./_ph0/ -name \"wfc*.dat\" -delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.dwf*\" - delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.bar*\" - delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.mix*\" - delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.recover*\" - delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.prd*\" - delete", file=f)
         print("done", file=f)
         print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
         print("find ./ -name \"wfc*.dat\" -delete", file=f)
+        print("for i in `seq 1 ${nq}`; do", file=f)
+        print("  test -s matdyn${i}.elph.${i} || exit", file=f)
+        print("done", file=f)
         print("touch ELPH_DONE", file=f)
+    #
+    # Electron-phonon matrix
+    #
+    with open("epmat.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, node, file=f)
+        print(jobscript_omp, 1, file=f)
+        print(jobscript_time + "8:00:00", file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd", jobscript_workdir, file=f)
+        print("bmax=`grep \"Highest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
+              file=f)
+        print("bmin=`grep \"Lowest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
+              file=f)
+        print("sed -i -e \"/elph_nbnd_min/c elph_nbnd_min=$bmin\" "
+              "-e \"/elph_nbnd_max/c elph_nbnd_max=$bmax\" epmat.in", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_pc.in > nscf_pc.out", file=f)
+        print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
+        print("for i in `seq 1 ${nq}`; do", file=f)
+        print("  test -s elph${i}.dat && continue", file=f)
+        print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
+        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in epmat.in >> epmat.out", file=f)
+        print("  find ./_ph0/ -name \"pwscf.wfc*\" -delete", file=f)
+        print("  find ./_ph0/ -name \"wfc*.dat\" -delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.dwf*\" -delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.bar*\" -delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.mix*\" -delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.recover*\" -delete", file=f)
+        print("  find ./_ph0/ -name \"pwscf.prd*\" -delete", file=f)
+        print("done", file=f)
+        print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
+        print("find ./ -name \"wfc*.dat\" -delete", file=f)
+        print("for i in `seq 1 ${nq}`; do", file=f)
+        print("  test -s elph${i}.dat || exit", file=f)
+        print("done", file=f)
+        print("touch EPMAT_DONE", file=f)
     #
     # Projected DOS
     #
@@ -264,7 +318,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk_path, "-pd T -ntg", ntg, "-in band.in > band.out", file=f)
-        print(mpiexec, "-n", nproc, bands, "-nk", nk_path, "-pd T -ntg", ntg, "-in bands.in > bands.out", file=f)
+        print(mpiexec, "-n", nproc, bands, "-nk", nk_path, "-pd T -ntg", ntg, "-in bands.in", file=f)
         print(mpiexec, "-n", nproc, proj, "-nk", nk, "-pd T -ntg", ntg, "-in proj.in > pband.out", file=f)
         #
         # Projected band
@@ -277,41 +331,6 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
                     print(" %d" % ii, end="", file=f)
                 print("' -e '4c " + ityp + atomwfc_dict[ityp][1][il] + ".xmgr' plotband.in > plotpband.in", file=f)
                 print(mpiexec, "-n 1 ~/bin/plotband.x < plotpband.in", file=f)
-    #
-    # Electron-phonon matrix
-    #
-    nk = min(core_per_node * maxnode, nkc)
-    ntg = good_proc(int(core_per_node * maxnode / nk), core_per_node)
-    nproc = nk * ntg
-    node = math.ceil(nproc / core_per_node)
-    if host == "ohtaka" and node > 36:
-        node = maxnode
-    with open("epmat.sh", 'w') as f:
-        print("#!/bin/sh", file=f)
-        print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "8:00:00", file=f)
-        print("source ~/.bashrc", file=f)
-        print("cd ", jobscript_workdir, file=f)
-        print("bmax=`grep \"Highest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
-              file=f)
-        print("bmin=`grep \"Lowest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
-              file=f)
-        print("sed -i -e \"/elph_nbnd_min/c elph_nbnd_min=$bmin\" "
-              "-e \"/elph_nbnd_max/c elph_nbnd_max=$bmax\" epmat.in", file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_pc.in > nscf_pc.out", file=f)
-        print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
-        print("for i in `seq 1 ${nq}`; do", file=f)
-        print("  test -s elph${i}.dat && continue", file=f)
-        print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
-        print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in epmat.in >> epmat.out", file=f)
-        print("  find ./_ph0/ -name \"pwscf.wfc*\" -delete", file=f)
-        print("  find ./_ph0/ -name \"wfc*.dat\" -delete", file=f)
-        print("done", file=f)
-        print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
-        print("find ./ -name \"wfc*.dat\" -delete", file=f)
-        print("touch EPMAT_DONE", file=f)
     #
     # Coulomb matrix
     #
@@ -326,7 +345,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(jobscript_queue, file=f)
         print(jobscript_node, node, file=f)
         print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "8:00:00", file=f)
+        print(jobscript_time + "24:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in twin.in > twin.out", file=f)
@@ -336,7 +355,10 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print("for i in `seq 1 ${nq}`; do", file=f)
         print("  test -s vel${i}.dat && continue", file=f)
         print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" sctk.in", file=f)
-        print(mpiexec, "-n", nproc, sctk, "-nk", nk, "-in sctk.in >> kel.out", file=f)
+        print(" ", mpiexec, "-n", nproc, sctk, "-nk", nk, "-in sctk.in >> kel.out", file=f)
+        print("done", file=f)
+        print("for i in `seq 1 ${nq}`; do", file=f)
+        print("  test -s vel${i}.dat || exit", file=f)
         print("done", file=f)
         print("touch KEL_DONE", file=f)
     #

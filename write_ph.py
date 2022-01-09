@@ -14,7 +14,7 @@ def write_ph(nq, ecutrho, nbnd):
         print("     tr2_ph = 1.0d-15", file=f)
         print("  only_init = .true.", file=f)
         print("      lqdir = .true.", file=f)
-        print("  alpha_mix = 0.3", file=f)
+        print("  alpha_mix = 0.1", file=f)
         print("   fildvscf = \'dv\'", file=f)
         print("        nq1 = %d" % nq[0], file=f)
         print("        nq2 = %d" % nq[1], file=f)
