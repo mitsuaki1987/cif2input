@@ -15,14 +15,17 @@ def good_proc(nproc, ncore):
 
 
 def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
-    pw = "~/bin/pw.x"
-    ph = "~/bin/ph.x"
-    proj = "~/bin/projwfc.x"
-    vf = "~/bin/fermi_velocity.x"
-    bands = "~/bin/bands.x"
-    sumpdos = "~/bin/sumpdos.x"
-    fproj = "~/bin/fermi_proj.x"
-    sctk = "~/bin/sctk.x"
+    pw = "/home/public/bin/pw.x"
+    pp = "/home/public/bin/pp.x"
+    ph = "/home/public/bin/ph.x"
+    proj = "/home/public/bin/projwfc.x"
+    vf = "/home/public/bin/fermi_velocity.x"
+    bands = "/home/public/bin/bands.x"
+    qe2respack = "/home/public/bin/qe2respack.py"
+    calc_wannier = "/home/public/bin/calc_wannier"
+    sumpdos = "/home/public/bin/sumpdos.x"
+    fproj = "/home/public/bin/fermi_proj.x"
+    sctk = "/home/public/bin/sctk.x"
     typ = set(atom)
     #
     core_per_node = 0
@@ -87,13 +90,13 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         else:
             print("Too large system")
             exit(-1)
-        jobscript_queue = "#QSUB -queue " + queue
-        jobscript_node = "#QSUB -node "
-        jobscript_mpi = "#QSUB -mpi "
-        jobscript_omp = "#QSUB -omp "
-        jobscript_time = "#PBS -l walltime="
+        jobscript_queue = "#PBS -l nodes=1:ppn=28"
+        jobscript_node = "#PBS -n"
+        jobscript_mpi = ""
+        jobscript_omp = ""
+        jobscript_time = "export OMP_NUM_THREADS=1"
         jobscript_workdir = "${PBS_O_WORKDIR}"
-        mpiexec = "mpijob"
+        mpiexec = "mpiexec -hostfile ${PBS_NODEFILE}"
     else:
         print("Unsupported host")
         exit(-1)
@@ -101,19 +104,18 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     #
     # Structure optimization
     #
-    print("debug", core_per_node)
-    nk = min(core_per_node*maxnode, nks)
-    ntg = good_proc(int(core_per_node*maxnode / nk), core_per_node)
+    nk = 28
+    ntg = 1
     nproc = nk*ntg
-    node = math.ceil(nproc / core_per_node)
+    node = 1
     if host == "ohtaka" and node > 36:
         node = maxnode
     with open("rx.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "8:00:00", file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
         print("#sed -n -e '1,/CELL_PARAMETERS/p' rx.in > temp", file=f)
@@ -133,23 +135,63 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     with open("scf.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "8:00:00", file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in scf.in > scf.out", file=f)
         print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
         print("find ./ -name \"wfc*.dat\" -delete", file=f)
     #
+    # Charge optimization
+    #
+    with open("pp.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd", jobscript_workdir, file=f)
+        print(mpiexec, "-n", 1, pp, "-nk", 1, "-pd T -ntg", ntg, "-in pp.in > pp.out", file=f)
+    #
+    # RESPACK_preprocess
+    #
+    with open("nscf_r.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd", jobscript_workdir, file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_r.in > nscf_r.out", file=f)
+        print(qe2respack, "pwscf.save", file=f)
+        print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
+        print("find ./ -name \"wfc*.dat\" -delete", file=f)
+    #
+    # RESPACK
+    #
+    with open("respack.sh", 'w') as f:
+        print("#!/bin/sh", file=f)
+        print(jobscript_queue, file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
+        print("source ~/.bashrc", file=f)
+        print("cd", jobscript_workdir, file=f)
+        print("export OMP_NUM_THREADS=28", file=f)
+        print(calc_wannier, "< respack.in > respack.out", file=f)
+    #
     # Phonon
     #
     with open("ph.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "24:00:00", file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_p.in > nscf_p.out", file=f)
@@ -185,9 +227,9 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     with open("elph.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "8:00:00", file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_pd.in > nscf_pd.out", file=f)
@@ -216,9 +258,9 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     with open("epmat.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "8:00:00", file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
         print("bmax=`grep \"Highest band which contains FS\" vfermi.out elph.out| awk 'NR==1{print $NF}'`",
@@ -250,10 +292,10 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     #
     # Projected DOS
     #
-    nk = min(core_per_node*maxnode, nkd)
-    ntg = good_proc(int(core_per_node*maxnode / nk), core_per_node)
+    nk = 28
+    ntg = 1
     nproc = nk * ntg
-    node = math.ceil(nproc / core_per_node)
+    node = 1
     if host == "ohtaka" and node > 36:
         node = maxnode
     #
@@ -270,15 +312,13 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     with open("proj.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "8:00:00", file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf.in > nscf.out", file=f)
         print(mpiexec, "-n 1", vf, "-in nscf.in > vfermi.out", file=f)
-        print("ef=`grep Fermi nscf.out| awk '{print $5}'`", file=f)
-        print("sed -i -e '/emin/c emin = '${ef}'' -e '/emax/c emax = '${ef}'' proj.in", file=f)
         print(mpiexec, "-n", nproc, proj, "-nk", nk, "-pd T -ntg", ntg, "-in proj.in > proj.out", file=f)
         #
         # Sum PDOS at each Atom and L
@@ -303,22 +343,22 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     #
     # Band
     #
-    nk = min(core_per_node*maxnode, nk_path)
-    ntg = good_proc(int(core_per_node*maxnode / nk), core_per_node)
+    nk = 28
+    ntg = 1
     nproc = nk * ntg
-    node = math.ceil(nproc / core_per_node)
+    node = 1
     if host == "ohtaka" and node > 36:
         node = maxnode
     with open("band.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "8:00:00", file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
-        print(mpiexec, "-n", nproc, pw, "-nk", nk_path, "-pd T -ntg", ntg, "-in band.in > band.out", file=f)
-        print(mpiexec, "-n", nproc, bands, "-nk", nk_path, "-pd T -ntg", ntg, "-in bands.in", file=f)
+        print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in band.in > band.out", file=f)
+        print(mpiexec, "-n", nproc, bands, "-nk", nk, "-pd T -ntg", ntg, "-in bands.in", file=f)
         print(mpiexec, "-n", nproc, proj, "-nk", nk, "-pd T -ntg", ntg, "-in proj.in > pband.out", file=f)
         #
         # Projected band
@@ -330,22 +370,22 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
                 for ii in pfermi[ityp][il]:
                     print(" %d" % ii, end="", file=f)
                 print("' -e '4c " + ityp + atomwfc_dict[ityp][1][il] + ".xmgr' plotband.in > plotpband.in", file=f)
-                print(mpiexec, "-n 1 ~/bin/plotband.x < plotpband.in", file=f)
+                print(mpiexec, "-n 1 /home/public/bin/plotband.x < plotpband.in", file=f)
     #
     # Coulomb matrix
     #
-    nk = min(core_per_node * maxnode, nkcbz)
-    ntg = good_proc(int(core_per_node*maxnode / nk), core_per_node)
+    nk = 28
+    ntg = 1
     nproc = nk * ntg
-    node = math.ceil(nproc / core_per_node)
+    node = 1
     if host == "ohtaka" and node > 36:
         node = maxnode
     with open("kel.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_omp, 1, file=f)
-        print(jobscript_time + "24:00:00", file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_omp, file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
         print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in twin.in > twin.out", file=f)
@@ -368,10 +408,10 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     with open("scdft0.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_mpi, node, file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_mpi, file=f)
         print(jobscript_omp, core_per_node, file=f)
-        print(jobscript_time + "3:00:00", file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
         print("sed -i -e \'/calculation/c calculation = \"lambda_mu_k\"\' sctk.in", file=f)
@@ -387,10 +427,10 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
     with open("scdft.sh", 'w') as f:
         print("#!/bin/sh", file=f)
         print(jobscript_queue, file=f)
-        print(jobscript_node, node, file=f)
-        print(jobscript_mpi, node, file=f)
+        print(jobscript_node, file=f)
+        print(jobscript_mpi, file=f)
         print(jobscript_omp, core_per_node, file=f)
-        print(jobscript_time + "3:00:00", file=f)
+        print(jobscript_time, file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
         print("sed -i -e \'/calculation/c calculation = \"scdft_tc\"\' sctk.in", file=f)

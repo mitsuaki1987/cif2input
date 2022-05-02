@@ -35,7 +35,7 @@ def write_openmx(skp, nq, rel):
         for ityp in typ:
             print(" %s  %s%s-%s  %s  %f" % (
                 ityp, ityp, omx_radius_dict[str(ityp)], omx_pao_dict[str(ityp)], omx_pot_dict[str(ityp)],
-                pymatgen.Element(ityp).atomic_mass), file=f)
+                pymatgen.core.Element(ityp).atomic_mass), file=f)
             print("proj%s  %s%s-s1p1d1  %s" % (
                 ityp, ityp, omx_radius_dict[str(ityp)], omx_pot_dict[str(ityp)]), file=f)
         print("Definition.of.Atomic.Species>", file=f)

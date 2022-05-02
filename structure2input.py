@@ -108,7 +108,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     nbnd = 0
     for iat in atom:
         nbnd += valence_dict[iat]
-    nbnd = nbnd / 2 + len(atom)*20
+    nbnd = nbnd / 2 + len(atom)*5
     if rel:
         nbnd *= 2
     print("Number of Bands : ", nbnd)
@@ -139,7 +139,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     #
     # band.gp, pwscf.win, respack.in, disp.in
     #
-    write_wannier(skp, nbnd, nq)
+    write_wannier(skp, nbnd, nq, atomwfc_dict)
     #
     # openmx.in : Input file for openmx
     #
