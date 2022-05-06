@@ -135,7 +135,6 @@ with open(args[1][:-3] + "vesta", 'w') as f:
                     dcart_max = dcart_abs
                     iaxis0 = iaxis
 
-        print(site1, nsite, cutoff)
         print(site1.a, site1.b, site1.c, end=" ")
         for iaxis in range(3):
             iaxis1 = (iaxis0 + iaxis + 1) % 3
@@ -147,7 +146,7 @@ with open(args[1][:-3] + "vesta", 'w') as f:
                   dfrac[2] * structure2.lattice.c, 0, file=f)
             print(atom_count, 0, 0, 0, 0, file=f)
             print(0, 0, 0, 0, 0, file=f)
-        print("")
+        print(" !", nsite, cutoff)
 
         vec_count += 1
     print(0, 0, 0, 0, 0, file=f)
