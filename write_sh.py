@@ -69,7 +69,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
             exit(-1)
         jobscript_queue = "#SBATCH -p " + queue
         jobscript_node = "#SBATCH -N "
-        jobscript_mpi = "#SBATCH -N "
+        jobscript_mpi = "#SBATCH -n "
         jobscript_omp = "#SBATCH -c "
         jobscript_time = "#SBATCH -t "
         jobscript_workdir = "${SLURM_SUBMIT_DIR}"
@@ -272,7 +272,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(mpiexec, "-n", nproc, pw, "-nk", nk, "-pd T -ntg", ntg, "-in nscf_pc.in > nscf_pc.out", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
-        print("  test -s elph${i}.dat && continue", file=f)
+        print("  test -s _ph0/pwscf.q_${i}/pwscf.elph${i} && continue", file=f)
         print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
         print(" ", mpiexec, "-n", nproc, ph, "-nk", nk, "-pd T -ntg", ntg, "-in epmat.in >> epmat.out", file=f)
         print("  find ./_ph0/ -name \"pwscf.wfc*\" -delete", file=f)
@@ -286,7 +286,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
         print("find ./ -name \"wfc*.dat\" -delete", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
-        print("  test -s elph${i}.dat || exit", file=f)
+        print("  test -s _ph0/pwscf.q_${i}/pwscf.elph${i} || exit", file=f)
         print("done", file=f)
         print("touch EPMAT_DONE", file=f)
     #
@@ -398,7 +398,7 @@ def write_sh(nkcbz, nkc, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd):
         print(" ", mpiexec, "-n", nproc, sctk, "-nk", nk, "-in sctk.in >> kel.out", file=f)
         print("done", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
-        print("  test -s vel${i}.dat || exit", file=f)
+        print("  test -s pwscf.vel${i} || exit", file=f)
         print("done", file=f)
         print("touch KEL_DONE", file=f)
     #
