@@ -1,8 +1,8 @@
 import numpy
 from pymatgen.core.periodic_table import get_el_sp
+from wanorb import wanorb_dict
 
-
-def write_wannier(skp, nbnd, nq):
+def write_wannier(skp, nbnd, nq, atomwfc_dict):
     #
     # Lattice information
     #
@@ -11,6 +11,7 @@ def write_wannier(skp, nbnd, nq):
     pos = skp["primitive_positions"]
     nat = len(skp["primitive_types"])
     atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
+    typ = set(atom)
     #
     # band.gp : Gnuplot script
     #
@@ -75,7 +76,7 @@ def write_wannier(skp, nbnd, nq):
         for ii in range(n_sym_points):
             print("set arrow from x%d, Emin to x%d, Emax nohead ls 2 front" % (ii+1, ii+1), file=f)
         print("#", file=f)
-        print("unset key", file=f)
+        print("set key outside", file=f)
         print("#", file=f)
         print("set xzeroaxis ls 1", file=f)
         print("#", file=f)
@@ -91,9 +92,12 @@ def write_wannier(skp, nbnd, nq):
             else:
                 break
         print("plot[:][Emin:Emax] \\", file=f)
-        print("        \"bands.out.gnu\" u 1:($2-EF) w p ls 3, \\", file=f)
-        print("        \"wannier_band.dat\" u ($1/%f):($2-EF) w p ls 3, \\" % x0, file=f)
-        print("        \"dir-wan/dat.iband\" u ($1*x%d):($2-EF) w l ls 4" % n_sym_points, file=f)
+        print("        EF, \\", file=f)
+        for ityp in typ:
+            for il in range(len(atomwfc_dict[ityp][1])):
+                print("        \"" + ityp + atomwfc_dict[ityp][1][il] + ".xmgr\" u 1:2:($3*2) w p ps variable, \\", file=f)
+        print("        \"wannier_band.dat\" u ($1/%f):($2) w p ls 3, \\" % x0, file=f)
+        print("        \"dir-wan/dat.iband\" u ($1*x%d):($2) w l ls 4" % n_sym_points, file=f)
         print("pause -1", file=f)
     #
     # wannier.win : wannier90 input
@@ -174,14 +178,14 @@ def write_wannier(skp, nbnd, nq):
         print("     N_initial_guess = ", file=f)
         print(" Lower_energy_window = ", file=f)
         print(" Upper_energy_window = ", file=f)
-        print("!flg_initial_guess_direc = 1", file=f)
+        print("flg_initial_guess_direc = 1", file=f)
         print("!   set_inner_window =.true.", file=f)
         print("! Lower_inner_window = ", file=f)
         print("! Upper_inner_window = ", file=f)
         print("/", file=f)
         for iat in range(nat):
-            for prj in "s", "px", "py", "pz", "dxy", "dyz", "dzx", "dx2", "dz2":
-                print("%s 0.2 %f %f %f !%s%d" %
+            for prj in wanorb_dict[atom[iat]]:
+                print("%s 0.2 %f %f %f  1.0 0.0 0.0  0.0 1.0 0.0  0.0 0.0 1.0 !%s%d" %
                       (prj, pos[iat][0], pos[iat][1], pos[iat][2],
                        atom[iat], iat+1), file=f)
         print("&PARAM_INTERPOLATION", file=f)

@@ -21,8 +21,8 @@ def write_pp():
     #
     with open("proj.in", 'w') as f:
         print("&PROJWFC", file=f)
-        print("      emin = ", file=f)
-        print("      emax = ", file=f)
+        print("!      emin = ", file=f)
+        print("!      emax = ", file=f)
         print("    deltae = 0.1", file=f)
         print("   filproj = 'bands'", file=f)
         print("/", file=f)
