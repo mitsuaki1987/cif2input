@@ -2,6 +2,7 @@ import numpy
 from pymatgen.core.periodic_table import get_el_sp
 from wanorb import wanorb_dict
 
+
 def write_wannier(skp, nbnd, nq, atomwfc_dict):
     #
     # Lattice information
@@ -11,7 +12,7 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
     pos = skp["primitive_positions"]
     nat = len(skp["primitive_types"])
     atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
-    typ = set(atom)
+    typ = sorted(set(atom))
     #
     # band.gp : Gnuplot script
     #
@@ -95,7 +96,9 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
         print("        EF, \\", file=f)
         for ityp in typ:
             for il in range(len(atomwfc_dict[ityp][1])):
-                print("        \"" + ityp + atomwfc_dict[ityp][1][il] + ".xmgr\" u 1:2:($3*2) w p ps variable, \\", file=f)
+                print("        \"" + ityp + atomwfc_dict[ityp][1][il] + ".xmgr\" u 1:2:($3*2) w p ps variable" +
+                      " t \"" + ityp + atomwfc_dict[ityp][1][il] + "\", \\",
+                      file=f)
         print("        \"wannier_band.dat\" u ($1/%f):($2) w p ls 3, \\" % x0, file=f)
         print("        \"dir-wan/dat.iband\" u ($1*x%d):($2) w l ls 4" % n_sym_points, file=f)
         print("pause -1", file=f)
@@ -244,7 +247,7 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
         print(" flfrc = \'ifc.dat\'", file=f)
         print(" fldos = \' \'", file=f)
         print(" flfrq = \'matdyn.freq\'", file=f)
-        print(" flvec = \' \'", file=f)
+        print(" flvec = \'matdyn.modes\'", file=f)
         print(" fleig = \' \'", file=f)
         print(" fldyn = \' \'", file=f)
         print(" fltau = \' \'", file=f)

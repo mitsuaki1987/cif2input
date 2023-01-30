@@ -41,7 +41,7 @@ def write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
     pos = skp["primitive_positions"]
     nat = len(skp["primitive_types"])
     atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
-    typ = set(atom)
+    typ = sorted(set(atom))
     ntyp = len(typ)
     #
     # rx.in : Variation cell optimization
@@ -145,6 +145,7 @@ def write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
         print("        nbnd = %d" % nbnd, file=f)
         print("/", file=f)
         print("&ELECTRONS", file=f)
+        print(" diagonalization = \"cg\"", file=f)
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS crystal", file=f)

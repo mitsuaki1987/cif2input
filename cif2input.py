@@ -23,8 +23,8 @@ def main():
     #
     dk_path = 0.1
     dq_grid = 0.27
-    pseudo_kind = "sg15"
-    host = "enaga"
+    pseudo_kind = "sssp"
+    host = "ohtaka"
     irel = 0
     #
     if len(args) > 2:

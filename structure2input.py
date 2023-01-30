@@ -1,7 +1,6 @@
 import pymatgen
 import seekpath
 import numpy
-import os
 import math
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from write_openmx import write_openmx
@@ -47,12 +46,15 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
                                         [pymatgen.core.Element(str(spc)).number for spc in structure.species]),
                                        reference_distance=dk_path)
     #
+    print("debug", skp["primitive_positions"])
+    print("debug", skp["primitive_types"])
     # Lattice information
     #
     avec = skp["primitive_lattice"]
     bvec = skp["reciprocal_primitive_lattice"]
     atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
-    typ = set(atom)
+    typ = sorted(set(atom))
+    print("debug3", typ, atom)
     print("Bravais lattice : ", skp["bravais_lattice"])
     print("Space group : ", skp['spacegroup_international'])
     bz_volume = abs(- bvec[0][2]*bvec[1][1]*bvec[2][0]
@@ -122,8 +124,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     middle = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*2, nq[1]*2, nq[2]*2), is_shift=(0, 0, 0))
     dense = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*4, nq[1]*4, nq[2]*4), is_shift=(0, 0, 0))
     print("Number of irreducible k : ", len(coarse), len(middle), len(dense))
-    write_sh(nq[0]*nq[1]*nq[2], len(coarse), len(middle), len(dense),
-             len(skp["explicit_kpoints_rel"]), atom, atomwfc_dict, host, numpw*nbnd)
+    write_sh(nq[0]*nq[1]*nq[2], len(middle), len(dense),
+             len(skp["explicit_kpoints_rel"]), atom, atomwfc_dict, host, numpw*nbnd, rel)
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
@@ -139,9 +141,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     #
     # band.gp, pwscf.win, respack.in, disp.in
     #
-    write_wannier(skp, nbnd, nq)
+    write_wannier(skp, nbnd, nq, atomwfc_dict)
     #
     # openmx.in : Input file for openmx
     #
-    if not os.path.isfile("openmx.dat"):
-        write_openmx(skp, nq, rel)
+    write_openmx(skp, nq, rel)

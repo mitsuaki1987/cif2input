@@ -54,7 +54,7 @@ def qsub_action(file_name, i_action):
     pos = skp["primitive_positions"]
     nat = len(skp["primitive_types"])
     atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
-    typ = set(atom)
+    typ = sorted(set(atom))
     ntyp = len(typ)
     #
     # WFC and Rho cutoff

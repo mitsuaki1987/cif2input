@@ -34,7 +34,7 @@ def main():
         bvec = pymatgen.core.Lattice(structure.lattice.matrix).reciprocal_lattice.matrix
         nat = structure.num_sites
         atom = [str(get_el_sp(iat)) for iat in structure.atomic_numbers]
-        typ = set(atom)
+        typ = sorted(set(atom))
         ntyp = structure.ntypesp
         if nat > 100:
             print("Too many atoms in ", prefix)
