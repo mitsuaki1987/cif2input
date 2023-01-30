@@ -2,9 +2,7 @@
 import os
 import pymatgen
 from pymatgen.core.periodic_table import get_el_sp
-from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict
-# from sg15 import pseudo_dict, ecutwfc_dict, ecutrho_dict
-from xml.etree import ElementTree
+from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, atomwfc_dict
 import subprocess
 import numpy
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
@@ -31,7 +29,6 @@ def main():
         #
         structure = pymatgen.core.Structure.from_file(input_file)
         avec = structure.lattice.matrix
-        bvec = pymatgen.core.Lattice(structure.lattice.matrix).reciprocal_lattice.matrix
         nat = structure.num_sites
         atom = [str(get_el_sp(iat)) for iat in structure.atomic_numbers]
         typ = sorted(set(atom))
@@ -58,23 +55,29 @@ def main():
         if unsupported_element:
             continue
         #
-        # k grid
+        # k and q grid
+        #  the number of grid proportional to the Height of b
+        #  b_i * a_i / |a_i| = 2pi / |a_i| (a_i is perpendicular to other b's)
         #
         nk = numpy.zeros(3, numpy.int_)
+        spg_analysis = SpacegroupAnalyzer(structure)
         for ii in range(3):
-            norm = numpy.sqrt(numpy.dot(bvec[ii][:], bvec[ii][:]))
-            nk[ii] = round(norm / 0.16)
+            norm = numpy.sqrt(numpy.dot(avec[ii][:], avec[ii][:]))
+            nk[ii] = round(2.0 * numpy.pi / norm / 0.15)
             if nk[ii] == 0:
                 nk[ii] = 1
+        k_ibz = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
+        print("Normal grid : ", nk[0], nk[1], nk[2], ", nk_ibz =", len(k_ibz))
+        n_proc_n = min(24, len(k_ibz))
         #
-        # Number of k in IBZ
-        #
-        spg_analysis = SpacegroupAnalyzer(structure)
-        coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
-        n_proc = min(4, len(coarse))
+        k_ibz = spg_analysis.get_ir_reciprocal_mesh(mesh=(2*nk[0], 2*nk[1], 2*nk[2]))
+        print(" Dense grid : ", 2*nk[0], 2*nk[1], 2*nk[2], ", nk_ibz =", len(k_ibz))
+        n_proc_d = min(24, len(k_ibz))
         #
         scf_input = "scf_" + prefix + ".in"
         scf_output = "scf_" + prefix + ".out"
+        nscf_input = "nscf_" + prefix + ".in"
+        nscf_output = "nscf_" + prefix + ".out"
         pdos_input = "pdos_" + prefix + ".in"
         pdos_output = "pdos_" + prefix + ".out"
         #
@@ -92,6 +95,9 @@ def main():
             print("     ecutwfc = %f" % ecutwfc, file=f)
             print("     ecutrho = %f" % ecutrho, file=f)
             print(" occupations = \'tetrahedra_opt\'", file=f)
+            print("       nspin = 2", file=f)
+            for ityp in range(ntyp):
+                print(" starting_magnetization(%d) = 1.0" % (ityp + 1), file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
             print(" mixing_beta = 0.3", file=f)
@@ -112,44 +118,139 @@ def main():
             print("K_POINTS automatic", file=f)
             print(" %d %d %d 0 0 0" % (nk[0], nk[1], nk[2]), file=f)
         #
-        # Run DFT
+        # Non-SCF file
+        #
+        with open(nscf_input, 'w') as f:
+            print("&CONTROL", file=f)
+            print(" calculation = \'nscf\'", file=f)
+            print(" prefix = \'%s\'" % prefix, file=f)
+            print("/", file=f)
+            print("&SYSTEM", file=f)
+            print("       ibrav = 0", file=f)
+            print("         nat = %d" % nat, file=f)
+            print("        ntyp = %d" % ntyp, file=f)
+            print("     ecutwfc = %f" % ecutwfc, file=f)
+            print("     ecutrho = %f" % ecutrho, file=f)
+            print(" occupations = \'tetrahedra_opt\'", file=f)
+            print("       nspin = 2", file=f)
+            for ityp in range(ntyp):
+                print(" starting_magnetization(%d) = 1.0" % (ityp + 1), file=f)
+            print("/", file=f)
+            print("&ELECTRONS", file=f)
+            print("/", file=f)
+            print("CELL_PARAMETERS angstrom", file=f)
+            for ii in range(3):
+                print(" %25.15e %25.15e %25.15e" % (avec[ii, 0], avec[ii, 1], avec[ii, 2]), file=f)
+            print("ATOMIC_SPECIES", file=f)
+            for ityp in typ:
+                print(" %s %f %s" % (ityp, pymatgen.core.Element(ityp).atomic_mass, pseudo_dict[str(ityp)]), file=f)
+            print("ATOMIC_POSITIONS crystal", file=f)
+            for iat in range(nat):
+                print(" %s %25.15e %25.15e %25.15e" % (
+                      atom[iat],
+                      structure.frac_coords[iat][0], structure.frac_coords[iat][1], structure.frac_coords[iat][2]),
+                      file=f)
+            print("K_POINTS automatic", file=f)
+            print(" %d %d %d 0 0 0" % (nk[0]*2, nk[1]*2, nk[2]*2), file=f)
+        #
+        # Run DFT (SCF)
         #
         try:
             subprocess.check_call("mpiexec -n %d ~/bin/pw.x -nk %d -in %s > %s"
-                                  % (n_proc, n_proc, scf_input, scf_output), shell=True)
+                                  % (n_proc_n, n_proc_n, scf_input, scf_output), shell=True)
         except subprocess.CalledProcessError:
             print("SCF error in ", prefix)
             clean(prefix)
             continue
         #
-        # Extract DOS
+        # Run DFT (non-SCF)
         #
-        xmlfile = os.path.join(prefix + ".save/", 'data-file-schema.xml')
-        tree = ElementTree.parse(xmlfile)
-        root = tree.getroot()
-        child = root.find('output').find('band_structure')
-        efermi = float(child.find('fermi_energy').text) * 13.60569228 * 2.0
+        try:
+            subprocess.check_call("mpiexec -n %d ~/bin/pw.x -nk %d -in %s > %s"
+                                  % (n_proc_d, n_proc_d, nscf_input, nscf_output), shell=True)
+        except subprocess.CalledProcessError:
+            print("Non-SCF error in ", prefix)
+            clean(prefix)
+            continue
         #
-        # proj.in : Read by projwfc.x
+        # Fermi energy
         #
-        with open(pdos_input, 'w') as f:
-            print("&PROJWFC", file=f)
-            print(" prefix = \'%s\'" % prefix, file=f)
-            print("   emin = %f" % efermi, file=f)
-            print("   emax = %f" % efermi, file=f)
-            print(" deltae = 0.1", file=f)
-            print("/", file=f)
+        efermi = None
+        with open(nscf_output, "r") as f:
+            output_lines = f.readlines()
+        for output_line in output_lines:
+            output_words = output_line.split("the Fermi energy is")
+            if len(output_words) > 1:
+                efermi = float(output_words[1].split()[0])
+                #
+                # proj.in : Read by projwfc.x
+                #
+                with open(pdos_input, 'w') as f:
+                    print("&PROJWFC", file=f)
+                    print(" prefix = \'%s\'" % prefix, file=f)
+                    print("   emin = %f" % efermi, file=f)
+                    print("   emax = %f" % efermi, file=f)
+                    print(" deltae = 0.1", file=f)
+                    print("/", file=f)
+        if efermi is None:
+            print("efermi error in ", prefix)
+            clean(prefix)
+            continue
         #
         # Run PDOS
         #
         try:
             subprocess.check_call("mpiexec -n %d ~/bin/projwfc.x -nk %d -in %s > %s"
-                                  % (n_proc, n_proc, pdos_input, pdos_output), shell=True)
+                                  % (n_proc_d, n_proc_d, pdos_input, pdos_output), shell=True)
         except subprocess.CalledProcessError:
             print("PDOS error in ", prefix)
             clean(prefix)
             continue
         #
+        # Sum PDOS at each Atom and L
+        #
+        for ityp in typ:
+            nwfc = 1
+            for il in range(len(atomwfc_dict[ityp][1])):
+                try:
+                    subprocess.check_call("mpiexec -n 1 ~/bin/sumpdos.x %s.pdos_atm*\\(%s\\)_wfc#%d* > %s.pdos_%s%s"
+                                          % (prefix, ityp, nwfc, prefix, ityp, atomwfc_dict[ityp][1][il]), shell=True)
+                except subprocess.CalledProcessError:
+                    print("Sum-PDOS error in ", prefix)
+                    continue
+                nwfc += 1
+        #
+        # Atomwfc dictionary for fermi_proj.x
+        #
+        pfermi = {ityp: [[] for il in range(len(atomwfc_dict[ityp][0]))] for ityp in typ}
+        ii = 0
+        for iat in atom:
+            for il in range(len(atomwfc_dict[iat][0])):
+                for im in range(atomwfc_dict[iat][0][il]):
+                    ii += 1
+                    pfermi[iat][il].append(ii)
+        #
+        # Fermi surface with atomic projection
+        #
+        for ityp in typ:
+            for il in range(len(atomwfc_dict[ityp][1])):
+                with open("fermi_proj.in", 'w') as f:
+                    print("&PROJWFC", file=f)
+                    print(" prefix = \'%s\'" % prefix, file=f)
+                    print("/", file=f)
+                    print(len(pfermi[ityp][il]), file=f)
+                    for ii in pfermi[ityp][il]:
+                        print(" %d" % ii, end="", file=f)
+                try:
+                    subprocess.check_call("mpiexec -n 1 ~/bin/fermi_proj.x -in fermi_proj.in", shell=True)
+                except subprocess.CalledProcessError:
+                    print("fermi_proj error in ", prefix)
+                    continue
+                os.rename("./" + prefix + "_proj1.frmsf",
+                          "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_1.frmsf")
+                os.rename("./" + prefix + "_proj2.frmsf",
+                          "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_2.frmsf")
+
         clean(prefix)
 
 
