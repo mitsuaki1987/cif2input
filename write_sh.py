@@ -42,7 +42,28 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
     #
     nmem = npw_nbnd * nkcbz * 4.0**3 * 16.0 / 1.0e9 * 50.0  # Last is scale factor
     print("Estimated memory for WFC (GB) : ", nmem)
-    if host == "ohtaka":
+    if host == "wisteria":
+        extension = "_w.sh"
+        qsystem = "pj"
+        mem_per_node = 32
+        core_per_node = 48
+        required_node = max(int(nmem / mem_per_node), 1)
+        if required_node <= 72:
+            queue = "short-o"
+        elif required_node <= 2304:
+            queue = "regular"
+        else:
+            print("Too large system")
+            exit(-1)
+        maxnode = required_node
+        jobscript_queue = "#PJM -L rscgrp=" + queue
+        jobscript_node = "#PJM -L node="
+        jobscript_mpi = "#PJM --mpi proc="
+        jobscript_omp = "#PJM --omp thread="
+        jobscript_time = "#PJM -L elapse="
+        jobscript_workdir = "${PJM_O_WORKDIR}"
+        mpiexec = "mpiexec"
+    elif host == "ohtaka":
         extension = "_o.sh"
         qsystem = "slurm"
         mem_per_node = 256
@@ -121,6 +142,10 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node/nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node, node, file=f)
+            print(jobscript_mpi, core_per_node, file=f)
+            print(jobscript_omp, nth, file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -133,7 +158,10 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
         print("#grep -A %d ATOMIC_POSITIONS rx.out |tail -n %d >> temp" % (len(atom), len(atom)), file=f)
         print("#sed -n -e '/K_POINTS/,$p' rx.in >> temp", file=f)
         print("#mv temp rx.in", file=f)
-        print(mpiexec, "-n", npool, pw, "-npool", npool, "-in rx.in > rx.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of rx.out -n", npool, pw, "-npool", npool, "-in rx.in ", file=f)
+        else:
+            print(mpiexec, "-n", npool, pw, "-npool", npool, "-in rx.in > rx.out", file=f)
         print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
         print("find ./ -name \"wfc*.dat\" -delete", file=f)
         print("find ./ -name \"*.upf\" -delete", file=f)
@@ -148,13 +176,20 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node / nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node, node, file=f)
+            print(jobscript_mpi, core_per_node, file=f)
+            print(jobscript_omp, nth, file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
-        print(mpiexec, "-n", npool, pw, "-npool", npool, "-in scf.in > scf.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of scf.out -n", npool, pw, "-npool", npool, "-in scf.in", file=f)
+        else:
+            print(mpiexec, "-n", npool, pw, "-npool", npool, "-in scf.in > scf.out", file=f)
         print("find ./ -name \"pwscf.wfc*\" -delete", file=f)
         print("find ./ -name \"wfc*.dat\" -delete", file=f)
     #
@@ -167,13 +202,20 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node / nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node, node, file=f)
+            print(jobscript_mpi, core_per_node, file=f)
+            print(jobscript_omp, nth, file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
         print(jobscript_time + "24:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
-        print(mpiexec, "-n", npool, pw, "-npool", npool, "-in nscf_p.in > nscf_p.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of nscf_p.out -n", npool, pw, "-npool", npool, "-in nscf_p.in", file=f)
+        else:
+            print(mpiexec, "-n", npool, pw, "-npool", npool, "-in nscf_p.in > nscf_p.out", file=f)
         #
         # Compute number of q
         #
@@ -185,7 +227,10 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
         print("for i in `seq 1 ${nq}`; do", file=f)
         print("  test -s matdyn${i} && continue", file=f)
         print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" ph.in", file=f)
-        print(" ", mpiexec, "-n", npool, ph, "-npool", npool, "-in ph.in >> ph.out", file=f)
+        if qsystem == "pj":
+            print(" ", mpiexec, "-of ph${i}.out -n", npool, ph, "-npool", npool, "-in ph.in", file=f)
+        else:
+            print(" ", mpiexec, "-n", npool, ph, "-npool", npool, "-in ph.in > ph${i}.out", file=f)
         print("  find ./_ph0/ -name \"pwscf.wfc*\" -delete", file=f)
         print("  find ./_ph0/ -name \"wfc*.dat\" -delete", file=f)
         print("  find ./_ph0/ -name \"pwscf.dwf*\" -delete", file=f)
@@ -210,18 +255,28 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node / nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node, node, file=f)
+            print(jobscript_mpi, core_per_node, file=f)
+            print(jobscript_omp, nth, file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
-        print(mpiexec, "-n", npool, pw, "-npool", npool, "-in nscf_pd.in > nscf_pd.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of nscf_pd.out -n", npool, pw, "-npool", npool, "-in nscf_pd.in", file=f)
+        else:
+            print(mpiexec, "-n", npool, pw, "-npool", npool, "-in nscf_pd.in > nscf_pd.out", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
         print("  test -s matdyn${i}.elph.${i} && continue", file=f)
         print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" elph.in", file=f)
-        print(" ", mpiexec, "-n", npool, ph, "-npool", npool, "-in elph.in >> elph.out", file=f)
+        if qsystem == "pj":
+            print(" ", mpiexec, "-of elph${i}.out -n", npool, ph, "-npool", npool, "-in elph.in", file=f)
+        else:
+            print(" ", mpiexec, "-n", npool, ph, "-npool", npool, "-in elph.in > elph${i}.out", file=f)
         print("  find ./_ph0/ -name \"pwscf.wfc*\" -delete", file=f)
         print("  find ./_ph0/ -name \"wfc*.dat\" -delete", file=f)
         print("  find ./_ph0/ -name \"pwscf.dwf*\" -delete", file=f)
@@ -246,6 +301,10 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node / nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node, node, file=f)
+            print(jobscript_mpi, core_per_node, file=f)
+            print(jobscript_omp, nth, file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, 1, file=f)
@@ -258,12 +317,18 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
               file=f)
         print("sed -i -e \"/elph_nbnd_min/c elph_nbnd_min=$bmin\" "
               "-e \"/elph_nbnd_max/c elph_nbnd_max=$bmax\" epmat.in", file=f)
-        print(mpiexec, "-n", npool, pw, "-npool", npool, "-in nscf_pc.in > nscf_pc.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of nscf_pc.out -n", npool, pw, "-npool", npool, "-in nscf_pc.in", file=f)
+        else:
+            print(mpiexec, "-n", npool, pw, "-npool", npool, "-in nscf_pc.in > nscf_pc.out", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
         print("  test -s _ph0/pwscf.q_${i}/pwscf.elph${i} && continue", file=f)
         print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" epmat.in", file=f)
-        print(" ", mpiexec, "-n", npool, ph, "-npool", npool, "-in epmat.in >> epmat.out", file=f)
+        if qsystem == "pj":
+            print(" ", mpiexec, "-of epmat${i}.out -n", npool, ph, "-npool", npool, "-in epmat.in", file=f)
+        else:
+            print(" ", mpiexec, "-n", npool, ph, "-npool", npool, "-in epmat.in > epmat${i}.out", file=f)
         print("  find ./_ph0/ -name \"pwscf.wfc*\" -delete", file=f)
         print("  find ./_ph0/ -name \"wfc*.dat\" -delete", file=f)
         print("  find ./_ph0/ -name \"pwscf.dwf*\" -delete", file=f)
@@ -308,17 +373,28 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node / nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node, node, file=f)
+            print(jobscript_mpi, core_per_node, file=f)
+            print(jobscript_omp, nth, file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
-        print(mpiexec, "-n", npool, pw, "-npool", npool, "-in nscf.in > nscf.out", file=f)
-        print(mpiexec, "-n 1", vf, "-in nscf.in > vfermi.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of nscf.out -n", npool, pw, "-npool", npool, "-in nscf.in", file=f)
+            print(mpiexec, "-of vfermi.out -n 1", vf, "-in nscf.in", file=f)
+        else:
+            print(mpiexec, "-n", npool, pw, "-npool", npool, "-in nscf.in > nscf.out", file=f)
+            print(mpiexec, "-n 1", vf, "-in nscf.in > vfermi.out", file=f)
         print("ef=`grep Fermi nscf.out| awk '{print $5}'`", file=f)
         print("sed -i -e '/emin/c emin = '${ef}'' -e '/emax/c emax = '${ef}'' proj.in", file=f)
-        print(mpiexec, "-n", npool, proj, "-npool", npool, "-in proj.in > proj.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of proj.out -n", npool, proj, "-npool", npool, "-in proj.in", file=f)
+        else:
+            print(mpiexec, "-n", npool, proj, "-npool", npool, "-in proj.in > proj.out", file=f)
         #
         # Sum PDOS at each Atom and L
         #
@@ -362,15 +438,24 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node / nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node, node, file=f)
+            print(jobscript_mpi, core_per_node, file=f)
+            print(jobscript_omp, nth, file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
         print(jobscript_time + "8:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
-        print(mpiexec, "-n", npool, pw, "-npool", nk_path, "-in band.in > band.out", file=f)
-        print(mpiexec, "-n", npool, bands, "-npool", nk_path, "-in bands.in", file=f)
-        print(mpiexec, "-n", npool, proj, "-npool", npool, "-in proj.in > pband.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of band.out -n", npool, pw, "-npool", nk_path, "-in band.in", file=f)
+            print(mpiexec, "-of bandsx.out -n", npool, bands, "-npool", nk_path, "-in bands.in", file=f)
+            print(mpiexec, "-of pband.out -n", npool, proj, "-npool", npool, "-in proj.in", file=f)
+        else:
+            print(mpiexec, "-n", npool, pw, "-npool", nk_path, "-in band.in > band.out", file=f)
+            print(mpiexec, "-n", npool, bands, "-npool", nk_path, "-in bands.in > bandsx.out", file=f)
+            print(mpiexec, "-n", npool, proj, "-npool", npool, "-in proj.in > pband.out", file=f)
         #
         # Projected band
         #
@@ -397,19 +482,29 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node / nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node, node, file=f)
+            print(jobscript_mpi, core_per_node, file=f)
+            print(jobscript_omp, nth, file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
         print(jobscript_time + "24:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
-        print(mpiexec, "-n", npool, pw, "-npool", npool, "-in twin.in > twin.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of twin.out -n", npool, pw, "-npool", npool, "-in twin.in", file=f)
+        else:
+            print(mpiexec, "-n", npool, pw, "-npool", npool, "-in twin.in > twin.out", file=f)
         print("sed -i -e \'/calculation/c calculation = \"kel\"\' sctk.in", file=f)
         print("nq=`awk \'NR==2{print $1}\' matdyn0`", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
         print("  test -s pwscf.vel${i} && continue", file=f)
         print("  sed -i -e \"/start_q/c start_q=$i\" -e \"/last_q/c last_q=$i\" sctk.in", file=f)
-        print(" ", mpiexec, "-n", npool, sctk, "-npool", npool, "-in sctk.in >> kel.out", file=f)
+        if qsystem == "pj":
+            print(" ", mpiexec, "-of kel${i}.out -n", npool, sctk, "-npool", npool, "-in sctk.in", file=f)
+        else:
+            print(" ", mpiexec, "-n", npool, sctk, "-npool", npool, "-in sctk.in > kel${i}.out", file=f)
         print("done", file=f)
         print("for i in `seq 1 ${nq}`; do", file=f)
         print("  test -s pwscf.vel${i} || exit", file=f)
@@ -433,11 +528,20 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
         print("sed -i -e \'/calculation/c calculation = \"lambda_mu_k\"\' sctk.in", file=f)
-        print(mpiexec, "-n", node, sctk, "-npool", node, "-in sctk.in > lambda_mu_k.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of lambda_mu_k.out -n", node, sctk, "-npool", node, "-in sctk.in", file=f)
+        else:
+            print(mpiexec, "-n", node, sctk, "-npool", node, "-in sctk.in > lambda_mu_k.out", file=f)
         print("sed -i -e \'/calculation/c calculation = \"scdft\"\' sctk.in", file=f)
-        print(mpiexec, "-n", node, sctk, "-npool", node, "-in sctk.in > scdft0.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of scdft0.out -n", node, sctk, "-npool", node, "-in sctk.in", file=f)
+        else:
+            print(mpiexec, "-n", node, sctk, "-npool", node, "-in sctk.in > scdft0.out", file=f)
         print("sed -i -e \'/calculation/c calculation = \"deltaf\"\' sctk.in", file=f)
-        print(mpiexec, "-n", node, sctk, "-npool", node, "-in sctk.in > deltaf.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of deltaf.out -n", node, sctk, "-npool", node, "-in sctk.in", file=f)
+        else:
+            print(mpiexec, "-n", node, sctk, "-npool", node, "-in sctk.in > deltaf.out", file=f)
     #
     # Tc calculation
     #
@@ -456,4 +560,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
         print("sed -i -e \'/calculation/c calculation = \"scdft_tc\"\' sctk.in", file=f)
-        print(mpiexec, "-n", node, sctk, "-npool", node, "-in sctk.in > tc.out", file=f)
+        if qsystem == "pj":
+            print(mpiexec, "-of tc.out -n", node, sctk, "-npool", node, "-in sctk.in", file=f)
+        else:
+            print(mpiexec, "-n", node, sctk, "-npool", node, "-in sctk.in > tc.out", file=f)

@@ -24,7 +24,7 @@ def main():
     dk_path = 0.1
     dq_grid = 0.27
     pseudo_kind = "sssp"
-    host = "ohtaka"
+    host = "wisteria"
     irel = 0
     #
     if len(args) > 2:
