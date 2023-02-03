@@ -143,9 +143,11 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
         elif qsystem == "pj":
-            print(jobscript_node, node, file=f)
-            print(jobscript_mpi, core_per_node, file=f)
-            print(jobscript_omp, nth, file=f)
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -177,9 +179,11 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
         elif qsystem == "pj":
-            print(jobscript_node, node, file=f)
-            print(jobscript_mpi, core_per_node, file=f)
-            print(jobscript_omp, nth, file=f)
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node * node / nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -202,14 +206,21 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node / nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+            print(jobscript_time + "24:00:00", file=f)
         elif qsystem == "pj":
-            print(jobscript_node, node, file=f)
-            print(jobscript_mpi, core_per_node, file=f)
-            print(jobscript_omp, nth, file=f)
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
+            if queue == "short-o":
+                print(jobscript_time + "8:00:00", file=f)
+            else:
+                print(jobscript_time + "24:00:00", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
-        print(jobscript_time + "24:00:00", file=f)
+            print(jobscript_time + "24:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd", jobscript_workdir, file=f)
         if qsystem == "pj":
@@ -256,9 +267,11 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
         elif qsystem == "pj":
-            print(jobscript_node, node, file=f)
-            print(jobscript_mpi, core_per_node, file=f)
-            print(jobscript_omp, nth, file=f)
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -302,9 +315,11 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
         elif qsystem == "pj":
-            print(jobscript_node, node, file=f)
-            print(jobscript_mpi, core_per_node, file=f)
-            print(jobscript_omp, nth, file=f)
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, 1, file=f)
@@ -374,9 +389,11 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
         elif qsystem == "pj":
-            print(jobscript_node, node, file=f)
-            print(jobscript_mpi, core_per_node, file=f)
-            print(jobscript_omp, nth, file=f)
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -439,9 +456,11 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
         elif qsystem == "pj":
-            print(jobscript_node, node, file=f)
-            print(jobscript_mpi, core_per_node, file=f)
-            print(jobscript_omp, nth, file=f)
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -482,14 +501,21 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             proc_per_node = int(core_per_node / nth)
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=" + str(proc_per_node) + ":ompthreads=" + str(nth), file=f)
+            print(jobscript_time + "24:00:00", file=f)
         elif qsystem == "pj":
-            print(jobscript_node, node, file=f)
-            print(jobscript_mpi, core_per_node, file=f)
-            print(jobscript_omp, nth, file=f)
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
+            if queue == "short-o":
+                print(jobscript_time + "8:00:00", file=f)
+            else:
+                print(jobscript_time + "24:00:00", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
-        print(jobscript_time + "24:00:00", file=f)
+            print(jobscript_time + "24:00:00", file=f)
         print("source ~/.bashrc", file=f)
         print("cd ", jobscript_workdir, file=f)
         if qsystem == "pj":
@@ -520,6 +546,12 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
         if qsystem == "pbs":
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=1:ompthreads=" + str(core_per_node), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_mpi, node, file=f)
@@ -552,6 +584,12 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
         if qsystem == "pbs":
             print("#PBS -l select=" + str(node) + ":ncpus=" + str(core_per_node)
                   + ":mpiprocs=1:ompthreads=" + str(core_per_node), file=f)
+        elif qsystem == "pj":
+            print(jobscript_node + str(node), file=f)
+            print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
+            print(jobscript_omp + str(nth), file=f)
+            print("#PJM -g ga20", file=f)
+            print("#PJM -j", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_mpi, node, file=f)

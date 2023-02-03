@@ -5,7 +5,6 @@ from pymatgen.core.periodic_table import get_el_sp
 from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, atomwfc_dict
 import subprocess
 import numpy
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 import sys
 
 
@@ -19,6 +18,7 @@ def main():
     args = sys.argv
     with open(str(args[1]), "r") as f:
         input_list = f.readlines()
+    n_proc = int(args[2])
     #
     # Read previous result
     #
@@ -60,19 +60,11 @@ def main():
         #  b_i * a_i / |a_i| = 2pi / |a_i| (a_i is perpendicular to other b's)
         #
         nk = numpy.zeros(3, numpy.int_)
-        spg_analysis = SpacegroupAnalyzer(structure)
         for ii in range(3):
             norm = numpy.sqrt(numpy.dot(avec[ii][:], avec[ii][:]))
             nk[ii] = round(2.0 * numpy.pi / norm / 0.15)
             if nk[ii] == 0:
                 nk[ii] = 1
-        k_ibz = spg_analysis.get_ir_reciprocal_mesh(mesh=(nk[0], nk[1], nk[2]))
-        print("Normal grid : ", nk[0], nk[1], nk[2], ", nk_ibz =", len(k_ibz))
-        n_proc_n = min(24, len(k_ibz))
-        #
-        k_ibz = spg_analysis.get_ir_reciprocal_mesh(mesh=(2*nk[0], 2*nk[1], 2*nk[2]))
-        print(" Dense grid : ", 2*nk[0], 2*nk[1], 2*nk[2], ", nk_ibz =", len(k_ibz))
-        n_proc_d = min(24, len(k_ibz))
         #
         scf_input = "scf_" + prefix + ".in"
         scf_output = "scf_" + prefix + ".out"
@@ -156,8 +148,8 @@ def main():
         # Run DFT (SCF)
         #
         try:
-            subprocess.check_call("mpiexec -n %d ~/bin/pw.x -nk %d -in %s > %s"
-                                  % (n_proc_n, n_proc_n, scf_input, scf_output), shell=True)
+            subprocess.check_call("mpiexec -n %d -of %s ~/bin/pw.x -nk %d -in %s"
+                                  % (n_proc, scf_output, n_proc, scf_input), shell=True)
         except subprocess.CalledProcessError:
             print("SCF error in ", prefix)
             clean(prefix)
@@ -166,8 +158,8 @@ def main():
         # Run DFT (non-SCF)
         #
         try:
-            subprocess.check_call("mpiexec -n %d ~/bin/pw.x -nk %d -in %s > %s"
-                                  % (n_proc_d, n_proc_d, nscf_input, nscf_output), shell=True)
+            subprocess.check_call("mpiexec -n %d -of %s ~/bin/pw.x -nk %d -in %s"
+                                  % (n_proc, nscf_output, n_proc, nscf_input), shell=True)
         except subprocess.CalledProcessError:
             print("Non-SCF error in ", prefix)
             clean(prefix)
@@ -200,8 +192,8 @@ def main():
         # Run PDOS
         #
         try:
-            subprocess.check_call("mpiexec -n %d ~/bin/projwfc.x -nk %d -in %s > %s"
-                                  % (n_proc_d, n_proc_d, pdos_input, pdos_output), shell=True)
+            subprocess.check_call("mpiexec -n %d -of %s ~/bin/projwfc.x -nk %d -in %s"
+                                  % (n_proc, pdos_output, n_proc, pdos_input), shell=True)
         except subprocess.CalledProcessError:
             print("PDOS error in ", prefix)
             clean(prefix)
@@ -213,8 +205,8 @@ def main():
             nwfc = 1
             for il in range(len(atomwfc_dict[ityp][1])):
                 try:
-                    subprocess.check_call("mpiexec -n 1 ~/bin/sumpdos.x %s.pdos_atm*\\(%s\\)_wfc#%d* > %s.pdos_%s%s"
-                                          % (prefix, ityp, nwfc, prefix, ityp, atomwfc_dict[ityp][1][il]), shell=True)
+                    subprocess.check_call("mpiexec -n 1 -of %s.pdos_%s%s ~/bin/sumpdos.x %s.pdos_atm*\\(%s\\)_wfc#%d*"
+                                          % (prefix, ityp, atomwfc_dict[ityp][1][il], prefix, ityp, nwfc), shell=True)
                 except subprocess.CalledProcessError:
                     print("Sum-PDOS error in ", prefix)
                     continue
