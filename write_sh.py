@@ -24,7 +24,6 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
     fproj = "~/bin/fermi_proj.x"
     sctk = "~/bin/sctk.x"
     typ = sorted(set(atom))
-    print("debug4", typ)
     #
     core_per_node = 0
     maxnode = 0

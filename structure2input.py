@@ -46,15 +46,12 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
                                         [pymatgen.core.Element(str(spc)).number for spc in structure.species]),
                                        reference_distance=dk_path)
     #
-    print("debug", skp["primitive_positions"])
-    print("debug", skp["primitive_types"])
     # Lattice information
     #
     avec = skp["primitive_lattice"]
     bvec = skp["reciprocal_primitive_lattice"]
     atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
     typ = sorted(set(atom))
-    print("debug3", typ, atom)
     print("Bravais lattice : ", skp["bravais_lattice"])
     print("Space group : ", skp['spacegroup_international'])
     bz_volume = abs(- bvec[0][2]*bvec[1][1]*bvec[2][0]
