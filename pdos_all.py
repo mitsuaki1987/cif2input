@@ -92,6 +92,7 @@ def main():
                 print(" starting_magnetization(%d) = 1.0" % (ityp + 1), file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
+            print(" diagonalization = \"cg\"", file=f)
             print(" mixing_beta = 0.3", file=f)
             print(" conv_thr = %e" % (float(nat)*1.0e-7), file=f)
             print(" diagonalization = \"cg\"", file=f)
@@ -240,10 +241,14 @@ def main():
                 except subprocess.CalledProcessError:
                     print("fermi_proj error in ", prefix)
                     continue
-                os.rename("./" + prefix + "_proj1.frmsf",
+                os.rename("./proj1.frmsf",
                           "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_1.frmsf")
-                os.rename("./" + prefix + "_proj2.frmsf",
+                os.rename("./proj2.frmsf",
                           "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_2.frmsf")
+                #os.rename("./" + prefix + "_proj1.frmsf",
+                #          "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_1.frmsf")
+                #os.rename("./" + prefix + "_proj2.frmsf",
+                #          "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_2.frmsf")
 
         clean(prefix)
 
