@@ -94,6 +94,7 @@ def main():
             print("&ELECTRONS", file=f)
             print(" mixing_beta = 0.3", file=f)
             print(" conv_thr = %e" % (float(nat)*1.0e-7), file=f)
+            print(" diagonalization = \"cg\"", file=f)
             print("/", file=f)
             print("CELL_PARAMETERS angstrom", file=f)
             for ii in range(3):
@@ -109,6 +110,16 @@ def main():
                       file=f)
             print("K_POINTS automatic", file=f)
             print(" %d %d %d 0 0 0" % (nk[0], nk[1], nk[2]), file=f)
+        #
+        # Run DFT (SCF)
+        #
+        try:
+            subprocess.check_call("mpiexec -n %d -of %s ~/bin/pw.x -nk %d -in %s"
+                                  % (n_proc, scf_output, n_proc, scf_input), shell=True)
+        except subprocess.CalledProcessError:
+            print("SCF error in ", prefix)
+            clean(prefix)
+            continue
         #
         # Non-SCF file
         #
@@ -129,6 +140,7 @@ def main():
                 print(" starting_magnetization(%d) = 1.0" % (ityp + 1), file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
+            print(" diagonalization = \"cg\"", file=f)
             print("/", file=f)
             print("CELL_PARAMETERS angstrom", file=f)
             for ii in range(3):
@@ -144,16 +156,6 @@ def main():
                       file=f)
             print("K_POINTS automatic", file=f)
             print(" %d %d %d 0 0 0" % (nk[0]*2, nk[1]*2, nk[2]*2), file=f)
-        #
-        # Run DFT (SCF)
-        #
-        try:
-            subprocess.check_call("mpiexec -n %d -of %s ~/bin/pw.x -nk %d -in %s"
-                                  % (n_proc, scf_output, n_proc, scf_input), shell=True)
-        except subprocess.CalledProcessError:
-            print("SCF error in ", prefix)
-            clean(prefix)
-            continue
         #
         # Run DFT (non-SCF)
         #
