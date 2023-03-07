@@ -33,7 +33,7 @@ def write_head(f, calculation, nat, ntyp, ecutwfc, ecutrho, rel):
         print("     lspinorb = .FALSE.", file=f)
 
 
-def write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
+def write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpath):
     #
     # Lattice information
     #
@@ -149,13 +149,9 @@ def write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel):
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS crystal", file=f)
-        print(len(skp["explicit_kpoints_rel"]), file=f)
-        for ik in range(len(skp["explicit_kpoints_rel"])):
-            print(" %f %f %f 1.0" % (
-                skp["explicit_kpoints_rel"][ik][0],
-                skp["explicit_kpoints_rel"][ik][1],
-                skp["explicit_kpoints_rel"][ik][2]),
-                  file=f)
+        print(len(kpath), file=f)
+        for kpath0 in kpath:
+            print(" %f %f %f 1.0" % (kpath0[0], kpath0[1], kpath0[2]), file=f)
     #
     # nscf_w.in : Non-scf for wannier90
     #

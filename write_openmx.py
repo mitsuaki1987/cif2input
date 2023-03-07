@@ -4,7 +4,7 @@ import numpy
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def write_openmx(skp, nq, rel):
+def write_openmx(skp, nq, rel, nkpath):
     #
     # Lattice information
     #
@@ -169,18 +169,16 @@ def write_openmx(skp, nq, rel):
         print("Band.Nkpath  %d" % len(skp["path"]), file=f)
         print("<Band.kpath", file=f)
         for ipath in range(len(skp["path"])):
-            start = skp["explicit_segments"][ipath][0]
-            final = skp["explicit_segments"][ipath][1] - 1
             print("%d  %f %f %f %f %f %f %s %s" % (
-                final - start + 1,
-                skp["explicit_kpoints_rel"][start][0],
-                skp["explicit_kpoints_rel"][start][1],
-                skp["explicit_kpoints_rel"][start][2],
-                skp["explicit_kpoints_rel"][final][0],
-                skp["explicit_kpoints_rel"][final][1],
-                skp["explicit_kpoints_rel"][final][2],
-                skp["explicit_kpoints_labels"][start],
-                skp["explicit_kpoints_labels"][final]),
+                nkpath[ipath],
+                skp['point_coords'][skp['path'][ipath][0]][0],
+                skp['point_coords'][skp['path'][ipath][0]][1],
+                skp['point_coords'][skp['path'][ipath][0]][2],
+                skp['point_coords'][skp['path'][ipath][1]][0],
+                skp['point_coords'][skp['path'][ipath][1]][1],
+                skp['point_coords'][skp['path'][ipath][1]][2],
+                skp['path'][ipath][0],
+                skp['path'][ipath][1]),
                   file=f)
         print("Band.kpath>", file=f)
         #
@@ -325,24 +323,27 @@ def write_openmx(skp, nq, rel):
         print("Unfolding.LowerBound        -10", file=f)
         print("Unfolding.UpperBound          10", file=f)
         print("<Unfolding.kpoint", file=f)
-        final = 0
-        ii = 1
+        ii = 2
         print("%s %f %f %f" % (
-            skp["explicit_kpoints_labels"][final],
-            skp["explicit_kpoints_rel"][final][0],
-            skp["explicit_kpoints_rel"][final][1],
-            skp["explicit_kpoints_rel"][final][2]),
+            skp['path'][0][0],
+            skp['point_coords'][skp['path'][0][0]][0],
+            skp['point_coords'][skp['path'][0][0]][1],
+            skp['point_coords'][skp['path'][0][0]][2]),
               file=f)
-        for ipath in range(len(skp["path"])):
-            start = skp["explicit_segments"][ipath][0]
-            if start == final:
-                final = skp["explicit_segments"][ipath][1] - 1
+        print("%s %f %f %f" % (
+            skp['path'][0][1],
+            skp['point_coords'][skp['path'][0][1]][0],
+            skp['point_coords'][skp['path'][0][1]][1],
+            skp['point_coords'][skp['path'][0][1]][2]),
+              file=f)
+        for ipath in range(1, len(skp["path"])):
+            if skp['path'][ipath-1][1] == skp['path'][ipath][0]:
                 ii += 1
                 print("%s %f %f %f" % (
-                    skp["explicit_kpoints_labels"][final],
-                    skp["explicit_kpoints_rel"][final][0],
-                    skp["explicit_kpoints_rel"][final][1],
-                    skp["explicit_kpoints_rel"][final][2]),
+                    skp['path'][ipath][1],
+                    skp['point_coords'][skp['path'][ipath][1]][0],
+                    skp['point_coords'][skp['path'][ipath][1]][1],
+                    skp['point_coords'][skp['path'][ipath][1]][2]),
                       file=f)
             else:
                 break

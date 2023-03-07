@@ -1,9 +1,10 @@
 import numpy
 from pymatgen.core.periodic_table import get_el_sp
 from wanorb import wanorb_dict
+import math
 
 
-def write_wannier(skp, nbnd, nq, atomwfc_dict):
+def write_wannier(skp, nbnd, nq, atomwfc_dict, kpath):
     #
     # Lattice information
     #
@@ -28,15 +29,15 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
         n_sym_points = 1
         final = 0
         x0 = numpy.linalg.norm(avec[0, :]) * 0.5 / numpy.pi
-        print("x%d = %f" % (n_sym_points, x0*skp["explicit_kpoints_linearcoord"][final]), file=f)
+        print("x1 = 0.0", file=f)
+        k0 = 0.0
         for ipath in range(len(skp["path"])):
-            start = skp["explicit_segments"][ipath][0]
-            if start != final:
-                n_sym_points += 1
-                print("x%d = %f" % (n_sym_points, x0*skp["explicit_kpoints_linearcoord"][start]), file=f)
-            n_sym_points += 1
-            final = skp["explicit_segments"][ipath][1] - 1
-            print("x%d = %f" % (n_sym_points, x0*skp["explicit_kpoints_linearcoord"][final]), file=f)
+            dk = numpy.array(skp['point_coords'][skp['path'][ipath][1]]) \
+                 - numpy.array(skp['point_coords'][skp['path'][ipath][0]])
+            dk = numpy.dot(dk, bvec)
+            dknorm = math.sqrt(numpy.dot(dk, dk))
+            k0 += dknorm * x0
+            print("x%d = %f" % (ipath+2, k0), file=f)
         print("#", file=f)
         print("set border lw 2", file=f)
         print("#", file=f)
@@ -49,32 +50,31 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
         print("#", file=f)
         print("set ytics scale 3.0, -0.5 1.0 font \'Cmr10,18\'", file=f)
         print("set xtics( \\", file=f)
-        n_sym_points = 1
-        final = 0
-        label_f = skp["explicit_kpoints_labels"][final]
-        if label_f == "GAMMA":
-            label_f = "\\241"
-        print("\"%s\" x%d" % (label_f, n_sym_points), end="", file=f)
-        for ipath in range(len(skp["path"])):
-            start = skp["explicit_segments"][ipath][0]
-            label_s = skp["explicit_kpoints_labels"][start]
-            if label_s == "GAMMA":
-                label_s = "\\241"
-            label_f = skp["explicit_kpoints_labels"][final]
-            if label_f == "GAMMA":
-                label_f = "\\241"
-            if start != final:
-                n_sym_points += 1
-                print(", \\\n\"%s%s\" x%d" % (label_f, label_s, n_sym_points), end="", file=f)
-            n_sym_points += 1
-            final = skp["explicit_segments"][ipath][1] - 1
-            label_f = skp["explicit_kpoints_labels"][final]
-            if label_f == "GAMMA":
-                label_f = "\\241"
-            print(", \\\n\"%s\" x%d" % (label_f, n_sym_points), end="", file=f)
+        label = skp['path'][0][0]
+        if label == "GAMMA":
+            label = "\\241"
+        print("\"%s\" x%d" % (label, 1), end="", file=f)
+        for ipath in range(len(skp["path"])-1):
+            if skp['path'][ipath][1] == skp['path'][ipath+1][0]:
+                label = skp['path'][ipath][1]
+                if label == "GAMMA":
+                    label = "\\241"
+            else:
+                label = skp['path'][ipath][1]
+                if label == "GAMMA":
+                    label = "\\241"
+                if skp['path'][ipath+1][0] == "GAMMA":
+                    label = label + "\\241"
+                else:
+                    label = label + skp['path'][ipath+1][0]
+            print(", \\\n\"%s\" x%d" % (label, ipath+2), end="", file=f)
+        label = skp["path"][len(skp["path"])-1][1]
+        if label == "GAMMA":
+            label = "\\241"
+        print(", \\\n\"%s\" x%d" % (label, len(skp["path"])+1), end="", file=f)
         print(") \\\noffset 0.0, 0.0 font \'Cmr10,18\'", file=f)
         print("#", file=f)
-        for ii in range(n_sym_points):
+        for ii in range(len(skp["path"])+1):
             print("set arrow from x%d, Emin to x%d, Emax nohead ls 2 front" % (ii+1, ii+1), file=f)
         print("#", file=f)
         print("set key outside", file=f)
@@ -83,15 +83,6 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
         print("#", file=f)
         print("set ylabel \"Energy from {/Cmmi10 E}_F [eV]\" offset - 0.5, 0.0 font \'Cmr10,18\'", file=f)
         print("#", file=f)
-        n_sym_points = 1
-        final = 0
-        for ipath in range(len(skp["path"])):
-            start = skp["explicit_segments"][ipath][0]
-            if start == final:
-                n_sym_points += 1
-                final = skp["explicit_segments"][ipath][1] - 1
-            else:
-                break
         print("plot[:][Emin:Emax] \\", file=f)
         print("        EF, \\", file=f)
         for ityp in typ:
@@ -100,7 +91,7 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
                       " t \"" + ityp + atomwfc_dict[ityp][1][il] + "\", \\",
                       file=f)
         print("        \"wannier_band.dat\" u ($1/%f):($2) w p ls 3, \\" % x0, file=f)
-        print("        \"dir-wan/dat.iband\" u ($1*x%d):($2) w l ls 4" % n_sym_points, file=f)
+        print("        \"dir-wan/dat.iband\" u ($1*x%d):($2) w l ls 4" % (len(skp["path"]) + 1), file=f)
         print("pause -1", file=f)
     #
     # wannier.win : wannier90 input
@@ -125,17 +116,15 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
         print("wannier_plot_supercell = 3", file=f)
         print("begin kpoint_path", file=f)
         for ipath in range(len(skp["path"])):
-            start = skp["explicit_segments"][ipath][0]
-            final = skp["explicit_segments"][ipath][1] - 1
             print("%s %f %f %f %s %f %f %f" % (
-                skp["explicit_kpoints_labels"][start],
-                skp["explicit_kpoints_rel"][start][0],
-                skp["explicit_kpoints_rel"][start][1],
-                skp["explicit_kpoints_rel"][start][2],
-                skp["explicit_kpoints_labels"][final],
-                skp["explicit_kpoints_rel"][final][0],
-                skp["explicit_kpoints_rel"][final][1],
-                skp["explicit_kpoints_rel"][final][2]),
+                skp['path'][ipath][0],
+                skp['point_coords'][skp['path'][ipath][0]][0],
+                skp['point_coords'][skp['path'][ipath][0]][1],
+                skp['point_coords'][skp['path'][ipath][0]][2],
+                skp['path'][ipath][1],
+                skp['point_coords'][skp['path'][ipath][1]][0],
+                skp['point_coords'][skp['path'][ipath][1]][1],
+                skp['point_coords'][skp['path'][ipath][1]][2]),
                   file=f)
         print("end kpoint_path", file=f)
         print("", file=f)
@@ -192,35 +181,42 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
                       (prj, pos[iat][0], pos[iat][1], pos[iat][2],
                        atom[iat], iat+1), file=f)
         print("&PARAM_INTERPOLATION", file=f)
-        n_sym_points = 1
-        final = 0
-        for ipath in range(len(skp["path"])):
-            start = skp["explicit_segments"][ipath][0]
-            if start == final:
-                n_sym_points += 1
-                final = skp["explicit_segments"][ipath][1] - 1
-            else:
-                break
-        print(" N_sym_points = %d" % n_sym_points, file=f)
+        n_sym_points0 = 1
+        n_sym_points = []
+        for ipath in range(0, len(skp["path"])-1):
+            n_sym_points0 += 1
+            if skp['path'][ipath][1] != skp['path'][ipath+1][0]:
+                n_sym_points.append(n_sym_points0)
+                n_sym_points0 = 1
+        n_sym_points.append(n_sym_points0+1)
+        print(" N_sym_points =", end="", file=f)
+        for in_sym_point in n_sym_points:
+            print(" %d" % in_sym_point, end="", file=f)
+        print("", file=f)
         print("!       dense = %d, %d, %d" % (nq[0]*4, nq[1]*4, nq[2]*4), file=f)
         print("/", file=f)
-        final = 0
         print("%f %f %f" % (
-            skp["explicit_kpoints_rel"][final][0],
-            skp["explicit_kpoints_rel"][final][1],
-            skp["explicit_kpoints_rel"][final][2]),
+            skp['point_coords'][skp['path'][0][0]][0],
+            skp['point_coords'][skp['path'][0][0]][1],
+            skp['point_coords'][skp['path'][0][0]][2]),
               file=f)
-        for ipath in range(len(skp["path"])):
-            start = skp["explicit_segments"][ipath][0]
-            if start == final:
-                final = skp["explicit_segments"][ipath][1] - 1
+        for ipath in range(len(skp["path"])-1):
+            print("%f %f %f" % (
+                skp['point_coords'][skp['path'][ipath][1]][0],
+                skp['point_coords'][skp['path'][ipath][1]][1],
+                skp['point_coords'][skp['path'][ipath][1]][2]),
+                  file=f)
+            if skp['path'][ipath][1] != skp['path'][ipath+1][0]:
                 print("%f %f %f" % (
-                    skp["explicit_kpoints_rel"][final][0],
-                    skp["explicit_kpoints_rel"][final][1],
-                    skp["explicit_kpoints_rel"][final][2]),
-                    file=f)
-            else:
-                break
+                    skp['point_coords'][skp['path'][ipath+1][0]][0],
+                    skp['point_coords'][skp['path'][ipath+1][0]][1],
+                    skp['point_coords'][skp['path'][ipath+1][0]][2]),
+                      file=f)
+        print("%f %f %f" % (
+            skp['point_coords'][skp['path'][len(skp["path"])-1][1]][0],
+            skp['point_coords'][skp['path'][len(skp["path"])-1][1]][1],
+            skp['point_coords'][skp['path'][len(skp["path"])-1][1]][2]),
+              file=f)
         print("&PARAM_VISUALIZATION", file=f)
         print("! flg_vis_wannier = 1,", file=f)
         print("       ix_vis_min = -1,", file=f)
@@ -255,13 +251,9 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
         print("   q_in_cryst_coord = .true.", file=f)
         print("   asr = \'crystal\'", file=f)
         print("/", file=f)
-        print(len(skp["explicit_kpoints_rel"]), file=f)
-        for ik in range(len(skp["explicit_kpoints_rel"])):
-            print(" %f %f %f 1.0" % (
-                skp["explicit_kpoints_rel"][ik][0],
-                skp["explicit_kpoints_rel"][ik][1],
-                skp["explicit_kpoints_rel"][ik][2]),
-                  file=f)
+        print(len(kpath), file=f)
+        for kpath0 in kpath:
+            print(" %f %f %f 1.0" % (kpath0[0], kpath0[1], kpath0[2]), file=f)
     #
     # respack.in : Input file for RESPACK
     #
@@ -319,25 +311,28 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict):
         print("", file=f)
         print("[tool]", file=f)
         print("nk_line = 20", file=f)
-        final = 0
-        n_sym_points = 1
-        print("knode = [(%s, %f, %f, %f)" % (
-            skp["explicit_kpoints_labels"][final],
-            skp["explicit_kpoints_rel"][final][0],
-            skp["explicit_kpoints_rel"][final][1],
-            skp["explicit_kpoints_rel"][final][2]),
-              file=f, end="")
-        for ipath in range(len(skp["path"])):
-            start = skp["explicit_segments"][ipath][0]
-            if start == final:
+        n_sym_points = 2
+        print("knode = [(%s, %f, %f, %f)," % (
+            skp['path'][0][0],
+            skp['point_coords'][skp['path'][0][0]][0],
+            skp['point_coords'][skp['path'][0][0]][1],
+            skp['point_coords'][skp['path'][0][0]][2]),
+              file=f)
+        print("         (%s, %f, %f, %f)" % (
+            skp['path'][0][1],
+            skp['point_coords'][skp['path'][0][1]][0],
+            skp['point_coords'][skp['path'][0][1]][1],
+            skp['point_coords'][skp['path'][0][1]][2]),
+            end="", file=f)
+        for ipath in range(1, len(skp["path"])):
+            if skp['path'][ipath - 1][1] == skp['path'][ipath][0]:
                 n_sym_points += 1
-                final = skp["explicit_segments"][ipath][1] - 1
                 print(",\n         (%s, %f, %f, %f)" % (
-                    skp["explicit_kpoints_labels"][final],
-                    skp["explicit_kpoints_rel"][final][0],
-                    skp["explicit_kpoints_rel"][final][1],
-                    skp["explicit_kpoints_rel"][final][2]),
-                    file=f, end="")
+                    skp['path'][ipath][1],
+                    skp['point_coords'][skp['path'][ipath][1]][0],
+                    skp['point_coords'][skp['path'][ipath][1]][1],
+                    skp['point_coords'][skp['path'][ipath][1]][2]),
+                      end="", file=f)
             else:
                 break
         print("]", file=f)

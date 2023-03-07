@@ -42,9 +42,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
             if abs(round(coord3) - coord3) < 0.001:
                 frac_coord2[ipos, iaxis] = float(round(coord3)) / 6.0
     #
-    skp = seekpath.get_explicit_k_path((structure.lattice.matrix, frac_coord2,
-                                        [pymatgen.core.Element(str(spc)).number for spc in structure.species]),
-                                       reference_distance=dk_path)
+    skp = seekpath.get_path((structure.lattice.matrix, frac_coord2,
+                            [pymatgen.core.Element(str(spc)).number for spc in structure.species]))
     #
     # Lattice information
     #
@@ -85,22 +84,59 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
             nq[ii] = 1
     print("Coarse grid : ", nq[0], nq[1], nq[2])
     #
+    # Get explicit kpath applicable to bands.x and plotband.x
+    #
+    kpath = []
+    nkpath = []
+    #
+    for ipath in range(len(skp['path'])):
+        dk = numpy.array(skp['point_coords'][skp['path'][ipath][1]])\
+           - numpy.array(skp['point_coords'][skp['path'][ipath][0]])
+        dk = numpy.dot(dk, bvec)
+        dknorm = math.sqrt(numpy.dot(dk, dk))
+        nkpath0= max(2, int(dknorm / dk_path))
+        nkpath.append(nkpath0)
+        for ik in range(nkpath0):
+            xkpath = ik / nkpath0
+            kpath0 = numpy.array(skp['point_coords'][skp['path'][ipath][0]]) * (1.0 - xkpath) \
+                + numpy.array(skp['point_coords'][skp['path'][ipath][1]]) * xkpath
+            kpath.append(kpath0)
+        #
+        # jump case
+        #
+        if ipath < len(skp['path']) - 1 and skp['path'][ipath][1] != skp['path'][ipath+1][0]:
+            dk1 = numpy.array(skp['point_coords'][skp['path'][ipath][1]]) - kpath[len(kpath) - 1]
+            dk1 = numpy.dot(dk1, bvec)
+            dk2 = numpy.array(skp['point_coords'][skp['path'][ipath+1][0]])\
+                - numpy.array(skp['point_coords'][skp['path'][ipath][1]])  # jump
+            dk2 = numpy.dot(dk2, bvec)
+            dk1norm = math.sqrt(numpy.dot(dk1, dk1))
+            dk2norm = math.sqrt(numpy.dot(dk2, dk2))
+            #
+            # If the jump is relatively small, shift the last point closer to the end
+            #
+            if dk2norm < 10.0 * dk1norm:
+                xkpath = dk2norm / dknorm * 0.09
+                kpath0 = numpy.array(skp['point_coords'][skp['path'][ipath][0]]) * xkpath \
+                    + numpy.array(skp['point_coords'][skp['path'][ipath][1]]) * (1.0 - xkpath)
+                kpath[len(kpath)-1] = kpath0
+            kpath.append(numpy.array(skp['point_coords'][skp['path'][ipath][1]]))
+    kpath.append(numpy.array(skp['point_coords'][skp['path'][len(skp['path']) - 1][1]]))
+    #
     # Band path
     #
     print("Band path")
     for ipath in range(len(skp["path"])):
-        start = skp["explicit_segments"][ipath][0]
-        final = skp["explicit_segments"][ipath][1] - 1
         print("%5d %8s %10.5f %10.5f %10.5f %8s %10.5f %10.5f %10.5f" % (
-            final - start + 1,
-            skp["explicit_kpoints_labels"][start],
-            skp["explicit_kpoints_rel"][start][0],
-            skp["explicit_kpoints_rel"][start][1],
-            skp["explicit_kpoints_rel"][start][2],
-            skp["explicit_kpoints_labels"][final],
-            skp["explicit_kpoints_rel"][final][0],
-            skp["explicit_kpoints_rel"][final][1],
-            skp["explicit_kpoints_rel"][final][2]))
+            nkpath[ipath],
+            skp['path'][ipath][0],
+            skp['point_coords'][skp['path'][ipath][0]][0],
+            skp['point_coords'][skp['path'][ipath][0]][1],
+            skp['point_coords'][skp['path'][ipath][0]][2],
+            skp['path'][ipath][1],
+            skp['point_coords'][skp['path'][ipath][1]][0],
+            skp['point_coords'][skp['path'][ipath][1]][1],
+            skp['point_coords'][skp['path'][ipath][1]][2]))
     #
     # Number of electrons
     #
@@ -122,11 +158,11 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     dense = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*4, nq[1]*4, nq[2]*4), is_shift=(0, 0, 0))
     print("Number of irreducible k : ", len(coarse), len(middle), len(dense))
     write_sh(nq[0]*nq[1]*nq[2], len(middle), len(dense),
-             len(skp["explicit_kpoints_rel"]), atom, atomwfc_dict, host, numpw*nbnd, rel)
+             len(kpath), atom, atomwfc_dict, host, numpw*nbnd, rel)
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
-    write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel)
+    write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpath)
     #
     # ph.in, elph.in, epmat.in, phdos.in, rpa.in, scdft.in
     #
@@ -138,8 +174,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     #
     # band.gp, pwscf.win, respack.in, disp.in
     #
-    write_wannier(skp, nbnd, nq, atomwfc_dict)
+    write_wannier(skp, nbnd, nq, atomwfc_dict, kpath)
     #
     # openmx.in : Input file for openmx
     #
-    write_openmx(skp, nq, rel)
+    write_openmx(skp, nq, rel, nkpath)
