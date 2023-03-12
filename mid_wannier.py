@@ -11,7 +11,7 @@ import math
 
 
 def clean(prefix):
-    subprocess.call("rm -rf %s.save %s.xml %s.wfc* %s.mix* dir-*"
+    subprocess.call("rm -rf %s.save %s.xml %s.wfc* %s.mix* dir-* bands.out"
                    % (prefix, prefix, prefix, prefix), shell=True)
 
 
@@ -299,8 +299,8 @@ def main():
         # Run DFT (non-SCF)
         #
         try:
-            subprocess.check_call("mpiexec -n %d ~/bin/pw.x -nk %d -in %s > %s"
-                                  % (n_proc, n_proc, nscf_input, nscf_output), shell=True)
+            subprocess.check_call("mpiexec -n %d -of %s ~/bin/pw.x -nk %d -in %s"
+                                  % (n_proc, nscf_output, n_proc, nscf_input), shell=True)
         except subprocess.CalledProcessError:
             print("Non-SCF error in ", prefix)
             clean(prefix)
@@ -424,7 +424,7 @@ def main():
         # Run Calc_wannier
         #
         try:
-            subprocess.check_call("OMP_NUM_THREADS=4 ~/bin/calc_wannier < %s > %s"
+            subprocess.check_call("OMP_NUM_THREADS=48 ~/bin/calc_wannier < %s > %s"
                                   % (respack_input, respack_output), shell=True)
         except subprocess.CalledProcessError:
             print("RESPACK error in ", prefix)
