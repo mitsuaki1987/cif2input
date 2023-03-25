@@ -206,10 +206,10 @@ def main():
         #
         for ityp in typ:
             nwfc = 1
-            for il in range(len(atomwfc_dict[ityp][1])):
+            for il in atomwfc_dict[ityp]:
                 try:
                     subprocess.check_call("mpiexec -n 1 -of %s.pdos_%s%s ~/bin/sumpdos.x %s.pdos_atm*\\(%s\\)_wfc#%d*"
-                                          % (prefix, ityp, atomwfc_dict[ityp][1][il], prefix, ityp, nwfc), shell=True)
+                                          % (prefix, ityp, il[0], prefix, ityp, nwfc), shell=True)
                 except subprocess.CalledProcessError:
                     print("Sum-PDOS error in ", prefix)
                     continue
@@ -217,18 +217,18 @@ def main():
         #
         # Atomwfc dictionary for fermi_proj.x
         #
-        pfermi = {ityp: {il: [] for il in atomwfc_dict[ityp][0]} for ityp in typ}
+        pfermi = {ityp: {il: [] for il in atomwfc_dict[ityp][:, 0]} for ityp in typ}
         ii = 0
         for iat in atom:
-            for il in atomwfc_dict[iat][0]:
-                for im in range(atomwfc_dict[iat][0][il]):
+            for il in atomwfc_dict[iat]:
+                for im in range(int(il[1])):
                     ii += 1
-                    pfermi[iat][il].append(ii)
+                    pfermi[iat][il[0]].append(ii)
         #
         # Fermi surface with atomic projection
         #
         for ityp in typ:
-            for il in atomwfc_dict[ityp][1]:
+            for il in atomwfc_dict[ityp]:
                 with open("fermi_proj.in", 'w') as f:
                     print("&PROJWFC", file=f)
                     print(" prefix = \'%s\'" % prefix, file=f)
@@ -242,13 +242,13 @@ def main():
                     print("fermi_proj error in ", prefix)
                     continue
                 os.rename("./proj1.frmsf",
-                          "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_1.frmsf")
+                          "./" + prefix + "_" + ityp + il[0] + "_1.frmsf")
                 os.rename("./proj2.frmsf",
-                          "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_2.frmsf")
-                #os.rename("./" + prefix + "_proj1.frmsf",
-                #          "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_1.frmsf")
-                #os.rename("./" + prefix + "_proj2.frmsf",
-                #          "./" + prefix + "_" + ityp + atomwfc_dict[ityp][1][il] + "_2.frmsf")
+                          "./" + prefix + "_" + ityp + il[0] + "_2.frmsf")
+                # os.rename("./" + prefix + "_proj1.frmsf",
+                #           "./" + prefix + "_" + ityp + il[0] + "_1.frmsf")
+                # os.rename("./" + prefix + "_proj2.frmsf",
+                #           "./" + prefix + "_" + ityp + il[0] + "_2.frmsf")
 
         clean(prefix)
 

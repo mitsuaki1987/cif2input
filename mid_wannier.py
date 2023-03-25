@@ -12,7 +12,7 @@ import math
 
 def clean(prefix):
     subprocess.call("rm -rf %s.save %s.xml %s.wfc* %s.mix* dir-* bands.out"
-                   % (prefix, prefix, prefix, prefix), shell=True)
+                    % (prefix, prefix, prefix, prefix), shell=True)
 
 
 def main():
