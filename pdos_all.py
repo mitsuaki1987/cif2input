@@ -92,10 +92,9 @@ def main():
                 print(" starting_magnetization(%d) = 1.0" % (ityp + 1), file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
-            print(" diagonalization = \"cg\"", file=f)
-            print(" mixing_beta = 0.3", file=f)
+            print(" diagonalization = \"rmm-davidson\"", file=f)
+            print(" mixing_beta = 0.1", file=f)
             print(" conv_thr = %e" % (float(nat)*1.0e-7), file=f)
-            print(" diagonalization = \"cg\"", file=f)
             print("/", file=f)
             print("CELL_PARAMETERS angstrom", file=f)
             for ii in range(3):
@@ -122,6 +121,16 @@ def main():
             clean(prefix)
             continue
         #
+        # Unconverged case
+        #
+        try:
+            subprocess.check_call("grep \"convergence has been achieved in\" %s"
+                                  % scf_output, shell=True)
+        except subprocess.CalledProcessError:
+            print("SCF did not converge in ", prefix)
+            clean(prefix)
+            continue
+        #
         # Non-SCF file
         #
         with open(nscf_input, 'w') as f:
@@ -141,7 +150,7 @@ def main():
                 print(" starting_magnetization(%d) = 1.0" % (ityp + 1), file=f)
             print("/", file=f)
             print("&ELECTRONS", file=f)
-            print(" diagonalization = \"cg\"", file=f)
+            print(" diagonalization = \"ppcg\"", file=f)
             print("/", file=f)
             print("CELL_PARAMETERS angstrom", file=f)
             for ii in range(3):
