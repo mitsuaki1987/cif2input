@@ -2,7 +2,7 @@
 import os
 import pymatgen
 from pymatgen.core.periodic_table import get_el_sp
-from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, atomwfc_dict
+from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, atomwfc_dict, band_dict
 import subprocess
 import numpy
 import sys
@@ -73,6 +73,12 @@ def main():
         pdos_input = "pdos_" + prefix + ".in"
         pdos_output = "pdos_" + prefix + ".out"
         #
+        # Number of valence band
+        #
+        nbnd = 0
+        for iat in atom:
+            nbnd += band_dict[iat] + 1
+        #
         # SCF file
         #
         with open(scf_input, 'w') as f:
@@ -88,6 +94,7 @@ def main():
             print("     ecutrho = %f" % ecutrho, file=f)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("       nspin = 2", file=f)
+            print("        nbnd = %d" % nbnd, file=f)
             for ityp in range(ntyp):
                 print(" starting_magnetization(%d) = 1.0" % (ityp + 1), file=f)
             print("/", file=f)
@@ -146,6 +153,7 @@ def main():
             print("     ecutrho = %f" % ecutrho, file=f)
             print(" occupations = \'tetrahedra_opt\'", file=f)
             print("       nspin = 2", file=f)
+            print("        nbnd = %d" % nbnd, file=f)
             for ityp in range(ntyp):
                 print(" starting_magnetization(%d) = 1.0" % (ityp + 1), file=f)
             print("/", file=f)
