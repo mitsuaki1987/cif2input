@@ -26,8 +26,6 @@ def write_wannier(skp, nbnd, nq, atomwfc_dict, kpath):
         print("Emin = ", file=f)
         print("Emax = ", file=f)
         print("#", file=f)
-        n_sym_points = 1
-        final = 0
         x0 = numpy.linalg.norm(avec[0, :]) * 0.5 / numpy.pi
         print("x1 = 0.0", file=f)
         k0 = 0.0
