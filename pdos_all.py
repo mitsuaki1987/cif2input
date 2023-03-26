@@ -250,8 +250,8 @@ def main():
                     print("&PROJWFC", file=f)
                     print(" prefix = \'%s\'" % prefix, file=f)
                     print("/", file=f)
-                    print(len(pfermi[ityp][il]), file=f)
-                    for ii in pfermi[ityp][il]:
+                    print(str(len(pfermi[ityp][il[0]])), file=f)
+                    for ii in pfermi[ityp][il[0]]:
                         print(" %d" % ii, end="", file=f)
                 try:
                     subprocess.check_call("mpiexec -n 1 ~/bin/fermi_proj.x -in fermi_proj.in", shell=True)
