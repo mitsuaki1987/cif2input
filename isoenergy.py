@@ -1,35 +1,37 @@
 #!/usr/bin/python3
-import pslibrary
-import sg15
-import sssp
+import os
+import pymatgen
+from pymatgen.core.periodic_table import get_el_sp
+from sssp import psen_dict
+import subprocess
+import numpy
+import sys
 
-ii = 0
-for lib in pslibrary, sg15, sssp:
-    ii += 1
-    for atom in lib.pseudo_dict.keys():
-        with open(str(ii)+"/"+atom+".in", 'w') as f:
-            print("&CONTROL", file=f)
-            print(" calculation = \'scf\'", file=f)
-            print("  pseudo_dir = \'/work/i0012/i001200/pseudo/\'", file=f)
-            print("/", file=f)
-            print("&SYSTEM", file=f)
-            print("       ibrav = 1", file=f)
-            print("   celldm(1) = 20.0", file=f)
-            print("         nat = 1", file=f)
-            print("        ntyp = 1", file=f)
-            print("     ecutwfc = %f" % lib.ecutwfc_dict[atom], file=f)
-            print("     ecutrho = %f" % lib.ecutrho_dict[atom], file=f)
-            print(" occupations = \'smearing\'", file=f)
-            print("    smearing = \'m-p\'", file=f)
-            print("     degauss = 0.05", file=f)
-            print("    assume_isolated = \'m-t\'", file=f)
-            print("/", file=f)
-            print("&ELECTRONS", file=f)
-            print(" conv_thr = 1.0e-8", file=f)
-            print(" mixing_beta = 0.3", file=f)
-            print("/", file=f)
-            print("ATOMIC_SPECIES", file=f)
-            print(" %s 1.0 %s" % (atom, lib.pseudo_dict[atom]), file=f)
-            print("ATOMIC_POSITIONS crystal", file=f)
-            print(" %s 0.0 0.0 0.0" % atom, file=f)
-            print("K_POINTS gamma", file=f)
+
+def main():
+    #
+    args = sys.argv
+    with open(str(args[1]), "r") as f:
+        input_list = f.readlines()
+    #
+    # Read previous result
+    #
+    for input_file in input_list:
+        #
+        input_file = input_file.strip("\n")
+        prefix = input_file.split("/")[-1].split(".")[0]
+        #
+        structure = pymatgen.core.Structure.from_file(input_file)
+        atom = [str(get_el_sp(iat)) for iat in structure.atomic_numbers]
+        #
+        # Isolated atoms energy
+        #
+        iso_energy = 0.0
+        for iat in atom:
+            iso_energy += psen_dict[iat]
+        #
+        with open(prefix + "_iso.dat", 'w') as f:
+            print(iso_energy, file=f)
+
+
+main()
