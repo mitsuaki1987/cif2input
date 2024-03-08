@@ -15,7 +15,7 @@ def main():
     args = sys.argv
     with open(str(args[1]), "r") as f:
         files = f.readlines()
-    matcher = StructureMatcher()
+    matcher = StructureMatcher(scale=False)
     #
     # Read All files specified as command-line arguments
     #
@@ -43,6 +43,9 @@ def main():
             continue
         #
         # Treatment for implicit hydrogen for CIF file
+        #
+        pressure = 100.0
+        temperature = 300.0
         #
         if input_file.split(".")[-1] == "cif":
             cf = CifFile.ReadCif(input_file)
@@ -95,6 +98,21 @@ def main():
                 elif elem_switch == 2:
                     print("Elements does not match", formula_input, formula_data)
                     continue
+            #
+            # Temperature and pressure
+            #
+            cell_measurement_pressure = cf.get_all("_cell_measurement_pressure")
+            diffrn_ambient_pressure = cf.get_all("_diffrn_ambient_pressure")
+            cell_measurement_temperature = cf.get_all("_cell_measurement_temperature")
+            diffrn_ambient_temperature = cf.get_all("_diffrn_ambient_temperature")
+            if cell_measurement_pressure:
+                pressure = float(cell_measurement_pressure[0].split("(")[0])
+            if diffrn_ambient_pressure:
+                pressure = float(diffrn_ambient_pressure[0].split("(")[0])
+            if cell_measurement_temperature:
+                temperature = float(cell_measurement_temperature[0].split("(")[0])
+            if diffrn_ambient_temperature:
+                temperature = float(diffrn_ambient_temperature[0].split("(")[0])
         #
         # Refine 3-folded Wyckoff position
         #
@@ -147,6 +165,21 @@ def main():
                 output_file += "-" + re.sub("[^0-9]", "", input_file.split("/")[-1])+".xsf"
             print("Write to "+output_file)
             structure2.to(fmt="xsf", filename=output_file)
+            with open(output_file, 'w') as f:
+                print("CRYSTAL", file=f)
+                print("# temperature = %f" % temperature, file=f)
+                print("# pressure = %f" % pressure, file=f)
+                print("PRIMVEC", file=f)
+                for i in range(3):
+                    print("%.14f %.14f %.14f" % (structure.lattice.matrix[i][0],
+                                                 structure.lattice.matrix[i][1],
+                                                 structure.lattice.matrix[i][2]), file=f)
+                print("PRIMCOORD", file=f)
+                print("%d 1" % len(structure.cart_coords), file=f)
+                for site, coord in zip(structure, structure.cart_coords):
+                    sp = site.specie.Z
+                    x, y, z = coord
+                    print("%d %20.14f %20.14f %20.14f" % (sp, x, y, z), file=f)
 
 
 main()

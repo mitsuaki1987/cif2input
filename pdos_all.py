@@ -128,7 +128,7 @@ def main():
             clean(prefix)
             continue
         #
-        # Unconverged case
+        # Un-converged case
         #
         try:
             subprocess.check_call("grep \"convergence has been achieved in\" %s"

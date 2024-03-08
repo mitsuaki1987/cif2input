@@ -9,6 +9,7 @@ from write_pp import write_pp
 from write_ph import write_ph
 from write_wannier import write_wannier
 from write_sh import write_sh
+# from write_hilapw import write_hilapw
 from pymatgen.core.periodic_table import get_el_sp
 
 
@@ -28,6 +29,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
         from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
     elif pseudo_kind == "ssspsol":
         from ssspsol import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+    elif pseudo_kind == "sssp_us":
+        from sssp_us import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
     else:
         from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
         print("Unsupported pseudo potential library :", pseudo_kind)
@@ -89,12 +92,13 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     kpath = []
     nkpath = []
     #
+    dk_jump = 1.0e10
     for ipath in range(len(skp['path'])):
         dk = numpy.array(skp['point_coords'][skp['path'][ipath][1]])\
            - numpy.array(skp['point_coords'][skp['path'][ipath][0]])
         dk = numpy.dot(dk, bvec)
         dknorm = math.sqrt(numpy.dot(dk, dk))
-        nkpath0= max(2, int(dknorm / dk_path))
+        nkpath0 = max(2, int(dknorm / dk_path))
         nkpath.append(nkpath0)
         for ik in range(nkpath0):
             xkpath = ik / nkpath0
@@ -105,22 +109,25 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
         # jump case
         #
         if ipath < len(skp['path']) - 1 and skp['path'][ipath][1] != skp['path'][ipath+1][0]:
-            dk1 = numpy.array(skp['point_coords'][skp['path'][ipath][1]]) - kpath[len(kpath) - 1]
-            dk1 = numpy.dot(dk1, bvec)
-            dk2 = numpy.array(skp['point_coords'][skp['path'][ipath+1][0]])\
-                - numpy.array(skp['point_coords'][skp['path'][ipath][1]])  # jump
-            dk2 = numpy.dot(dk2, bvec)
-            dk1norm = math.sqrt(numpy.dot(dk1, dk1))
-            dk2norm = math.sqrt(numpy.dot(dk2, dk2))
-            #
-            # If the jump is relatively small, shift the last point closer to the end
-            #
-            if dk2norm < 10.0 * dk1norm:
-                xkpath = dk2norm / dknorm * 0.09
-                kpath0 = numpy.array(skp['point_coords'][skp['path'][ipath][0]]) * xkpath \
-                    + numpy.array(skp['point_coords'][skp['path'][ipath][1]]) * (1.0 - xkpath)
-                kpath[len(kpath)-1] = kpath0
-            kpath.append(numpy.array(skp['point_coords'][skp['path'][ipath][1]]))
+            kpath0 = numpy.array(skp['point_coords'][skp['path'][ipath][1]])
+            kpath1 = numpy.array(skp['point_coords'][skp['path'][ipath+1][0]])
+            dk = kpath1 - kpath0
+            dk = numpy.dot(dk, bvec)
+            dk_jump = min(dk_jump, math.sqrt(numpy.dot(dk, dk)))
+            kpath.append(kpath0)
+    #
+    # If the jump is relatively small, shift the last point closer to the end
+    #
+    dk = numpy.array(kpath[1]) - numpy.array(kpath[0])
+    dk = numpy.dot(dk, bvec)
+    dknorm = math.sqrt(numpy.dot(dk, dk))
+    if dk_jump < 10.0 * dknorm:
+        xkpath = dk_jump * 0.09
+        for i in range(3):
+            kpath[1][i] = kpath[0][i] + (kpath[1][i] - kpath[0][i])*xkpath/dknorm
+    #
+    # Last point
+    #
     kpath.append(numpy.array(skp['point_coords'][skp['path'][len(skp['path']) - 1][1]]))
     #
     # Band path
@@ -179,3 +186,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     # openmx.in : Input file for openmx
     #
     write_openmx(skp, nq, rel, nkpath)
+    #
+    # HiLAPW input
+    #
+    # write_hilapw(skp, nq)

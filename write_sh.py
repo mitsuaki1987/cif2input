@@ -147,6 +147,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -183,6 +184,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -212,6 +214,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
             if queue == "short-o":
                 print(jobscript_time + "8:00:00", file=f)
             else:
@@ -271,6 +274,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -319,6 +323,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, 1, file=f)
@@ -393,6 +398,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -419,7 +425,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             for il in atomwfc_dict[ityp]:
                 if rel and int(il[1]) > 1:
                     print("%s pwscf.pdos_atm*\\(%s\\)_wfc#%d* pwscf.pdos_atm*\\(%s\\)_wfc#%d* > pdos_%s%s"
-                          % (sumpdos, ityp, nwfc, ityp, nwfc, ityp, il[0]), file=f)
+                          % (sumpdos, ityp, nwfc, ityp, nwfc+1, ityp, il[0]), file=f)
                     nwfc += 2
                 else:
                     print("%s pwscf.pdos_atm*\\(%s\\)_wfc#%d* > pdos_%s%s"
@@ -460,6 +466,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_omp, nth, file=f)
@@ -480,10 +487,10 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
         print("mv bands.projwfc_up bands.out.proj", file=f)
         for ityp in typ:
             for il in atomwfc_dict[ityp]:
-                print("sed -e '2c", end="", file=f)
+                print("sed -e '2i", end="", file=f)
                 for ii in pfermi[ityp][il[0]]:
                     print(" %d" % ii, end="", file=f)
-                print("' -e '4c " + ityp + il[0] + ".xmgr' plotband.in > plotpband.in", file=f)
+                print("' -e '3c " + ityp + il[0] + ".xmgr' plotband.in > plotpband.in", file=f)
                 print(mpiexec, "-n 1 ~/bin/plotband.x < plotpband.in", file=f)
     #
     # Coulomb matrix
@@ -507,6 +514,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
             if queue == "short-o":
                 print(jobscript_time + "8:00:00", file=f)
             else:
@@ -551,6 +559,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_mpi, node, file=f)
@@ -589,6 +598,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_omp + str(nth), file=f)
             print("#PJM -g ga20", file=f)
             print("#PJM -j", file=f)
+            print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
             print(jobscript_node, node, file=f)
             print(jobscript_mpi, node, file=f)

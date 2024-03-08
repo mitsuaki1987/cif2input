@@ -13,7 +13,6 @@ def write_pp():
     #
     with open("plotband.in", 'w') as f:
         print("bands.out", file=f)
-        print("11 12 13", file=f)
         print("-1.0e10 1.0e10", file=f)
         print("band.xmgr", file=f)
     #
