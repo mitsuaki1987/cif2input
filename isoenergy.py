@@ -1,10 +1,7 @@
 #!/usr/bin/python3
-import os
 import pymatgen
 from pymatgen.core.periodic_table import get_el_sp
 from sssp import psen_dict
-import subprocess
-import numpy
 import sys
 
 
