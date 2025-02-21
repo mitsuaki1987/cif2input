@@ -3,7 +3,6 @@ import sys
 import pymatgen.core
 import numpy
 import math
-import seekpath
 
 args = sys.argv
 
@@ -51,30 +50,13 @@ with open(args[1][:-3] + "vesta", 'w') as f:
     print("CELLP", file=f)
     structure = pymatgen.core.Structure.from_file(args[1])
     structure.remove_oxidation_states()
-    #
-    # Reduce to the primitive cell
-    #
-    frac_coord2 = numpy.array(structure.frac_coords)
-    for ipos in range(len(frac_coord2)):
-        for iaxis in range(3):
-            coord3 = frac_coord2[ipos, iaxis] * 6.0
-            if abs(round(coord3) - coord3) < 0.001:
-                frac_coord2[ipos, iaxis] = float(round(coord3)) / 6.0
-    #
-    skp = seekpath.get_explicit_k_path((structure.lattice.matrix, frac_coord2,
-                                        [pymatgen.core.Element(str(spc)).number for spc in structure.species]))
-    structure2 = pymatgen.core.Structure(skp["primitive_lattice"],
-                                         skp["primitive_types"], skp["primitive_positions"])
-    #
-    #
-    #
-    lattice = structure2.lattice
+    lattice = structure.lattice
     print(lattice.a, lattice.b, lattice.c, lattice.alpha, lattice.beta, lattice.gamma, file=f)
     print(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, file=f)
 
     print("STRUC", file=f)
     atom_count = 0
-    for site1 in structure2.sites:
+    for site1 in structure.sites:
         atom_count += 1
         frac1 = numpy.array([site1.a, site1.b, site1.c])
         print(atom_count, site1.species_string, site1.species_string, 1.0,
@@ -85,13 +67,13 @@ with open(args[1][:-3] + "vesta", 'w') as f:
     print("VECTR", file=f)
     atom_count = 0
     vec_count = 0
-    for site1 in structure2.sites:
+    for site1 in structure.sites:
         atom_count += 1
         if site1.species_string != args[2]:
             continue
         frac1 = numpy.array([site1.a, site1.b, site1.c])
         for cutoff in numpy.arange(0.5, 6.0, 0.1):
-            sites = structure2.get_neighbors(site1, cutoff)
+            sites = structure.get_neighbors(site1, cutoff)
             nsite = len(sites)
             if nsite >= coord:
                 break
@@ -100,7 +82,7 @@ with open(args[1][:-3] + "vesta", 'w') as f:
         for site2 in sites:
             frac2 = numpy.array([site2.a, site2.b, site2.c])
             dfrac = frac2[:] - frac1[:]
-            dcart[isite, 0:3] = numpy.array(structure2.lattice.get_cartesian_coords(dfrac))
+            dcart[isite, 0:3] = numpy.array(structure.lattice.get_cartesian_coords(dfrac))
             isite += 1
 
         ibase0 = 0
@@ -138,12 +120,12 @@ with open(args[1][:-3] + "vesta", 'w') as f:
         print(site1.a, site1.b, site1.c, end=" ")
         for iaxis in range(3):
             iaxis1 = (iaxis0 + iaxis + 1) % 3
-            dfrac = structure2.lattice.get_fractional_coords(base[ibase0, 0:3, iaxis1])
+            dfrac = structure.lattice.get_fractional_coords(base[ibase0, 0:3, iaxis1])
             print(base[ibase0, 0, iaxis1], base[ibase0, 1, iaxis1], base[ibase0, 2, iaxis1], end=" ")
             print(vec_count*3+iaxis+1,
-                  dfrac[0] * structure2.lattice.a,
-                  dfrac[1] * structure2.lattice.b,
-                  dfrac[2] * structure2.lattice.c, 0, file=f)
+                  dfrac[0] * structure.lattice.a,
+                  dfrac[1] * structure.lattice.b,
+                  dfrac[2] * structure.lattice.c, 0, file=f)
             print(atom_count, 0, 0, 0, 0, file=f)
             print(0, 0, 0, 0, 0, file=f)
         print(" !", nsite, cutoff)

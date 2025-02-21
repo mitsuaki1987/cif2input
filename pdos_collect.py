@@ -190,7 +190,7 @@ def main():
         #
         for ie in range(6):
             with open(str(args[1])+"_dos"+str(de[ie])+".csv", "a") as f:
-                print(prefix + "," + str(numpy.sum(wght[:, :, :, :, ie])), file=f)
+                print(prefix + "," + str(numpy.sum(wght[:, :, :, :, ie])/nat), file=f)
         #
         # Partial DOS
         #

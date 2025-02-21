@@ -491,7 +491,10 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
                 for ii in pfermi[ityp][il[0]]:
                     print(" %d" % ii, end="", file=f)
                 print("' -e '3c " + ityp + il[0] + ".xmgr' plotband.in > plotpband.in", file=f)
-                print(mpiexec, "-n 1 ~/bin/plotband.x < plotpband.in", file=f)
+                if qsystem == "pj":
+                    print(mpiexec, "-n 1 -stdin plotpband.in ~/bin/plotband.x", file=f)
+                else:
+                    print(mpiexec, "-n 1 ~/bin/plotband.x < plotpband.in", file=f)
     #
     # Coulomb matrix
     #
