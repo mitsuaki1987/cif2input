@@ -4,15 +4,11 @@ from wanorb import wanorb_dict
 import math
 
 
-def write_wannier(skp, nbnd, nq, atomwfc_dict, kpath):
+def write_wannier(avec, bvec, atom, pos, skp, nbnd, nq, atomwfc_dict, kpath):
     #
     # Lattice information
     #
-    avec = skp["primitive_lattice"]
-    bvec = skp["reciprocal_primitive_lattice"]
-    pos = skp["primitive_positions"]
-    nat = len(skp["primitive_types"])
-    atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
+    nat = len(atom)
     typ = sorted(set(atom))
     #
     # band.gp : Gnuplot script

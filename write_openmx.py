@@ -4,14 +4,11 @@ import numpy
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def write_openmx(skp, nq, rel, nkpath):
+def write_openmx(avec, atom, pos, skp, nq, rel, nkpath):
     #
     # Lattice information
     #
-    avec = skp["primitive_lattice"]
-    pos = skp["primitive_positions"]
-    nat = len(skp["primitive_types"])
-    atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
+    nat = len(atom)
     typ = sorted(set(atom))
     ntyp = len(typ)
     #

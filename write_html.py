@@ -25,15 +25,11 @@ for name in data_json.keys():
         print("    <meta charset=\"utf-8\">", file=f)
         print("    <script type=\"text/javascript\" src=\"../JSmol.min.js\"></script>", file=f)
         print("    <script type=\"text/javascript\"> ", file=f)
-        print("", file=f)
         print("// supersimple2.htm - illustrating the use of jQuery(document).ready to ", file=f)
         print("// populate all spans and divs AFTER the page is loaded.", file=f)
         print("// This is good programming practice.", file=f)
-        print("", file=f)
         print("$(document).ready(", file=f)
-        print("", file=f)
         print("function() {", file=f)
-        print("", file=f)
         print("Info = {", file=f)
         print("	width: 600,", file=f)
         print("	height: 600,", file=f)
@@ -47,15 +43,13 @@ for name in data_json.keys():
         print("	use: \"HTML5\",", file=f)
         print("	readyFunction: null,", file=f)
         print("    script: \"load INLINE \\\"" + lattice +
-              "\\\" {3,3,3}; set perspectiveDepth ON; select;set defaultLabelXYZ \\\"%e\\\"; set labelToggle; set labelAtom; set labelOffset 0 0; color labels black\"", file=f)
+              "\\\" {3,3,3}; set perspectiveDepth ON; select;set defaultLabelXYZ \\\"%e\\\"; set labelToggle; "
+              + "set labelAtom; set labelOffset 0 0; color labels black\"", file=f)
         print("}", file=f)
-        print("", file=f)
         print("$(\"#mydiv\").html(Jmol.getAppletHtml(\"jmolApplet0\",Info))", file=f)
         print("}", file=f)
         print(");", file=f)
-        print("", file=f)
         print("    </script>", file=f)
-        print("", file=f)
         print("<!-- gnuplot head start -->", file=f)
         print("    <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">", file=f)
         print("    <!--[if IE]><script type=\"text/javascript\" src=\"excanvas.js\"></script><![endif]-->", file=f)
@@ -74,20 +68,16 @@ for name in data_json.keys():
         print("    <link type=\"text/css\" href=\"../gnuplot/gnuplot_mouse.css\" rel=\"stylesheet\">", file=f)
         print("	<!-- gnuplot head end -->", file=f)
         print("  </head>", file=f)
-        print("  <body bgcolor=\"CCFFCC\" onload=\"gnuplot_canvas(); gnuplot.init();\" oncontextmenu=\"return false;\">", file=f)
-        print("", file=f)
+        print("  <body bgcolor=\"CCFFCC\" onload=\"gnuplot_canvas(); " +
+              "gnuplot.init();\" oncontextmenu=\"return false;\">", file=f)
         print("	<h1>" + name + "</h1>", file=f)
-        print("    ", file=f)
         print("	<h2>Crystal structure</h2>", file=f)
         print("	<span id=mydiv></span>", file=f)
-        print("", file=f)
         print("  <h2>Properties</h2>", file=f)
-        print("", file=f)
         print("  <p>Number of atoms per unit cell : " + str(nat) + "</p>", file=f)
         print("  <p>Formation energy : " + str(eform) + " eV/atom</p>", file=f)
         print("  <p>Magnetization : " + str(magt) + " &mu;<sub>B</sub>/atom</p>", file=f)
         print("  <p>DOS at E<sub>F</sub> : " + str(dosf) + " /eV/atom (both spin)</p>", file=f)
-        print("", file=f)
         print("	<h2>Band structure</h2>", file=f)
         print("    <div class=\"gnuplot\">", file=f)
         print("      <canvas id=\"Tile\" width=\"32\" height=\"32\" hidden></canvas>", file=f)
@@ -104,20 +94,31 @@ for name in data_json.keys():
         print("                        <table class=\"mousebox\">", file=f)
         print("                          <tr>", file=f)
         print("                            <td class=\"icon\"></td>", file=f)
-        print("                            <td class=\"icon\" onclick=gnuplot.toggle_grid><img src=\"../gnuplot/grid.png\" id=\"gnuplot_grid_icon\" class=\"icon-image\" alt=\"#\" title=\"toggle grid\"></td>", file=f)
-        print("                            <td class=\"icon\" onclick=gnuplot.unzoom><img src=\"../gnuplot/previouszoom.png\" id=\"gnuplot_unzoom_icon\" class=\"icon-image\" alt=\"unzoom\" title=\"unzoom\"></td>", file=f)
-        print("                            <td class=\"icon\" onclick=gnuplot.rezoom><img src=\"../gnuplot/nextzoom.png\" id=\"gnuplot_rezoom_icon\" class=\"icon-image\" alt=\"rezoom\" title=\"rezoom\"></td>", file=f)
-        print("                            <td class=\"icon\" onclick=gnuplot.toggle_zoom_text><img src=\"../gnuplot/textzoom.png\" id=\"gnuplot_textzoom_icon\" class=\"icon-image\" alt=\"zoom text\" title=\"zoom text with plot\"></td>", file=f)
-        print("                            <td class=\"icon\" onclick=gnuplot.popup_help()><img src=\"../gnuplot/help.png\" id=\"gnuplot_help_icon\" class=\"icon-image\" alt=\"?\" title=\"help\"></td>", file=f)
+        print("                            <td class=\"icon\" onclick=gnuplot.toggle_grid>" +
+              "<img src=\"../gnuplot/grid.png\" id=\"gnuplot_grid_icon\" class=\"icon-image\" " +
+              "alt=\"#\" title=\"toggle grid\"></td>", file=f)
+        print("                            <td class=\"icon\" onclick=gnuplot.unzoom>" +
+              "<img src=\"../gnuplot/previouszoom.png\" id=\"gnuplot_unzoom_icon\" class=\"icon-image\" " +
+              "alt=\"unzoom\" title=\"unzoom\"></td>", file=f)
+        print("                            <td class=\"icon\" onclick=gnuplot.rezoom>" +
+              "<img src=\"../gnuplot/nextzoom.png\" id=\"gnuplot_rezoom_icon\" class=\"icon-image\" " +
+              "alt=\"rezoom\" title=\"rezoom\"></td>", file=f)
+        print("                            <td class=\"icon\" onclick=gnuplot.toggle_zoom_text>" +
+              "<img src=\"../gnuplot/textzoom.png\" id=\"gnuplot_textzoom_icon\" class=\"icon-image\" " +
+              "alt=\"zoom text\" title=\"zoom text with plot\"></td>", file=f)
+        print("                            <td class=\"icon\" onclick=gnuplot.popup_help()>" +
+              "<img src=\"../gnuplot/help.png\" id=\"gnuplot_help_icon\" class=\"icon-image\" " +
+              "alt=\"?\" title=\"help\"></td>", file=f)
         print("                          </tr>", file=f)
         print("                          <tr>", file=f)
-        print("                            <td class=\"icon\" onclick=gnuplot.toggle_plot(\"gp_plot_1\")>1</td>", file=f)
+        print("                            <td class=\"icon\" onclick=gnuplot.toggle_plot(\"gp_plot_1\")>1</td>",
+              file=f)
         print("                            <td class=\"icon\" > </td>", file=f)
         print("                            <td class=\"icon\" > </td>", file=f)
         print("                            <td class=\"icon\" > </td>", file=f)
         print("                            <td class=\"icon\" > </td>", file=f)
         print("                            <td class=\"icon\" > </td>", file=f)
-        print("	                        </tr>", file=f)
+        print("                          </tr>", file=f)
         print("                        </table>", file=f)
         print("                      </td>", file=f)
         print("                    </tr>", file=f)
@@ -155,24 +156,24 @@ for name in data_json.keys():
         print("      </table>", file=f)
         print("    </div>", file=f)
         print("    <h2>Fermi surface and PDOS (/eV/atom both spin)</h2>", file=f)
-        print("    ", file=f)
+        print("    <ul>", file=f)
         for atom in atom_type.keys():
-            for n in atom_type[atom].keys():
-                if not isinstance(atom_type[atom][n], dict):
+            for n_main in atom_type[atom].keys():
+                if not isinstance(atom_type[atom][n_main], dict):
                     continue
-                for l in atom_type[atom][n].keys():
-                    orb = str(atom) + str(n) + str(l)
-                    pdos0 = sum(atom_type[atom][n][l]["pdos"]) / nat
-                    print("          <li><a href=\"../fermisurfer/index.php?frmsf=../fermi/"
-                          + name + "-" + orb + ".js\" ", file=f)
-                    print("          target=\"_blank\">" + orb + "</a>", file=f)
-                    print("           : " + str(pdos0) + "</li>", file=f)
-        print("", file=f)
+                for l_ang in atom_type[atom][n_main].keys():
+                    orb = str(atom) + str(n_main) + str(l_ang)
+                    pdos0 = sum(atom_type[atom][n_main][l_ang]["pdos"]) / nat
+                    print("      <li>" + orb + "(<a href=\"../fermisurfer/index.php?frmsf=../fermi/"
+                          + name + "_" + orb + "_1.js\" " + "target=\"_blank\">u</a>, " +
+                          "<a href=\"../fermisurfer/index.php?frmsf=../fermi/"
+                          + name + "_" + orb + "_2.js\" " + "target=\"_blank\">d</a>)"
+                          + " : " + str(pdos0) + "</li>", file=f)
+        print("    </ul>", file=f)
         print("    <h2>Input and output</h2>", file=f)
         print("    <ul>", file=f)
         print("      <li><a href=\"../scfin/scf_" + name + ".in\">SCF input</a></li>", file=f)
         print("      <li><a href=\"../scfout/scf_" + name + ".out\">SCF output</a></li>", file=f)
         print("    </ul>", file=f)
-        print("", file=f)
         print("  </body>", file=f)
         print("</html>", file=f)

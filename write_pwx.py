@@ -34,14 +34,11 @@ def write_head(f, calculation, nat, ntyp, ecutwfc, ecutrho, rel):
         print("     lspinorb = .FALSE.", file=f)
 
 
-def write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpath):
+def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpath):
     #
     # Lattice information
     #
-    avec = skp["primitive_lattice"]
-    pos = skp["primitive_positions"]
-    nat = len(skp["primitive_types"])
-    atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
+    nat = len(atom)
     typ = sorted(set(atom))
     ntyp = len(typ)
     #

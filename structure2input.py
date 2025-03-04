@@ -13,7 +13,7 @@ from write_sh import write_sh
 from pymatgen.core.periodic_table import get_el_sp
 
 
-def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
+def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel, uc):
 
     if pseudo_kind == "sg15":
         if rel:
@@ -45,14 +45,23 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
             if abs(round(coord3) - coord3) < 0.001:
                 frac_coord2[ipos, iaxis] = float(round(coord3)) / 6.0
     #
-    skp = seekpath.get_path((structure.lattice.matrix, frac_coord2,
-                            [pymatgen.core.Element(str(spc)).number for spc in structure.species]))
+    if uc:
+        skp = seekpath.get_path((structure.lattice.matrix, frac_coord2,
+                                [pymatgen.core.Element(str(spc)).number for spc in structure.species]))
+        avec = skp["primitive_lattice"]
+        bvec = skp["reciprocal_primitive_lattice"]
+        atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
+        pos = skp["primitive_positions"]
+    else:
+        skp = seekpath.get_path_orig_cell((structure.lattice.matrix, frac_coord2,
+                                          [pymatgen.core.Element(str(spc)).number for spc in structure.species]))
+        avec = structure.lattice.matrix
+        bvec = structure.lattice.reciprocal_lattice.matrix
+        atom = [str(get_el_sp(iat)) for iat in structure.atomic_numbers]
+        pos = frac_coord2
     #
     # Lattice information
     #
-    avec = skp["primitive_lattice"]
-    bvec = skp["reciprocal_primitive_lattice"]
-    atom = [str(get_el_sp(iat)) for iat in skp["primitive_types"]]
     typ = sorted(set(atom))
     print("Bravais lattice : ", skp["bravais_lattice"])
     print("Space group : ", skp['spacegroup_international'])
@@ -157,8 +166,11 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     #
     # Shell scripts
     #
-    structure2 = pymatgen.core.Structure(skp["primitive_lattice"],
-                                         skp["primitive_types"], skp["primitive_positions"])
+    if uc:
+        structure2 = pymatgen.core.Structure(skp["primitive_lattice"],
+                                             skp["primitive_types"], skp["primitive_positions"])
+    else:
+        structure2 = structure
     spg_analysis = SpacegroupAnalyzer(structure2)
     coarse = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0], nq[1], nq[2]), is_shift=(0, 0, 0))
     middle = spg_analysis.get_ir_reciprocal_mesh(mesh=(nq[0]*2, nq[1]*2, nq[2]*2), is_shift=(0, 0, 0))
@@ -169,7 +181,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
-    write_pwx(skp, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpath)
+    write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpath)
     #
     # ph.in, elph.in, epmat.in, phdos.in, rpa.in, scdft.in
     #
@@ -181,11 +193,11 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel):
     #
     # band.gp, pwscf.win, respack.in, disp.in
     #
-    write_wannier(skp, nbnd, nq, atomwfc_dict, kpath)
+    write_wannier(avec, bvec, atom, pos, skp, nbnd, nq, atomwfc_dict, kpath)
     #
     # openmx.in : Input file for openmx
     #
-    write_openmx(skp, nq, rel, nkpath)
+    write_openmx(avec, atom, pos, skp, nq, rel, nkpath)
     #
     # HiLAPW input
     #
