@@ -1,10 +1,9 @@
 import numpy
-from pymatgen.core.periodic_table import get_el_sp
 from wanorb import wanorb_dict
 import math
 
 
-def write_wannier(avec, bvec, atom, pos, skp, nbnd, nq, atomwfc_dict, kpath):
+def write_wannier(avec, bvec, atom, pos, skp, nbnd0, nq, atomwfc_dict, kpath):
     #
     # Lattice information
     #
@@ -14,8 +13,7 @@ def write_wannier(avec, bvec, atom, pos, skp, nbnd, nq, atomwfc_dict, kpath):
     # band.gp : Gnuplot script
     #
     with open("band.gp", 'w') as f:
-        print("#set terminal pdf color enhanced \\", file=f)
-        print("#dashed dl 0.5 size 8.0cm, 6.0cm", file=f)
+        print("#set terminal pdf color enhanced dashed dl 0.5 size 8.0cm, 6.0cm", file=f)
         print("#set output \"band.pdf\"", file=f)
         print("#", file=f)
         print("EF = ", file=f)
@@ -33,8 +31,6 @@ def write_wannier(avec, bvec, atom, pos, skp, nbnd, nq, atomwfc_dict, kpath):
             k0 += dknorm * x0
             print("x%d = %f" % (ipath+2, k0), file=f)
         print("#", file=f)
-        print("set border lw 2", file=f)
-        print("#", file=f)
         print("set style line 1 lt 1 lw 2 lc 0 dashtype 2", file=f)
         print("set style line 2 lt 1 lw 2 lc 0", file=f)
         print("set style line 3 lt 1 lw 1 lc 1", file=f)
@@ -42,7 +38,7 @@ def write_wannier(avec, bvec, atom, pos, skp, nbnd, nq, atomwfc_dict, kpath):
         print("set style line 5 lt 1 lw 1 lc 3", file=f)
         print("set style line 6 lt 1 lw 1 lc 4", file=f)
         print("#", file=f)
-        print("set ytics scale 3.0, -0.5 1.0 font \'Cmr10,18\'", file=f)
+        print("set ytics font \'Cmr10,18\'", file=f)
         print("set xtics( \\", file=f)
         label = skp['path'][0][0]
         if label == "GAMMA":
@@ -71,7 +67,7 @@ def write_wannier(avec, bvec, atom, pos, skp, nbnd, nq, atomwfc_dict, kpath):
         for ii in range(len(skp["path"])+1):
             print("set arrow from x%d, Emin to x%d, Emax nohead ls 2 front" % (ii+1, ii+1), file=f)
         print("#", file=f)
-        print("set key outside", file=f)
+        print("set key outside font \'Cmr10,18\'", file=f)
         print("#", file=f)
         print("set xzeroaxis ls 1", file=f)
         print("#", file=f)
@@ -84,14 +80,14 @@ def write_wannier(avec, bvec, atom, pos, skp, nbnd, nq, atomwfc_dict, kpath):
                 print("        \"" + ityp + il[0] + ".xmgr\" u 1:2:($3*2) w p ps variable" +
                       " t \"" + ityp + il[0] + "\", \\",
                       file=f)
-        print("        \"wannier_band.dat\" u ($1/%f):($2) w p ls 3, \\" % x0, file=f)
+        print("        \"wannier_band.dat\" u ($1*%f):($2) w l ls 3, \\" % x0, file=f)
         print("        \"dir-wan/dat.iband\" u ($1*x%d):($2) w l ls 4" % (len(skp["path"]) + 1), file=f)
         print("pause -1", file=f)
     #
     # wannier.win : wannier90 input
     #
     with open("wannier.win", 'w') as f:
-        print("num_bands = %d" % nbnd, file=f)
+        print("num_bands = %d" % nbnd0, file=f)
         print(" num_wann = ", file=f)
         print("", file=f)
         print(" dis_win_min = ", file=f)

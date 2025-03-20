@@ -17,22 +17,22 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel, uc):
 
     if pseudo_kind == "sg15":
         if rel:
-            from sg15_rel import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+            from sg15_rel import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict, band_dict
         else:
-            from sg15 import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+            from sg15 import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict, band_dict
     elif pseudo_kind == "pslibrary":
         if rel:
-            from pslibrary_rel import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+            from pslibrary_rel import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict, band_dict
         else:
-            from pslibrary import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+            from pslibrary import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict, band_dict
     elif pseudo_kind == "sssp":
-        from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+        from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict, band_dict
     elif pseudo_kind == "ssspsol":
-        from ssspsol import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+        from ssspsol import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict, band_dict
     elif pseudo_kind == "sssp_us":
-        from sssp_us import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+        from sssp_us import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict, band_dict
     else:
-        from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict
+        from sssp import pseudo_dict, ecutwfc_dict, ecutrho_dict, valence_dict, atomwfc_dict, band_dict
         print("Unsupported pseudo potential library :", pseudo_kind)
         exit(1)
     #
@@ -85,13 +85,17 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel, uc):
     print("Estimated number of PW (WFC) :", numpw)
     #
     # k and q grid
-    #  the number of grid proportional to the Height of b
-    #  b_i * a_i / |a_i| = 2pi / |a_i| (a_i is perpendicular to other b's)
+    #  n_i = c / |a_i| / dq
+    #  c = (|a_1| |a_2| |a_3| / V_{uc})^{1/3}
     #
+    v_uc = abs(numpy.linalg.det(avec))
     nq = numpy.zeros(3, numpy.int_)
+    norm = numpy.zeros(3, numpy.float_)
     for ii in range(3):
-        norm = numpy.sqrt(numpy.dot(avec[ii][:], avec[ii][:]))
-        nq[ii] = round(2.0 * numpy.pi / norm / dq_grid)
+        norm[ii] = numpy.sqrt(numpy.dot(avec[ii][:], avec[ii][:]))
+    c = (norm[0]*norm[1]*norm[2] / v_uc)**(1.0/3.0)
+    for ii in range(3):
+        nq[ii] = round(c / norm[ii] / dq_grid)
         if nq[ii] == 0:
             nq[ii] = 1
     print("Coarse grid : ", nq[0], nq[1], nq[2])
@@ -154,15 +158,22 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel, uc):
             skp['point_coords'][skp['path'][ipath][1]][1],
             skp['point_coords'][skp['path'][ipath][1]][2]))
     #
-    # Number of electrons
+    # Number of bands
     #
     nbnd = 0
     for iat in atom:
         nbnd += valence_dict[iat]
-    nbnd = nbnd / 2 + len(atom)*20
+    nbnd = nbnd + len(atom)*20
     if rel:
         nbnd *= 2
-    print("Number of Bands : ", nbnd)
+    print("Number of Bands with high-energy : ", nbnd)
+    #
+    # Number of bands
+    #
+    nbnd0 = 0
+    for iat in atom:
+        nbnd0 += band_dict[iat]
+    print("Number of Bands : ", nbnd0)
     #
     # Shell scripts
     #
@@ -181,7 +192,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel, uc):
     #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
-    write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpath)
+    write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd0, nbnd, rel, kpath)
     #
     # ph.in, elph.in, epmat.in, phdos.in, rpa.in, scdft.in
     #
@@ -193,7 +204,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel, uc):
     #
     # band.gp, pwscf.win, respack.in, disp.in
     #
-    write_wannier(avec, bvec, atom, pos, skp, nbnd, nq, atomwfc_dict, kpath)
+    write_wannier(avec, bvec, atom, pos, skp, nbnd0, nq, atomwfc_dict, kpath)
     #
     # openmx.in : Input file for openmx
     #

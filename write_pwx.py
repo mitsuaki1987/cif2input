@@ -34,7 +34,7 @@ def write_head(f, calculation, nat, ntyp, ecutwfc, ecutrho, rel):
         print("     lspinorb = .FALSE.", file=f)
 
 
-def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpath):
+def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd0, nbnd, rel, kpath):
     #
     # Lattice information
     #
@@ -53,7 +53,7 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
         print(" mixing_beta = 0.1", file=f)
         print(" scf_must_converge = .false.", file=f)
         print(" electron_maxstep = 30", file=f)
-        print(" diagonalization = \"cg\"", file=f)
+        print(" diagonalization = \"rmm-davidson\"", file=f)
         print("/", file=f)
         print("&IONS", file=f)
         print(" ion_dynamics = \"bfgs\"", file=f)
@@ -88,10 +88,11 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
         write_head(f, "nscf", nat, ntyp, ecutwfc, ecutrho, rel)
         print(" occupations = \'tetrahedra_opt\'", file=f)
         print("        nbnd = %d" % nbnd, file=f)
+        print("!        nbnd = %d" % nbnd0, file=f)
         print("        la2f = .true.", file=f)
         print("/", file=f)
         print("&ELECTRONS", file=f)
-        print(" diagonalization = \"ppcg\"", file=f)
+        print(" diagonalization = \"rmm-davidson\"", file=f)
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS automatic", file=f)
@@ -104,7 +105,7 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
         print(" occupations = \'tetrahedra_opt\'", file=f)
         print("/", file=f)
         print("&ELECTRONS", file=f)
-        print(" diagonalization = \"ppcg\"", file=f)
+        print(" diagonalization = \"rmm-davidson\"", file=f)
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS automatic", file=f)
@@ -117,7 +118,7 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
         print(" occupations = \'tetrahedra_opt\'", file=f)
         print("/", file=f)
         print("&ELECTRONS", file=f)
-        print(" diagonalization = \"ppcg\"", file=f)
+        print(" diagonalization = \"rmm-davidson\"", file=f)
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS automatic", file=f)
@@ -130,7 +131,7 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
         print(" occupations = \'tetrahedra_opt\'", file=f)
         print("/", file=f)
         print("&ELECTRONS", file=f)
-        print(" diagonalization = \"ppcg\"", file=f)
+        print(" diagonalization = \"rmm-davidson\"", file=f)
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS automatic", file=f)
@@ -141,9 +142,10 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
     with open("band.in", 'w') as f:
         write_head(f, "bands", nat, ntyp, ecutwfc, ecutrho, rel)
         print("        nbnd = %d" % nbnd, file=f)
+        print("!        nbnd = %d" % nbnd0, file=f)
         print("/", file=f)
         print("&ELECTRONS", file=f)
-        print(" diagonalization = \"ppcg\"", file=f)
+        print(" diagonalization = \"rmm-davidson\"", file=f)
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS crystal", file=f)
@@ -156,9 +158,10 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
     with open("nscf_w.in", 'w') as f:
         write_head(f, "bands", nat, ntyp, ecutwfc, ecutrho, rel)
         print("        nbnd = %d" % nbnd, file=f)
+        print("!        nbnd = %d" % nbnd0, file=f)
         print("/", file=f)
         print("&ELECTRONS", file=f)
-        print(" diagonalization = \"ppcg\"", file=f)
+        print(" diagonalization = \"rmm-davidson\"", file=f)
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS crystal", file=f)
@@ -166,7 +169,7 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
         for i0 in range(nq[0]):
             for i1 in range(nq[1]):
                 for i2 in range(nq[2]):
-                    print(" %f %f %f %f" % (
+                    print(" %.12f %.12f %.12f %f" % (
                             float(i0)/float(nq[0]),
                             float(i1)/float(nq[1]),
                             float(i2)/float(nq[2]),
@@ -179,9 +182,10 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
         write_head(f, "nscf", nat, ntyp, ecutwfc, ecutrho, rel)
         print(" occupations = \'tetrahedra_opt\'", file=f)
         print("        nbnd = %d" % nbnd, file=f)
+        print("!        nbnd = %d" % nbnd0, file=f)
         print("/", file=f)
         print("&ELECTRONS", file=f)
-        print(" diagonalization = \"ppcg\"", file=f)
+        print(" diagonalization = \"rmm-davidson\"", file=f)
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS automatic", file=f)
@@ -194,7 +198,7 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
         print("        nbnd = %d" % nbnd, file=f)
         print("/", file=f)
         print("&ELECTRONS", file=f)
-        print(" diagonalization = \"ppcg\"", file=f)
+        print(" diagonalization = \"rmm-davidson\"", file=f)
         print("/", file=f)
         write_atom(f, avec, typ, nat, pos, atom, pseudo_dict)
         print("K_POINTS crystal", file=f)
@@ -215,7 +219,7 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
                     kvec[2] = float(i2) / float(nq[2])
                     if i2 * 2 >= nq[2]:
                         kvec[2] += -1.0
-                    print(" %f %f %f 1.0" % (kvec[0], kvec[1], kvec[2]), file=f)
+                    print(" %.12f %.12f %.12f 1.0" % (kvec[0], kvec[1], kvec[2]), file=f)
         #
         # Shifted
         #
@@ -231,4 +235,4 @@ def write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd, rel, kpa
                     kvec[2] = (float(i2) + 0.5) / float(nq[2])
                     if i2 * 2 + 1 >= nq[2]:
                         kvec[2] += -1.0
-                    print(" %f %f %f 1.0" % (kvec[0], kvec[1], kvec[2]), file=f)
+                    print(" %.12f %.12f %.12f 1.0" % (kvec[0], kvec[1], kvec[2]), file=f)

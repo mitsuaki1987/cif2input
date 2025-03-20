@@ -24,7 +24,7 @@ def main():
     # Default value
     #
     dk_path = 0.1
-    dq_grid = 0.27
+    dq_grid = 0.0465
     pseudo_kind = "sssp"
     host = "wisteria"
     irel = 0
@@ -42,7 +42,6 @@ def main():
                         dk_path = float(args[6])
                         if len(args) > 7:
                             dq_grid = float(args[7])
-    rel = False
     if irel == 0:
         rel = False
     elif irel == 1:
@@ -51,7 +50,6 @@ def main():
         print("Invalid rel :", irel)
         exit(irel)
     #
-    uc = False
     if iuc == 0:
         uc = False
     elif iuc == 1:
