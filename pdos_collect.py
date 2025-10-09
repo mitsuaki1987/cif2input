@@ -72,8 +72,8 @@ def main():
 
         kvec = numpy.empty([nk_ibz, 3], dtype=numpy.int_)
         # band energy and projection in IBZ
-        eig_ibz = numpy.empty([nk_ibz, nbnd * 2], dtype=numpy.float_)
-        proj_ibz = numpy.zeros([nk_ibz, nbnd * 2, nat], dtype=numpy.float_)
+        eig_ibz = numpy.empty([nk_ibz, nbnd * 2], dtype=numpy.float64)
+        proj_ibz = numpy.zeros([nk_ibz, nbnd * 2, nat], dtype=numpy.float64)
         #
         ik = 0
         ispin = 0
@@ -81,7 +81,7 @@ def main():
             if filelines[iline][0:4] == " k =":
                 kvec0 = numpy.array([filelines[iline][5:19],
                                      filelines[iline][19:33],
-                                     filelines[iline][33:47]], dtype=numpy.float_)
+                                     filelines[iline][33:47]], dtype=numpy.float64)
                 kvec0 = numpy.dot(avec, kvec0) / alat
                 kvec0 = kvec0 * nk
                 ikvec = [round(kvec1) for kvec1 in kvec0]
@@ -120,7 +120,7 @@ def main():
         #
         # Projection becomes the same for equivalent atoms
         #
-        proj2 = numpy.zeros([nk_ibz, 2 * nbnd], dtype=numpy.float_)
+        proj2 = numpy.zeros([nk_ibz, 2 * nbnd], dtype=numpy.float64)
         for iat in range(nat):
             proj2[:, :] = 0.0
             nat0 = 0
@@ -157,8 +157,8 @@ def main():
         #
         # energy and projection : IBZ -> full BZ with symmetry operator
         #
-        eig_fbz = numpy.empty([nk[0], nk[1], nk[2], 2 * nbnd], dtype=numpy.float_)
-        proj_fbz = numpy.empty([nk[0], nk[1], nk[2], 2 * nbnd, nat], dtype=numpy.float_)
+        eig_fbz = numpy.empty([nk[0], nk[1], nk[2], 2 * nbnd], dtype=numpy.float64)
+        proj_fbz = numpy.empty([nk[0], nk[1], nk[2], 2 * nbnd, nat], dtype=numpy.float64)
         kdone = numpy.zeros([nk[0], nk[1], nk[2]], dtype=numpy.int_)
         for ik in range(nk_ibz):
             for rot0 in rot:

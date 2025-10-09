@@ -37,15 +37,15 @@ def main():
                 #
                 avec = numpy.array([lines[start_cell+1].strip().split(),
                                     lines[start_cell+2].strip().split(),
-                                    lines[start_cell+3].strip().split()], numpy.float_)
+                                    lines[start_cell+3].strip().split()], numpy.float64)
                 #
                 natom = end - 1 - start_atom
                 atom = numpy.zeros(natom, numpy.int_)
-                pos = numpy.zeros((natom, 3), numpy.float_)
+                pos = numpy.zeros((natom, 3), numpy.float64)
                 iatom = 0
                 for atom_pos in lines[start_atom+1:end]:
                     atom[iatom] = pymatgen.core.Element(atom_pos.strip().split()[0]).number
-                    pos[iatom, 0:3] = numpy.array(atom_pos.strip().split()[1:4], numpy.float_)
+                    pos[iatom, 0:3] = numpy.array(atom_pos.strip().split()[1:4], numpy.float64)
                     iatom += 1
                 #
                 # PyMatGen structure

@@ -90,7 +90,7 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel, uc):
     #
     v_uc = abs(numpy.linalg.det(avec))
     nq = numpy.zeros(3, numpy.int_)
-    norm = numpy.zeros(3, numpy.float_)
+    norm = numpy.zeros(3, numpy.float64)
     for ii in range(3):
         norm[ii] = numpy.sqrt(numpy.dot(avec[ii][:], avec[ii][:]))
     c = (norm[0]*norm[1]*norm[2] / v_uc)**(1.0/3.0)

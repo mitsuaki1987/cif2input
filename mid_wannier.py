@@ -339,7 +339,7 @@ def main():
             input_list = f.readlines()
         #
         nk0 = int(len(input_list[1:]) / nbnd)
-        eig = numpy.array(input_list[1:], dtype=numpy.float_).reshape(nk0, nbnd)
+        eig = numpy.array(input_list[1:], dtype=numpy.float64).reshape(nk0, nbnd)
         #
         eig_min = eig[:, ncore:].min()
         eig_max = eig[:, ncore:].max()

@@ -11,7 +11,7 @@ def load_data(filename):
         descriptor = []
         for line in lines:
             result.append(float(line.split()[0]))
-            descriptor.append(numpy.array(line.split()[1:], dtype=numpy.float_))
+            descriptor.append(numpy.array(line.split()[1:], dtype=numpy.float64))
 
     return numpy.array(descriptor), numpy.array(result)
 
