@@ -121,6 +121,22 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
         jobscript_time = "#PBS -l walltime="
         jobscript_workdir = "${PBS_O_WORKDIR}"
         mpiexec = "mpijob"
+
+    elif host == "imr":
+        extension = "_i.sh"
+        qsystem = "pbs"
+        mem_per_node = 256
+        core_per_node = 128
+        required_node = max(int(nmem / mem_per_node), 1)
+        queue = "P_030"
+        maxnode = 1
+        jobscript_queue = "#PBS -q " + queue
+        jobscript_node = "#PBS -node "
+        jobscript_mpi = "#select=1:ncpus="
+        jobscript_omp = "#PBS -omp "
+        jobscript_time = "#PBS -l walltime="
+        jobscript_workdir = "${PBS_O_WORKDIR}"
+        mpiexec = "mpirun"
     else:
         print("Unsupported host")
         exit(-1)
