@@ -12,7 +12,7 @@ def main():
         print("Default:")
         print("$ cif2input.py cif-file sg15 enaga 0 1 0.1 0.3359385398275")
         print("pseudo_kind : sg15, pslibrary, sssp, ssspsol")
-        print("host : enaga, ohtaka, wisteria")
+        print("host : enaga, ohtaka, wisteria, imr")
         print("rel : 0 (scaler/non relativistic) or 1 (spin-orbit)")
         print("uc : 0 (do not) or 1 (reduce to primitive unit-cell)")
         exit(0)

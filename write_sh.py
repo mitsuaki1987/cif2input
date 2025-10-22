@@ -161,7 +161,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
@@ -198,7 +198,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node * node / nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
@@ -228,7 +228,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
             if queue == "short-o":
@@ -288,7 +288,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
@@ -337,7 +337,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
@@ -412,7 +412,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
@@ -480,7 +480,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
@@ -531,7 +531,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
             if queue == "short-o":
@@ -576,7 +576,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
@@ -615,7 +615,7 @@ def write_sh(nkcbz, nks, nkd, nk_path, atom, atomwfc_dict, host, npw_nbnd, rel):
             print(jobscript_node + str(node), file=f)
             print(jobscript_mpi + str(int(core_per_node*node/nth)), file=f)
             print(jobscript_omp + str(nth), file=f)
-            print("#PJM -g ga20", file=f)
+            print("#PJM -g gm21", file=f)
             print("#PJM -j", file=f)
             print("#PJM -x PJM_FEFS_CACHE_MODE=3", file=f)
         else:
