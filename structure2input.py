@@ -190,6 +190,8 @@ def structure2input(structure, dk_path, dq_grid, pseudo_kind, host, rel, uc):
     write_sh(nq[0]*nq[1]*nq[2], len(middle), len(dense),
              len(kpath), atom, atomwfc_dict, host, numpw*nbnd, rel)
     #
+    structure2.to("new.xsf")
+    #
     # rx.in, scf.in, nscf.in, band.in , nscf_w.in, nscf_r.in
     #
     write_pwx(avec, atom, pos, ecutwfc, ecutrho, pseudo_dict, nq, nbnd0, nbnd, rel, kpath)
